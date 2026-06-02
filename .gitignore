@@ -1,2 +1,4 @@
 config.js
 .env
+supabase/.temp
+supabase/.branches

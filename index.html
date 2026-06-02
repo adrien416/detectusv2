@@ -3,9 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=1440">
-<title>Detectus · Lina Finance</title>
+<title>Detectus · Lina Capital</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23061D39'/%3E%3Ccircle cx='32' cy='32' r='18' fill='none' stroke='%236B7A8D' stroke-width='5' stroke-linecap='round' stroke-dasharray='95 18'/%3E%3Crect x='24' y='24' width='16' height='16' rx='3' transform='rotate(45 32 32)' fill='%2347d3b0'/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&display=swap" rel="stylesheet">
+<!-- Dépendances v2 : supabase-js (CDN) + config publique (URL + anon key, protégées par RLS) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{width:100%;height:100%;overflow:hidden}
@@ -175,9 +178,71 @@ body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direc
 [data-theme="dark"] .toast{background:#1a2d42;box-shadow:0 8px 24px rgba(0,0,0,.5)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .toast .t-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+
+/* ── v2 : écran de connexion (F1) ─────────────────────────────────────────── */
+#login-overlay{position:fixed;inset:0;background:#061D39;z-index:9000;display:flex;align-items:center;justify-content:center;flex-direction:column}
+#login-overlay.cache{display:none}
+.login-card{background:#fff;border-radius:16px;padding:38px 42px;width:380px;box-shadow:0 24px 64px rgba(0,0,0,.4)}
+.login-logo{display:flex;align-items:center;gap:12px;margin-bottom:24px;justify-content:center}
+.login-logo svg{width:44px;height:44px}
+.login-title{font-size:24px;font-weight:800;color:#061D39;line-height:1.1}
+.login-sub{font-size:13px;color:#47d3b0;font-weight:600}
+.login-field{margin-bottom:12px}
+.login-field label{display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#757575;margin-bottom:5px}
+.login-field input{width:100%;padding:11px 14px;border-radius:8px;border:1.5px solid #E4EBF3;font-size:15px;font-family:var(--font);outline:none;background:#F4F6FB;color:#061D39;transition:border .15s}
+.login-field input:focus{border-color:#47d3b0}
+.login-btn{width:100%;background:#47d3b0;color:#061D39;border:none;border-radius:8px;padding:13px;font-weight:800;font-size:15px;cursor:pointer;font-family:var(--font);letter-spacing:.03em;margin-top:6px;transition:opacity .15s}
+.login-btn:hover{opacity:.88}
+.login-btn:disabled{opacity:.5;cursor:wait}
+.login-forgot{display:block;text-align:center;margin-top:14px;font-size:13px;color:#757575;cursor:pointer;text-decoration:underline}
+.login-forgot:hover{color:#061D39}
+.login-error{margin-top:14px;padding:10px 14px;border-radius:8px;background:#fdf0f0;border:1px solid #e05252;color:#e05252;font-size:13.5px;font-weight:600;display:none}
+.login-error.visible{display:block}
+.login-info{margin-top:14px;padding:10px 14px;border-radius:8px;background:#e8f8f0;border:1px solid #2ecc71;color:#1d9e54;font-size:13.5px;font-weight:600;display:none}
+.login-info.visible{display:block}
+.login-footer{margin-top:26px;color:rgba(255,255,255,.35);font-size:12.5px;text-align:center}
+
+/* ── v2 : boutons topbar (synchroniser, déconnexion) ──────────────────────── */
+.tb-btn{height:36px;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:all .2s;flex-shrink:0;margin-left:8px;padding:0 14px;color:rgba(255,255,255,.75);font-family:var(--font);font-size:13px;font-weight:700}
+.tb-btn:hover{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.2);color:#fff}
+.tb-btn svg{width:16px;height:16px}
+.tb-btn:disabled{opacity:.4;cursor:wait}
+.tb-btn.sync-en-cours svg{animation:rotation 1s linear infinite}
+@keyframes rotation{from{transform:rotate(0)}to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
+
+<!-- ══ v2 : Écran de connexion (F1) — rien de l'app n'est visible sans session ══ -->
+<div id="login-overlay">
+  <div class="login-card">
+    <div class="login-logo">
+      <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="32" cy="32" r="20" stroke="#061D39" stroke-width="5.5" stroke-linecap="round" stroke-dasharray="100 20"/>
+        <rect x="24" y="24" width="16" height="16" rx="3" transform="rotate(45 32 32)" fill="#47d3b0"/>
+      </svg>
+      <div>
+        <div class="login-title">Detectus</div>
+        <div class="login-sub">CRM Lina Capital</div>
+      </div>
+    </div>
+    <form onsubmit="connexion(event)">
+      <div class="login-field">
+        <label for="login-email">Email</label>
+        <input type="email" id="login-email" autocomplete="email" required>
+      </div>
+      <div class="login-field">
+        <label for="login-password">Mot de passe</label>
+        <input type="password" id="login-password" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="login-btn" id="login-btn">Se connecter</button>
+    </form>
+    <span class="login-forgot" onclick="motDePasseOublie()">Mot de passe oublié ?</span>
+    <div class="login-error" id="login-error"></div>
+    <div class="login-info" id="login-info"></div>
+  </div>
+  <div class="login-footer">Accès réservé à l'équipe Lina Capital · Prouesse VC</div>
+</div>
 
 <div id="topbar">
   <div class="tb-brand">
@@ -189,7 +254,7 @@ body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direc
     </div>
     <div>
       <div class="tb-title">Detectus</div>
-      <div class="tb-sub">by Lina Finance · Jan – Mars 2026</div>
+      <div class="tb-sub">by Lina Capital</div>
     </div>
   </div>
   <div class="view-tabs">
@@ -197,10 +262,19 @@ body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direc
     <button class="view-tab" onclick="switchView('board',this)">Board</button>
   </div>
   <div class="tb-kpis" id="tb-kpis"></div>
-  <button class="theme-toggle" onclick="toggleTheme()" title="Mode sombre / clair" id="theme-btn">
-    <svg id="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:none"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-    <svg id="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-  </button>
+  <div style="display:flex;align-items:center">
+    <button class="tb-btn" onclick="synchroniserTypeform()" title="Importer les nouvelles réponses Typeform" id="btn-sync">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
+      Synchroniser
+    </button>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Mode sombre / clair" id="theme-btn">
+      <svg id="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:none"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      <svg id="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <button class="tb-btn" onclick="deconnexion()" title="Se déconnecter" id="btn-logout">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    </button>
+  </div>
 </div>
 
 <div id="body">
@@ -285,9 +359,16 @@ body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direc
 <div class="toast" id="toast"><span class="t-dot"></span><span class="t-msg"></span></div>
 
 <script>
+/* ═══════════════════════════════════════════════════════════════════════════
+   Detectus v2 — Lina Capital
+   Front vanilla JS + supabase-js (CDN). Aucune donnée métier en localStorage.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Thème (seul usage autorisé de localStorage) ─────────────────────────── */
 function toggleTheme(){const html=document.documentElement;const isDark=html.getAttribute('data-theme')==='dark';html.setAttribute('data-theme',isDark?'light':'dark');document.getElementById('theme-icon-sun').style.display=isDark?'none':'block';document.getElementById('theme-icon-moon').style.display=isDark?'block':'none';localStorage.setItem('detectus-theme',isDark?'light':'dark');}
 (function(){const saved=localStorage.getItem('detectus-theme');if(saved==='dark'){document.documentElement.setAttribute('data-theme','dark');setTimeout(()=>{document.getElementById('theme-icon-sun').style.display='block';document.getElementById('theme-icon-moon').style.display='none';},0);}})();
 
+/* ── Constantes UI (reprises de la v1) ───────────────────────────────────── */
 const C={green:'#2ecc71',orange:'#e08c3a',red:'#e05252',teal:'#47d3b0',blue:'#3c6da4',navy:'#061D39',grey:'#757575',purple:'#8b5cf6'};
 const dc=d=>d==="QUALIFIÉ"?C.green:d==="REFUSÉ"?C.red:C.orange;
 
@@ -308,124 +389,267 @@ const EMAIL_ST={
   accepte:p=>`Bonjour ${p},\n\nNous sommes heureux de vous informer que votre dossier a été retenu par notre comité.\n\nNous allons vous adresser sous 48h les documents relatifs aux conditions de financement. Un conseiller dédié prendra contact avec vous pour les prochaines étapes.\n\nFélicitations et bienvenue chez Lina Finance.\n\nCordialement,\nL'Équipe Lina Finance`,
   refuse:p=>`Bonjour ${p},\n\nNous vous remercions pour l'intérêt que vous portez à Lina Finance et pour le temps consacré à votre demande.\n\nAprès étude attentive de votre dossier, nous ne sommes malheureusement pas en mesure de donner une suite favorable, en raison de critères propres à notre politique de financement.\n\nNous vous souhaitons plein succès dans votre projet.\n\nCordialement,\nL'Équipe Lina Finance`,
 };
+const EMAIL_SUBJECTS={info:'Lina Finance — Compléments nécessaires pour votre dossier',pitch:'Lina Finance — Invitation à un appel de présentation',attente:'Lina Finance — Votre dossier est en suivi',accepte:"Lina Finance — Votre dossier est accepté",refuse:'Lina Finance — Suite à votre demande de financement'};
+const EMAIL_LABELS={info:'Demande de documents',pitch:'Invitation pitch',attente:"Mise en liste d'attente",accepte:"Confirmation d'acceptation",refuse:'Notification de refus'};
 
-const PROXY_URL='https://typeform-proxy.djamel-753.workers.dev';
-const SECTEURS_REFUSES=['Restauration','Transport','VTC','Taxi','BTP'];
-const SECTEURS_SANTE=['Santé','Médical','Paramédical','Pharmacie','Kiné','Infirmier','Chirurgie','Médecin','Dentiste','Optique','Bien-être'];
+/* ── Client Supabase ─────────────────────────────────────────────────────── */
+let sb=null;
+(function initialiserClient(){
+  try{
+    if(typeof CONFIG==='undefined'||!CONFIG.SUPABASE_URL||!CONFIG.SUPABASE_ANON_KEY)throw new Error('config.js manquant ou incomplet');
+    sb=window.supabase.createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_ANON_KEY);
+  }catch(e){
+    const err=document.getElementById('login-error');
+    err.textContent='Configuration manquante : créez config.js à partir de config.example.js (URL Supabase + anon key).';
+    err.classList.add('visible');
+  }
+})();
 
-function autoScore(l){
-  let s=30;
-  if(SECTEURS_REFUSES.some(x=>l.act.toLowerCase().includes(x.toLowerCase())))return{score:5,dec:'REFUSÉ',motif:`Activité ${l.act} — secteur exclu par Lina Finance`,forts:[],faibles:[`Secteur ${l.act} exclu`],action:`Refus — ${l.act} exclu`};
-  const sante=SECTEURS_SANTE.some(x=>(l.act+' '+l.desc).toLowerCase().includes(x.toLowerCase()));
-  if(sante)s+=25;
-  if(l.ent==='Oui')s+=15;
-  if(l.ca==='+ 50K')s+=15;
-  if(l.doc)s+=10;
-  if(l.desc.length>150)s+=5;
-  s=Math.min(s,100);
-  const dec=s>=65?'QUALIFIÉ':s<=20?'REFUSÉ':'À ÉTUDIER';
-  const forts=[],faibles=[];
-  if(sante)forts.push('Secteur santé (priorité Lina)');
-  if(l.ent==='Oui')forts.push('Entreprise existante');else faibles.push('Entreprise non créée');
-  if(l.ca==='+ 50K')forts.push('CA positif');else faibles.push('CA faible ou nul');
-  if(l.doc)forts.push('Document fourni');else faibles.push('Aucun document');
-  if(l.desc.length>150)forts.push('Description détaillée');
-  if(l.desc.length<50)faibles.push('Description trop courte');
-  const motif=dec==='QUALIFIÉ'?`Dossier solide — ${l.act}, à qualifier en priorité`:dec==='REFUSÉ'?`Dossier insuffisant — critères non remplis`:`À analyser — ${forts.length?forts[0]:'potentiel à confirmer'}`;
-  const action=dec==='QUALIFIÉ'?`Appel prioritaire — ${l.prenom} ${l.nom}`:dec==='REFUSÉ'?'Refus — critères insuffisants':'Demander un complément avant traitement';
-  return{score:s,dec,motif,forts,faibles,action,sante};
+/* ── État global ─────────────────────────────────────────────────────────── */
+let LEADS=[];
+let UTILISATEUR=null;          // utilisateur Supabase Auth connecté
+let appDemarree=false;
+let filterIA="Tous",filterST="Tous",currentL=null,currentSort="score",selectedIds=new Set();
+let dataSource='chargement…';
+
+/* ── Toast générique ─────────────────────────────────────────────────────── */
+let minuteurToast=null;
+function afficherToast(message,couleur){
+  const t=document.getElementById('toast');
+  t.querySelector('.t-dot').style.background=couleur||C.teal;
+  t.querySelector('.t-msg').textContent=message;
+  t.classList.add('show');
+  clearTimeout(minuteurToast);
+  minuteurToast=setTimeout(()=>t.classList.remove('show'),2600);
 }
 
-/* ── MAPPING CHAMPS PAR REF (formulaire pUE5Jgae) ──── */
-function parseTypeformAnswers(answers){
-  const map={};
-  if(!answers)return map;
-  answers.forEach(a=>{
-    const key=a.field?.ref||a.field?.id||'';
-    if(!key)return;
-    switch(a.type){
-      case 'text':case 'short_text':case 'long_text':map[key]=a.text||'';break;
-      case 'choice':map[key]=a.choice?.label||'';break;
-      case 'choices':map[key]=(a.choices?.labels||[]).join(', ');break;
-      case 'email':map[key]=a.email||'';break;
-      case 'phone_number':map[key]=a.phone_number||'';break;
-      case 'file_url':case 'file_upload':map[key]=a.file_url||'';break;
-      case 'boolean':map[key]=a.boolean?'Oui':'Non';break;
-      case 'number':map[key]=String(a.number||'');break;
-      case 'url':map[key]=a.url||'';break;
-      default:map[key]=String(a[a.type]||'');break;
+/* ═══ F1 — Authentification ═══════════════════════════════════════════════ */
+
+function afficherLogin(){
+  document.getElementById('login-overlay').classList.remove('cache');
+  document.getElementById('login-error').classList.remove('visible');
+  document.getElementById('login-info').classList.remove('visible');
+}
+function masquerLogin(){
+  document.getElementById('login-overlay').classList.add('cache');
+}
+
+async function connexion(event){
+  event.preventDefault();
+  if(!sb)return;
+  const bouton=document.getElementById('login-btn');
+  const erreur=document.getElementById('login-error');
+  erreur.classList.remove('visible');
+  bouton.disabled=true;bouton.textContent='Connexion…';
+  try{
+    const email=document.getElementById('login-email').value.trim();
+    const motDePasse=document.getElementById('login-password').value;
+    const {error}=await sb.auth.signInWithPassword({email,password:motDePasse});
+    if(error){
+      erreur.textContent=error.message==='Invalid login credentials'
+        ?'Email ou mot de passe incorrect.'
+        :'Connexion impossible : '+error.message;
+      erreur.classList.add('visible');
+    }
+    // En cas de succès, onAuthStateChange déclenche demarrerApp()
+  }catch(e){
+    erreur.textContent='Erreur réseau — vérifiez votre connexion.';
+    erreur.classList.add('visible');
+  }finally{
+    bouton.disabled=false;bouton.textContent='Se connecter';
+  }
+}
+
+async function motDePasseOublie(){
+  if(!sb)return;
+  const email=document.getElementById('login-email').value.trim();
+  const erreur=document.getElementById('login-error');
+  const info=document.getElementById('login-info');
+  erreur.classList.remove('visible');info.classList.remove('visible');
+  if(!email){
+    erreur.textContent='Saisissez votre email d\'abord, puis cliquez sur « Mot de passe oublié ».';
+    erreur.classList.add('visible');
+    return;
+  }
+  try{
+    const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin});
+    if(error)throw error;
+    info.textContent='Email de réinitialisation envoyé à '+email+'.';
+    info.classList.add('visible');
+  }catch(e){
+    erreur.textContent='Envoi impossible : '+(e.message||e);
+    erreur.classList.add('visible');
+  }
+}
+
+async function deconnexion(){
+  if(!sb)return;
+  try{
+    await sb.auth.signOut();
+    // onAuthStateChange purge l'état et réaffiche le login
+  }catch(e){
+    afficherToast('Déconnexion impossible : '+(e.message||e),C.red);
+  }
+}
+
+/* Démarrage : la session pilote tout via onAuthStateChange */
+function initialiserAuth(){
+  if(!sb)return;
+  sb.auth.onAuthStateChange((evenement,session)=>{
+    if(session&&!appDemarree){
+      appDemarree=true;
+      UTILISATEUR=session.user;
+      masquerLogin();
+      demarrerApp();
+    }else if(!session){
+      // Déconnexion : purge complète de l'état local (F1)
+      appDemarree=false;
+      UTILISATEUR=null;
+      LEADS=[];currentL=null;selectedIds.clear();
+      render();
+      afficherLogin();
     }
   });
-  return map;
 }
 
-function typeformToLead(r,idx){
-  const a=r.answers;
-  // Refs du formulaire pUE5Jgae (identifiés depuis l'API)
-  const prenom=(a['7cb1e3c9-8bbb-498f-94f6-fe6f2952db05']||'').trim()||'Inconnu';
-  const nom=(a['e19aadcb-cdcf-4d59-b5c8-e6f64f61ecb1']||'').trim()||'—';
-  const email=a['a24b51ec-27e0-41c8-afe6-26fc9d28968e']||'';
-  const act=a['b0d255f7-aae6-40e1-ad69-c6f508242778']||'Non précisée';
-  const ent=(a['fc05b640-ec8e-4923-80ac-27298f319e3e']||'').startsWith('Oui')?'Oui':'Non';
-  const caRaw=a['48916931-9ca2-4010-9427-b99f4ceab42e']||'';
-  const ca=caRaw.includes('50K')||caRaw.includes('50k')?(caRaw.includes('+')?'+ 50K':'< 50K'):'< 50K';
-  const desc=a['5dc89ab4-1f65-4fed-a1bd-4e57e36856bd']||'';
-  const docUrl=a['946de8c4-6455-426f-a039-4b38f1ebdd36']||'';
-  const doc=!!docUrl&&docUrl.startsWith('http');
-  const tel=a['96c42553-d4d5-44aa-b088-07c5894a5c07']||'';
-  const d=new Date(r.submitted_at);
-  const date=`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
-  const base={id:idx+1,date,prenom,nom,email,act,ent,ca,desc,doc,tel,docUrl,statut:'nouveau'};
-  const ai=autoScore(base);
-  return{...base,...ai,sante:ai.sante||false};
+async function demarrerApp(){
+  await chargerDeals();
+  // La synchro Typeform se lance en arrière-plan au chargement (comme la v1)
+  synchroniserTypeform(true);
 }
 
-let LEADS=[];
-let filterIA="Tous",filterST="Tous",currentL=null,currentSort="score",selectedIds=new Set();
-let dataSource='chargement...';
+/* ═══ F3/F4 — Données : chargement depuis Postgres ════════════════════════ */
 
-async function loadLeads(){
+/* Conversion ligne deals (Postgres) → objet lead (format d'affichage v1) */
+function dealVersLead(d){
+  const dateAffichage=(()=>{
+    const brut=d.date_soumission||d.cree_le;
+    if(!brut)return '—';
+    const dt=new Date(brut);
+    return `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}/${dt.getFullYear()}`;
+  })();
+  return {
+    id:d.id,
+    date:dateAffichage,
+    prenom:d.prenom||'Inconnu',
+    nom:d.nom||'—',
+    email:d.email||'',
+    act:d.activite||'Non précisée',
+    ent:d.entreprise_creee?'Oui':'Non',
+    ca:d.ca_tranche||'< 50K',
+    desc:d.description||'',
+    doc:!!d.document_url,
+    docUrl:d.document_url||'',
+    tel:d.telephone||'',
+    statut:d.statut||'nouveau',
+    score:d.score??0,
+    dec:d.decision||'À ÉTUDIER',
+    motif:d.motif||'',
+    forts:Array.isArray(d.points_forts)?d.points_forts:[],
+    faibles:Array.isArray(d.points_faibles)?d.points_faibles:[],
+    action:d.action_reco||'',
+    sante:!!d.sante,
+    source:d.source||'typeform',
+    // Champs confidentiels (utilisés à partir du Lot 2)
+    societe:d.societe,
+    montant_demande:d.montant_demande,
+    valorisation:d.valorisation,
+    montant_investi:d.montant_investi,
+    notes_dd:d.notes_dd,
+    prochaine_etape:d.prochaine_etape,
+    date_prochaine_etape:d.date_prochaine_etape,
+  };
+}
+
+/* Chargement de tous les dossiers depuis Postgres (remplace le localStorage v1) */
+async function chargerDeals(){
+  if(!sb||!UTILISATEUR)return;
   try{
-    const savedStatuts=JSON.parse(localStorage.getItem('detectus-statuts')||'{}');
-    let allItems=[],before=null,hasMore=true,pages=0;
-    while(hasMore&&pages<5){
-      const url=`${PROXY_URL}/?page_size=200${before?'&before='+before:''}`;
-      const res=await fetch(url);
-      if(!res.ok)throw new Error(`Proxy ${res.status}`);
-      const data=await res.json();
-      const items=data.items||[];
-      allItems=[...allItems,...items];
-      pages++;
-      hasMore=items.length===200;
-      if(hasMore)before=items[items.length-1].token;
-    }
-    LEADS=allItems.map((r,i)=>{
-      const lead=typeformToLead({...r,answers:parseTypeformAnswers(r.answers)},i);
-      if(savedStatuts[lead.email])lead.statut=savedStatuts[lead.email];
-      return lead;
-    });
-    dataSource=`Typeform · ${LEADS.length} leads`;
+    dataSource='chargement…';
+    const {data,error}=await sb.from('deals').select('*').order('date_soumission',{ascending:false});
+    if(error)throw error;
+    LEADS=(data||[]).map(dealVersLead);
+    dataSource=`Supabase · ${LEADS.length} dossiers`;
   }catch(e){
-    console.warn('⚠️ Typeform indisponible, données de démo',e);
-    LEADS=FALLBACK_LEADS;
-    dataSource='Données de démo (API indisponible)';
+    dataSource='Erreur de chargement';
+    afficherToast('Chargement des dossiers impossible : '+(e.message||e),C.red);
   }
   render();
 }
 
-function saveStatuts(){
-  const map={};
-  LEADS.forEach(l=>{if(l.statut!=='nouveau')map[l.email]=l.statut});
-  localStorage.setItem('detectus-statuts',JSON.stringify(map));
+/* ═══ F4 — Synchronisation Typeform (Edge Function typeform-sync) ═════════ */
+
+let syncEnCours=false;
+async function synchroniserTypeform(silencieux){
+  if(!sb||!UTILISATEUR||syncEnCours)return;
+  syncEnCours=true;
+  const bouton=document.getElementById('btn-sync');
+  bouton.disabled=true;bouton.classList.add('sync-en-cours');
+  try{
+    const {data,error}=await sb.functions.invoke('typeform-sync',{body:{}});
+    if(error)throw error;
+    if(data&&data.erreur)throw new Error(data.erreur);
+    if(data&&data.inseres>0){
+      await chargerDeals();
+      afficherToast(`${data.inseres} nouveau${data.inseres>1?'x':''} dossier${data.inseres>1?'s':''} importé${data.inseres>1?'s':''} depuis Typeform`,C.green);
+    }else if(!silencieux){
+      afficherToast('Aucun nouveau dossier — tout est à jour',C.teal);
+    }
+  }catch(e){
+    if(!silencieux)afficherToast('Synchronisation Typeform impossible : '+(e.message||e),C.red);
+  }finally{
+    syncEnCours=false;
+    bouton.disabled=false;bouton.classList.remove('sync-en-cours');
+  }
 }
 
-const FALLBACK_LEADS=[
-  {id:1,date:"05/03/2026",prenom:"Banta",nom:"SIBY",email:"bantasiby5@gmail.com",act:"Service aux particuliers",ent:"Non",ca:"< 50K",desc:"Conciergerie Airbnb clé en main.",doc:true,dec:"À ÉTUDIER",score:48,motif:"Activité borderline",forts:["Pitch deck fourni"],faibles:["Entreprise non créée"],sante:false,action:"Appel de qualification",statut:"nouveau"},
-  {id:2,date:"03/03/2026",prenom:"Adama",nom:"NDIAYE",email:"ndiayeadama17@gmail.com",act:"Santé",ent:"Non",ca:"< 50K",desc:"Société d'ambulance médicale.",doc:true,dec:"À ÉTUDIER",score:62,motif:"Santé médicale — à qualifier",forts:["Secteur santé"],faibles:["Entreprise non créée"],sante:true,action:"Appel de qualification",statut:"nouveau"},
-];
+/* ═══ Changement de statut (écrit dans Postgres) ══════════════════════════ */
+
+async function changerStatut(id,nouveauStatut){
+  const lead=LEADS.find(x=>x.id===id);
+  if(!lead||!sb)return;
+  const ancienStatut=lead.statut;
+  // Mise à jour optimiste de l'UI, annulée si l'écriture échoue
+  lead.statut=nouveauStatut;
+  render();
+  try{
+    const {error}=await sb.from('deals').update({statut:nouveauStatut}).eq('id',id);
+    if(error)throw error;
+    afficherToast(`${lead.prenom} ${lead.nom} → ${ST[nouveauStatut].label}`,ST[nouveauStatut].color);
+  }catch(e){
+    lead.statut=ancienStatut;
+    render();
+    afficherToast('Changement de statut impossible : '+(e.message||e),C.red);
+  }
+}
+
+/* Alias v1 conservé (appelé par les boutons d'action et le drag & drop) */
+function setStatus(id,st){changerStatut(id,st);}
+
+async function multiAction(nouveauStatut){
+  if(!sb)return;
+  const ids=[...selectedIds];
+  if(!ids.length)return;
+  // Mise à jour optimiste
+  const anciens={};
+  ids.forEach(id=>{const l=LEADS.find(x=>x.id===id);if(l){anciens[id]=l.statut;l.statut=nouveauStatut;}});
+  const nb=ids.length;
+  selectedIds.clear();renderMultiBar();render();
+  try{
+    const {error}=await sb.from('deals').update({statut:nouveauStatut}).in('id',ids);
+    if(error)throw error;
+    afficherToast(`${nb} dossiers → ${ST[nouveauStatut].label}`,ST[nouveauStatut].color);
+  }catch(e){
+    ids.forEach(id=>{const l=LEADS.find(x=>x.id===id);if(l&&anciens[id])l.statut=anciens[id];});
+    render();
+    afficherToast('Mise à jour groupée impossible : '+(e.message||e),C.red);
+  }
+}
+
+/* ═══ UI v1 (rendu) — identique à la v1, ids en chaînes (uuid) ════════════ */
 
 function showPanel(id,tab){document.querySelectorAll('.ftab').forEach(t=>t.classList.remove('on'));document.querySelectorAll('.fpanel').forEach(p=>p.classList.remove('on'));tab.classList.add('on');document.getElementById('panel-'+id).classList.add('on');}
-function selectAll(){const q=document.getElementById('sb-search').value.toLowerCase();LEADS.filter(l=>{const mia=filterIA==="Tous"||(filterIA==="Santé"?l.sante:l.dec===filterIA);const mst=filterST==="Tous"||l.statut===filterST;const ms=!q||`${l.prenom} ${l.nom} ${l.act} ${l.desc}`.toLowerCase().includes(q);return mia&&mst&&ms;}).forEach(l=>selectedIds.add(l.id));renderMultiBar();render();}
+function selectAll(){getVisibleLeads().forEach(l=>selectedIds.add(l.id));renderMultiBar();render();}
 function selectByScore(){const min=+document.getElementById('sel-score-min').value||0;const max=+document.getElementById('sel-score-max').value||100;selectedIds.clear();getVisibleLeads().filter(l=>l.score>=min&&l.score<=max).forEach(l=>selectedIds.add(l.id));renderMultiBar();render();}
 function selectByDate(){const from=document.getElementById('sel-date-from').value;const to=document.getElementById('sel-date-to').value;if(!from&&!to)return;const fd=from?new Date(from):new Date('2000-01-01');const td=to?new Date(to):new Date('2099-12-31');selectedIds.clear();getVisibleLeads().filter(l=>{const d=parseDate(l.date);return d>=fd&&d<=td}).forEach(l=>selectedIds.add(l.id));renderMultiBar();render();}
 function getVisibleLeads(){const q=document.getElementById('sb-search').value.toLowerCase();return LEADS.filter(l=>{const mia=filterIA==="Tous"||(filterIA==="Santé"?l.sante:l.dec===filterIA);const mst=filterST==="Tous"||l.statut===filterST;const ms=!q||`${l.prenom} ${l.nom} ${l.act} ${l.desc}`.toLowerCase().includes(q);return mia&&mst&&ms;});}
@@ -435,14 +659,11 @@ function parseDate(d){const[dd,mm,yy]=d.split('/');return new Date(yy,mm-1,dd)}
 function sortLeads(list){if(currentSort==='recent')return list.sort((a,b)=>parseDate(b.date)-parseDate(a.date));if(currentSort==='ancien')return list.sort((a,b)=>parseDate(a.date)-parseDate(b.date));return list.sort((a,b)=>b.score-a.score);}
 function toggleSelect(id,e){e.stopPropagation();if(selectedIds.has(id))selectedIds.delete(id);else selectedIds.add(id);renderMultiBar();render();}
 function renderMultiBar(){const bar=document.getElementById('multi-bar');if(selectedIds.size>0){bar.style.display='flex';document.getElementById('mb-count').textContent=selectedIds.size}else{bar.style.display='none'}}
-function multiAction(st){selectedIds.forEach(id=>{const l=LEADS.find(x=>x.id===id);if(l)l.statut=st});saveStatuts();const n=selectedIds.size;selectedIds.clear();renderMultiBar();render();const t=document.getElementById('toast');t.querySelector('.t-dot').style.background=ST[st].color;t.querySelector('.t-msg').textContent=`${n} dossiers → ${ST[st].label}`;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),2200);}
 function clearSelection(){selectedIds.clear();renderMultiBar();render()}
-function setStatus(id,st){const l=LEADS.find(x=>x.id===id);if(l){l.statut=st;saveStatuts();toast(l.prenom+' '+l.nom,st);render()}}
-function toast(name,st){const t=document.getElementById('toast');t.querySelector('.t-dot').style.background=ST[st].color;t.querySelector('.t-msg').textContent=`${name} → ${ST[st].label}`;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),2200);}
 
 function renderKpis(){
   const counts={};ST_ORDER.forEach(k=>counts[k]=0);
-  LEADS.forEach(l=>counts[l.statut]++);
+  LEADS.forEach(l=>{if(counts[l.statut]!==undefined)counts[l.statut]++});
   document.getElementById('tb-kpis').innerHTML=`
     <div class="kpi"><div class="kpi-val" style="color:#fff">${LEADS.length}</div><div class="kpi-lbl">Dossiers</div></div>
     <div class="kpi-div"></div>
@@ -458,7 +679,7 @@ function render(){
   list=sortLeads([...list]);
   if(!currentL&&list.length)currentL=list[0];
   if(currentL&&!list.find(l=>l.id===currentL.id)&&list.length)currentL=list[0];
-  document.getElementById('sb-list').innerHTML=list.map(l=>{const s=ST[l.statut],sel=selectedIds.has(l.id);return `<div class="li${currentL?.id===l.id?' on':''}" onclick="pick(${l.id})"><div class="li-top"><div class="li-left"><div class="li-check${sel?' checked':''}" onclick="toggleSelect(${l.id},event)">${sel?'✓':''}</div><div class="li-st" style="background:${s.color}${l.statut==='nouveau'?'44':''};border-color:${s.color}" title="${s.label}"></div><div class="li-name">${l.prenom} ${l.nom}</div></div><div class="li-sc" style="background:${dc(l.dec)}22;color:${dc(l.dec)};border:1px solid ${dc(l.dec)}">${l.score}</div></div><div class="li-meta" style="padding-left:42px">${l.act} · ${l.date}</div><div class="li-tags" style="padding-left:42px">${l.statut!=='nouveau'?`<span class="tst" style="background:${s.color}18;color:${s.color};border-color:${s.color}">${s.label}</span>`:''}${l.sante?'<span class="tag ts">Santé</span>':''}${l.doc?'<span class="tag td">Doc</span>':''}</div></div>`;}).join('');
+  document.getElementById('sb-list').innerHTML=list.map(l=>{const s=ST[l.statut],sel=selectedIds.has(l.id);return `<div class="li${currentL?.id===l.id?' on':''}" onclick="pick('${l.id}')"><div class="li-top"><div class="li-left"><div class="li-check${sel?' checked':''}" onclick="toggleSelect('${l.id}',event)">${sel?'✓':''}</div><div class="li-st" style="background:${s.color}${l.statut==='nouveau'?'44':''};border-color:${s.color}" title="${s.label}"></div><div class="li-name">${l.prenom} ${l.nom}</div></div><div class="li-sc" style="background:${dc(l.dec)}22;color:${dc(l.dec)};border:1px solid ${dc(l.dec)}">${l.score}</div></div><div class="li-meta" style="padding-left:42px">${l.act} · ${l.date}</div><div class="li-tags" style="padding-left:42px">${l.statut!=='nouveau'?`<span class="tst" style="background:${s.color}18;color:${s.color};border-color:${s.color}">${s.label}</span>`:''}${l.sante?'<span class="tag ts">Santé</span>':''}${l.doc?'<span class="tag td">Doc</span>':''}</div></div>`;}).join('');
   document.getElementById('sb-foot').textContent=`${list.length} dossier${list.length>1?'s':''} · ${LEADS.length} total · ${dataSource}`;
   renderMultiBar();
   renderDetail();
@@ -468,18 +689,15 @@ function pick(id){currentL=LEADS.find(l=>l.id===id);render()}
 
 function actionButtons(l){
   const s=l.statut,id=l.id;
-  if(s==='nouveau')return`<button class="act-btn orange" onclick="setStatus(${id},'info')">Demander info</button><button class="act-btn purple" onclick="setStatus(${id},'pitch')">Planifier pitch</button><button class="act-btn red" onclick="setStatus(${id},'refuse')">Refuser</button>`;
-  if(s==='info')return`<button class="act-btn purple" onclick="setStatus(${id},'pitch')">Doc reçu — Planifier pitch</button><button class="act-btn orange" onclick="relance(${id})">Relancer</button><button class="act-btn red" onclick="setStatus(${id},'refuse')">Refuser</button>`;
-  if(s==='pitch')return`<button class="act-btn green" onclick="setStatus(${id},'accepte')">Accepter</button><button class="act-btn navy" onclick="setStatus(${id},'attente')">Liste d'attente</button><button class="act-btn red" onclick="setStatus(${id},'refuse')">Refuser</button>`;
-  if(s==='attente')return`<button class="act-btn purple" onclick="setStatus(${id},'pitch')">Replanifier pitch</button><button class="act-btn red" onclick="setStatus(${id},'refuse')">Refuser</button>`;
-  if(s==='accepte'||s==='refuse')return`<button class="act-btn navy" onclick="setStatus(${id},'nouveau')">Réouvrir le dossier</button>`;
+  if(s==='nouveau')return`<button class="act-btn orange" onclick="setStatus('${id}','info')">Demander info</button><button class="act-btn purple" onclick="setStatus('${id}','pitch')">Planifier pitch</button><button class="act-btn red" onclick="setStatus('${id}','refuse')">Refuser</button>`;
+  if(s==='info')return`<button class="act-btn purple" onclick="setStatus('${id}','pitch')">Doc reçu — Planifier pitch</button><button class="act-btn orange" onclick="relance('${id}')">Relancer</button><button class="act-btn red" onclick="setStatus('${id}','refuse')">Refuser</button>`;
+  if(s==='pitch')return`<button class="act-btn green" onclick="setStatus('${id}','accepte')">Accepter</button><button class="act-btn navy" onclick="setStatus('${id}','attente')">Liste d'attente</button><button class="act-btn red" onclick="setStatus('${id}','refuse')">Refuser</button>`;
+  if(s==='attente')return`<button class="act-btn purple" onclick="setStatus('${id}','pitch')">Replanifier pitch</button><button class="act-btn red" onclick="setStatus('${id}','refuse')">Refuser</button>`;
+  if(s==='accepte'||s==='refuse')return`<button class="act-btn navy" onclick="setStatus('${id}','nouveau')">Réouvrir le dossier</button>`;
   return '';
 }
 
-function relance(id){const l=LEADS.find(x=>x.id===id);const t=document.getElementById('toast');t.querySelector('.t-dot').style.background=C.orange;t.querySelector('.t-msg').textContent=`Relance envoyée → ${l.prenom} ${l.nom}`;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),2200);}
-
-const EMAIL_SUBJECTS={info:'Lina Finance — Compléments nécessaires pour votre dossier',pitch:'Lina Finance — Invitation à un appel de présentation',attente:'Lina Finance — Votre dossier est en suivi',accepte:"Lina Finance — Votre dossier est accepté",refuse:'Lina Finance — Suite à votre demande de financement'};
-const EMAIL_LABELS={info:'Demande de documents',pitch:'Invitation pitch',attente:"Mise en liste d'attente",accepte:"Confirmation d'acceptation",refuse:'Notification de refus'};
+function relance(id){const l=LEADS.find(x=>x.id===id);if(!l)return;afficherToast(`Relance envoyée → ${l.prenom} ${l.nom}`,C.orange);}
 
 function mailtoLink(l){const st=l.statut,tpl=EMAIL_ST[st];if(!tpl)return null;const subj=encodeURIComponent(EMAIL_SUBJECTS[st]||'Lina Finance');const body=encodeURIComponent(tpl(l.prenom));return `mailto:${l.email}?subject=${subj}&body=${body}`;}
 
@@ -502,7 +720,7 @@ function renderDetail(){
       <div class="action-bar-status" style="background:${s.color}18;color:${s.color};border:2px solid ${s.color}"><span class="st-icon" style="background:${s.color}"></span>${s.label}</div>
       ${actionButtons(l)}
     </div>
-    <div class="card"><div class="cb"><div class="clbl">Projet</div><div class="ctxt">${l.desc}</div></div></div>
+    <div class="card"><div class="cb"><div class="clbl">Projet</div><div class="ctxt">${l.desc||'<i>Aucune description</i>'}</div></div></div>
     <div class="card motif" style="border-left-color:${col}"><div class="cb"><div class="clbl">Analyse IA</div><div class="cmotif">${l.motif}</div></div></div>
     <div class="pgrid">
       <div class="pcard"><div class="plbl" style="color:${C.green}">Points forts</div>${l.forts.length?l.forts.map(p=>`<div class="prow"><div class="pdot" style="background:${C.green}"></div><div class="ptxt">${p}</div></div>`).join(''):'<div class="pnone">Aucun</div>'}</div>
@@ -514,13 +732,15 @@ function renderDetail(){
       <span class="badge" style="background:var(--light);color:var(--grey);border-color:var(--pale)">Entreprise : ${l.ent}</span>
       <span class="badge" style="background:var(--light);color:var(--grey);border-color:var(--pale)">CA : ${l.ca}</span>
     </div>
-    <div class="abox"><img src="https://cdn-icons-png.flaticon.com/512/1250/1250689.png" width="12" height="12" alt=""><div><div class="albl">Action recommandée par l'IA</div><div class="atxt">${l.action}</div></div></div>
+    <div class="abox"><div><div class="albl">Action recommandée</div><div class="atxt">${l.action}</div></div></div>
     ${emailBlock(l)}
   `;
 }
 
+/* ── Redimensionnement de la sidebar (v1) ────────────────────────────────── */
 (function(){const handle=document.getElementById('resize-handle');const sidebar=document.getElementById('sidebar');let dragging=false,startX,startW;handle.addEventListener('mousedown',e=>{dragging=true;startX=e.clientX;startW=sidebar.offsetWidth;handle.classList.add('dragging');document.body.style.cursor='col-resize';document.body.style.userSelect='none';e.preventDefault();});document.addEventListener('mousemove',e=>{if(!dragging)return;const w=Math.min(Math.max(startW+(e.clientX-startX),200),600);sidebar.style.width=w+'px';});document.addEventListener('mouseup',()=>{if(!dragging)return;dragging=false;handle.classList.remove('dragging');document.body.style.cursor='';document.body.style.userSelect='';});})();
 
+/* ── Vue Board Kanban (v1, ids en chaînes) ───────────────────────────────── */
 let currentView='list';
 function switchView(v,btn){currentView=v;document.querySelectorAll('.view-tab').forEach(b=>b.classList.remove('on'));if(btn)btn.classList.add('on');document.getElementById('view-list').classList.toggle('hidden',v==='board');document.getElementById('view-board').classList.toggle('active',v==='board');if(v==='board')renderBoard();}
 
@@ -529,7 +749,7 @@ function renderBoard(){
   board.innerHTML=ST_ORDER.map(st=>{
     const s=ST[st];
     const items=LEADS.filter(l=>l.statut===st).sort((a,b)=>b.score-a.score);
-    return `<div class="board-col" data-col="${st}" ondragover="boardDragOver(event)" ondragleave="boardDragLeave(event)" ondrop="boardDrop(event,'${st}')"><div class="board-col-head"><div class="board-col-title"><div class="board-col-dot" style="background:${s.color}"></div>${s.label}</div><div class="board-col-count">${items.length}</div></div><div class="board-col-body">${items.map(l=>{const col=dc(l.dec);return `<div class="bc" draggable="true" data-id="${l.id}" ondragstart="boardDragStart(event,${l.id})" ondragend="boardDragEnd(event)" onclick="boardClick(${l.id})"><div class="bc-top"><div class="bc-name">${l.prenom} ${l.nom}</div><div class="bc-score" style="background:${col}22;color:${col};border:1px solid ${col}">${l.score}</div></div><div class="bc-act">${l.act} · ${l.date}</div><div class="bc-tags">${l.sante?'<span class="tag ts">Santé</span>':''}${l.doc?'<span class="tag td">Doc</span>':''}</div><div class="bc-ia" style="background:${col}15;color:${col}">${l.dec}</div></div>`;}).join('')}</div></div>`;
+    return `<div class="board-col" data-col="${st}" ondragover="boardDragOver(event)" ondragleave="boardDragLeave(event)" ondrop="boardDrop(event,'${st}')"><div class="board-col-head"><div class="board-col-title"><div class="board-col-dot" style="background:${s.color}"></div>${s.label}</div><div class="board-col-count">${items.length}</div></div><div class="board-col-body">${items.map(l=>{const col=dc(l.dec);return `<div class="bc" draggable="true" data-id="${l.id}" ondragstart="boardDragStart(event,'${l.id}')" ondragend="boardDragEnd(event)" onclick="boardClick('${l.id}')"><div class="bc-top"><div class="bc-name">${l.prenom} ${l.nom}</div><div class="bc-score" style="background:${col}22;color:${col};border:1px solid ${col}">${l.score}</div></div><div class="bc-act">${l.act} · ${l.date}</div><div class="bc-tags">${l.sante?'<span class="tag ts">Santé</span>':''}${l.doc?'<span class="tag td">Doc</span>':''}</div><div class="bc-ia" style="background:${col}15;color:${col}">${l.dec}</div></div>`;}).join('')}</div></div>`;
   }).join('');
 }
 
@@ -541,9 +761,12 @@ function boardDragLeave(e){e.currentTarget.classList.remove('drag-over')}
 function boardDrop(e,st){e.preventDefault();e.currentTarget.classList.remove('drag-over');if(dragId!==null){setStatus(dragId,st);renderBoard()}}
 function boardClick(id){currentL=LEADS.find(l=>l.id===id);switchView('list',document.querySelectorAll('.view-tab')[0]);render();}
 
-document.addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;const vis=LEADS.filter(l=>{const mia=filterIA==="Tous"||(filterIA==="Santé"?l.sante:l.dec===filterIA);const mst=filterST==="Tous"||l.statut===filterST;return mia&&mst;});if(!vis.length)return;const idx=currentL?vis.findIndex(l=>l.id===currentL.id):-1;if(e.key==='ArrowDown'||e.key==='j'){e.preventDefault();pick(vis[Math.min(idx+1,vis.length-1)].id)}if(e.key==='ArrowUp'||e.key==='k'){e.preventDefault();pick(vis[Math.max(idx-1,0)].id)}});
+/* ── Navigation clavier j/k (v1) ─────────────────────────────────────────── */
+document.addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;const vis=getVisibleLeads();if(!vis.length)return;const idx=currentL?vis.findIndex(l=>l.id===currentL.id):-1;if(e.key==='ArrowDown'||e.key==='j'){e.preventDefault();pick(vis[Math.min(idx+1,vis.length-1)].id)}if(e.key==='ArrowUp'||e.key==='k'){e.preventDefault();pick(vis[Math.max(idx-1,0)].id)}});
 
-loadLeads();
+/* ── Démarrage ───────────────────────────────────────────────────────────── */
+initialiserAuth();
+render();
 </script>
 </body>
 </html>
