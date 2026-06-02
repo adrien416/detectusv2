@@ -178,7 +178,7 @@ curl -X POST "https://api.fathom.ai/external/v1/webhooks" \
   -H "Content-Type: application/json" \
   -d '{
     "destination_url": "https://<PROJECT>.supabase.co/functions/v1/fathom-webhook",
-    "recordings_scope": "my_recordings",
+    "triggered_for": ["my_recordings"],
     "include_transcript": true,
     "include_summary": true,
     "include_action_items": true

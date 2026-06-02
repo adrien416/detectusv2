@@ -23,6 +23,15 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { reponseJson } from "../_shared/cors.ts";
 import { fetchAvecRetry } from "../_shared/retry.ts";
 
+function comparaisonConstante(a: string, b: string): boolean {
+  const aa = new TextEncoder().encode(a);
+  const bb = new TextEncoder().encode(b);
+  if (aa.length !== bb.length) return false;
+  let diff = 0;
+  for (let i = 0; i < aa.length; i++) diff |= aa[i] ^ bb[i];
+  return diff === 0;
+}
+
 // ── Constantes métier ─────────────────────────────────────────────────────────
 
 // Domaines internes Lina Capital : jamais des prospects (CLAUDE.md §7)
@@ -119,7 +128,7 @@ async function verifierSignatureSvix(
     .split(" ")
     .map((s) => (s.includes(",") ? s.split(",")[1] : s));
 
-  return signaturesRecues.includes(signatureAttendue);
+  return signaturesRecues.some((sig) => comparaisonConstante(sig, signatureAttendue));
 }
 
 // ── Parsing défensif du payload Fathom ────────────────────────────────────────

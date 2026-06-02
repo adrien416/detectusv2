@@ -256,12 +256,25 @@ create policy "deals_select_authentifie"
 create policy "deals_insert_authentifie"
   on public.deals for insert
   to authenticated
-  with check (true);
+  with check (cree_par = auth.uid());
 
 create policy "deals_update_authentifie"
   on public.deals for update
   to authenticated
   using (true);
+
+-- Les membres modifient les champs CRM, pas la donnee Typeform ni le scoring.
+revoke update on public.deals from anon, authenticated;
+grant update (
+  statut,
+  societe,
+  montant_demande,
+  valorisation,
+  montant_investi,
+  notes_dd,
+  prochaine_etape,
+  date_prochaine_etape
+) on public.deals to authenticated;
 
 create policy "deals_delete_admin"
   on public.deals for delete
@@ -278,7 +291,7 @@ create policy "events_select_authentifie"
 create policy "events_insert_authentifie"
   on public.deal_events for insert
   to authenticated
-  with check (true);
+  with check (auteur_id = auth.uid());
 
 -- Pas de policy UPDATE/DELETE → opérations impossibles pour authenticated.
 
@@ -316,6 +329,11 @@ create policy "meetings_update_authentifie"
   on public.meetings for update
   to authenticated
   using (true);
+
+-- Les membres peuvent seulement rattacher/ignorer une reunion.
+-- Le resume, les scores, le payload et les invites restent ecrits par les Edge Functions.
+revoke update on public.meetings from anon, authenticated;
+grant update (deal_id, statut_match) on public.meetings to authenticated;
 
 -- =============================================================================
 -- Realtime

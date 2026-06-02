@@ -9,8 +9,8 @@
 # =============================================================================
 
 [build]
-  publish = "."
-  command = "node -e \"require('fs').writeFileSync('config.js','const CONFIG = '+JSON.stringify({SUPABASE_URL:process.env.SUPABASE_URL,SUPABASE_ANON_KEY:process.env.SUPABASE_ANON_KEY})+';')\""
+  publish = "dist"
+  command = "node -e \"const fs=require('fs');fs.rmSync('dist',{recursive:true,force:true});fs.mkdirSync('dist',{recursive:true});fs.copyFileSync('index.html','dist/index.html');fs.writeFileSync('dist/config.js','const CONFIG = '+JSON.stringify({SUPABASE_URL:process.env.SUPABASE_URL,SUPABASE_ANON_KEY:process.env.SUPABASE_ANON_KEY})+';')\""
 
 # Ne jamais déployer les sources backend ni la documentation interne
 [build.processing]

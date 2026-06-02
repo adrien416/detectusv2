@@ -17,6 +17,15 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { reponseJson } from "../_shared/cors.ts";
 import { reponseVersDeal } from "../_shared/typeform.ts";
 
+function comparaisonConstante(a: string, b: string): boolean {
+  const aa = new TextEncoder().encode(a);
+  const bb = new TextEncoder().encode(b);
+  if (aa.length !== bb.length) return false;
+  let diff = 0;
+  for (let i = 0; i < aa.length; i++) diff |= aa[i] ^ bb[i];
+  return diff === 0;
+}
+
 // ── Vérification de la signature Typeform ────────────────────────────────────
 // Doc : https://www.typeform.com/developers/webhooks/secure-your-webhooks/
 
@@ -38,7 +47,7 @@ async function verifierSignatureTypeform(
     new TextEncoder().encode(corps),
   );
   const signatureAttendue = "sha256=" + btoa(String.fromCharCode(...new Uint8Array(hash)));
-  return signatureRecue === signatureAttendue;
+  return comparaisonConstante(signatureRecue, signatureAttendue);
 }
 
 // ── Traitement ────────────────────────────────────────────────────────────────
