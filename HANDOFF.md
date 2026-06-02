@@ -80,9 +80,9 @@ La v2 reprend les statuts et le scoring **du code**, et règle le problème de p
 | D9 | **Statuts localStorage v1 non migrés** (repart de zéro) **avec capture préalable** | ⬆ Complétée par la revue Codex : faire une capture manuelle des statuts v1 d'Adrien/Djamel avant la bascule (filet de sécurité). |
 | D10 | **Région Supabase EU** | RGPD — données financières et personnelles. |
 | D11 | ✅ **Analyse des réunions par l'API Anthropic — CONFIRMÉE par Adrien (02/06/2026)** | Le résumé + transcript de chaque réunion prospect part vers l'API Anthropic pour produire les 3 scores — même traitement que `Lina_fathom_CRM` (déjà en production). La revue Codex demandait une acceptation explicite (RGPD : la chaîne ne reste pas 100 % européenne) : c'est fait. |
-| D14 | **Sanctuarisation des réponses Typeform** (ajoutée le 02/06/2026 suite à la question d'Adrien) | La donnée des porteurs de projet est l'actif principal : import **exhaustif** (suppression de la limite v1 de 1 000 réponses), réponse brute conservée dans `deals.payload_brut`, historique propriété de Lina Capital dans son Postgres (Typeform n'est plus un point de défaillance unique). |
 | D12 | **Périmètre v2 réduit** : page admin, invitations in-app et backfill Fathom → v2.1 | Revue Codex : mieux vaut une v2 courte et stable qu'une grosse version où chaque intégration peut bloquer les autres. |
 | D13 | **Périmètre Fathom = `my_recordings` uniquement** | Revue Codex Q2 : les réunions partagées ajoutent du bruit ; à élargir en v2.1 après test. |
+| D14 | **Sanctuarisation des réponses Typeform** (ajoutée le 02/06/2026 suite à la question d'Adrien) | La donnée des porteurs de projet est l'actif principal : import **exhaustif** (suppression de la limite v1 de 1 000 réponses), réponse brute conservée dans `deals.payload_brut`, historique propriété de Lina Capital dans son Postgres (Typeform n'est plus un point de défaillance unique). |
 
 ---
 
@@ -109,16 +109,47 @@ Détails complets : **SPECS.md** (schéma SQL, RLS, pipeline Fathom 6 étapes, c
 
 ## 5. Checklist des pré-requis humains avant la session de code
 
-Ces éléments doivent être prêts **avant** de démarrer l'implémentation :
+Ces éléments doivent être prêts **avant** de démarrer l'implémentation. Répartition par personne :
+
+### 5a. À fournir par Djamel (message WhatsApp envoyé le 02/06/2026, voir §5c)
+
+- [ ] **Token Typeform** : Personal Access Token du compte qui possède le form `pUE5Jgae` (admin.typeform.com → Settings → Personal tokens) — ou ajout d'Adrien au workspace Typeform
+- [ ] **Accès admin au form Typeform** : nécessaire au Lot 4 pour configurer le webhook temps réel (Connect → Webhooks) — sinon on garde uniquement le polling
+- [ ] **Clé API Fathom** : celle du compte qui enregistre les calls prospects (Settings → API Access — le compte utilisé par `Lina_fathom_CRM`) + vérifier que le plan Fathom inclut l'API publique et les webhooks
+- [ ] **Clé API Anthropic** : celle de `Lina_fathom_CRM`, ou Adrien en crée une dédiée (console.anthropic.com)
+- [ ] **Export des statuts v1 de Djamel** (D9) : dans la console du navigateur sur Detectus v1 → `copy(localStorage.getItem('detectus-statuts'))` → coller le JSON + capture d'écran du board
+- [ ] **Après la mise en service de la v2** : couper le Worker Cloudflare `typeform-proxy.djamel-753.workers.dev` et la page GitHub Pages v1 (`djamel-lab/detectus`) — ils exposent la donnée des porteurs sans authentification, c'est la faille que la v2 corrige
+
+> ⚠️ **Transmission des clés** : jamais en clair sur WhatsApp ni dans le repo. Gestionnaire de mots de passe, ou saisie directe dans les secrets Supabase (`supabase secrets set` / Dashboard) à deux.
+
+### 5b. Côté Adrien / équipe
 
 - [x] **Décision D11 tranchée** (envoi des réunions à l'API Anthropic) → **OUI**, confirmé par Adrien le 02/06/2026
-- [ ] **Projet Supabase créé** (région EU) — et décider qui en est propriétaire (compte/orga, facturation)
-- [ ] **Accès admin au formulaire Typeform `pUE5Jgae`** (pour configurer le webhook) — sinon on garde uniquement le polling
-- [ ] **Clé API Fathom** (Settings → API Access du compte qui enregistre les calls) + vérifier que le plan Fathom inclut l'API publique et les webhooks
-- [ ] **Clé API Anthropic** (pour la classification/extraction Haiku)
+- [ ] **Projet Supabase créé** (région EU) — décider qui en est propriétaire (recommandation : compte/orga Lina Capital, pas un compte perso, pour la facturation et la continuité)
 - [ ] **Compte Netlify** relié au repo GitHub `adrien416/detectusv2`
-- [ ] **Capture des statuts v1** (revue Codex Q3) : export ou capture d'écran du board d'Adrien et/ou Djamel avant la bascule (les statuts localStorage ne seront pas migrés)
-- [ ] Les 3 admins disponibles pour définir leur mot de passe (email d'invitation Dashboard)
+- [ ] **Inviter Djamel et Mahefa** comme collaborateurs du repo GitHub `adrien416/detectusv2`
+- [ ] **Capture des statuts v1 d'Adrien** (s'il a aussi trié des dossiers dans son navigateur — même commande console que Djamel)
+- [ ] Les 3 admins disponibles pour définir leur mot de passe (email d'invitation Dashboard Supabase)
+
+### 5c. Message type envoyé à Djamel (WhatsApp)
+
+> Salut Djamel 👋
+>
+> On lance la v2 de Detectus : login obligatoire, base de données partagée (fini le localStorage), et les réunions Fathom qui se rattachent toutes seules aux dossiers. Le plan est validé, j'ai besoin de 4 choses de ton côté :
+>
+> **1. Typeform (le form pUE5Jgae)** → Ton Personal Access Token (admin.typeform.com → Settings → Personal tokens), ou ajoute-moi au workspace et je le génère moi-même. Plus tard il faudra aussi configurer le webhook sur le form (je te redirai quand).
+>
+> **2. Fathom** → La clé API du compte qui enregistre les calls prospects (Settings → API Access) — celle qu'utilise Lina_fathom_CRM. Vérifie juste que le plan inclut bien l'API publique + les webhooks.
+>
+> **3. Anthropic** → La clé API de Lina_fathom_CRM, ou dis-moi et j'en crée une nouvelle.
+>
+> **4. Tes statuts actuels dans Detectus** (pour ne rien perdre à la bascule) → Ouvre Detectus, console du navigateur (F12), tape : `copy(localStorage.getItem('detectus-statuts'))` → colle le résultat ici + envoie une capture d'écran de ton board.
+>
+> ⚠️ Pour les clés (1, 2, 3) : ne les envoie pas en clair ici — passe par un gestionnaire de mots de passe, ou on se cale 10 min et on les met ensemble directement dans Supabase.
+>
+> Dernière chose : une fois la v2 en ligne, on coupera ton Worker Cloudflare (typeform-proxy) et la page GitHub Pages actuelle — c'est la faille « URL ouverte » qu'on corrige.
+>
+> Merci 🙏
 
 ---
 
@@ -197,6 +228,8 @@ La v2 est terminée quand **tous les critères d'acceptation de SPECS.md** sont 
 
 ## 9. Prochaine étape
 
-Le plan est complet : revue Codex appliquée, toutes les décisions tranchées (D1 → D13).
+Le plan est complet : revue Codex appliquée, toutes les décisions tranchées (D1 → D14).
 
-La session d'implémentation peut démarrer sur cette même branche, en suivant les 4 lots du §7 (un commit par lot minimum). Les pré-requis humains du §5 (projet Supabase, clés API, compte Netlify) doivent être prêts au moment d'attaquer le lot concerné — le Lot 1 ne nécessite que le projet Supabase et le token Typeform.
+**En cours : collecte des pré-requis** — message envoyé à Djamel (§5c) pour le token Typeform, les clés Fathom/Anthropic et l'export de ses statuts v1. Côté Adrien : création du projet Supabase (région EU) et du compte Netlify.
+
+La session d'implémentation démarre dès que les éléments du Lot 1 sont là — il ne nécessite que **le projet Supabase et le token Typeform**. Les 4 lots du §7 s'enchaînent ensuite (un commit par lot minimum) ; les clés Fathom/Anthropic ne sont nécessaires qu'à partir du Lot 3.
