@@ -42,7 +42,7 @@
 3. **Fathom courant** : fathom-webhook + analyse Claude + matching strict + vue « À rattacher »
 4. **Finitions** : typeform-webhook temps réel + tests de sécurité + déploiement Netlify
 
-**Statut :** ✅ Plan validé (revue Codex appliquée + décisions tranchées) — prêt pour l'implémentation
+**Statut :** 🚀 Code implémenté (4 lots committés) — en attente de revue Codex de la PR, puis mise en production (guide : README.md)
 
 ---
 
