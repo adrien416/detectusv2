@@ -1,0 +1,18 @@
+# Configuration Supabase CLI — Detectus v2
+# Seules les sections nécessaires au déploiement des Edge Functions sont définies.
+
+project_id = "detectusv2"
+
+# ── Edge Functions ────────────────────────────────────────────────────────────
+
+# typeform-sync : appelée depuis le navigateur avec le JWT de session → vérifié.
+[functions.typeform-sync]
+verify_jwt = true
+
+# typeform-webhook : appelée par Typeform (pas de JWT) → sécurité par signature HMAC.
+[functions.typeform-webhook]
+verify_jwt = false
+
+# fathom-webhook : appelée par Fathom (pas de JWT) → sécurité par signature svix.
+[functions.fathom-webhook]
+verify_jwt = false

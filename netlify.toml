@@ -1,0 +1,26 @@
+# =============================================================================
+# Detectus v2 — Configuration Netlify
+#
+# Front statique : pas de bundler, pas de framework. La seule étape de build
+# est la génération de config.js à partir des variables d'environnement Netlify
+# (Site configuration → Environment variables) :
+#   SUPABASE_URL      = https://xxxx.supabase.co
+#   SUPABASE_ANON_KEY = eyJ... (clé publique, protégée par RLS)
+# =============================================================================
+
+[build]
+  publish = "dist"
+  command = "node -e \"const fs=require('fs');fs.rmSync('dist',{recursive:true,force:true});fs.mkdirSync('dist',{recursive:true});fs.copyFileSync('index.html','dist/index.html');fs.writeFileSync('dist/config.js','const CONFIG = '+JSON.stringify({SUPABASE_URL:process.env.SUPABASE_URL,SUPABASE_ANON_KEY:process.env.SUPABASE_ANON_KEY})+';')\""
+
+# Ne jamais déployer les sources backend ni la documentation interne
+[build.processing]
+  skip_processing = true
+
+# ── En-têtes de sécurité ──────────────────────────────────────────────────────
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"

@@ -14,7 +14,9 @@
 | Revue Codex (`CODEX_REVIEW.md`) | ✅ commit `b852da6` — **« validé sous réserves »** |
 | Révision du plan selon la revue | ✅ commit `2a3aea5` |
 | Décision D11 (analyse Anthropic) tranchée par Adrien | ✅ **OUI** — 02/06/2026 (résumé + transcript, comme Lina_fathom_CRM) |
-| Implémentation (4 lots) | ⏳ prête à démarrer |
+| Implémentation (4 lots) | ✅ Lot 1 `c42c464` · Lot 2 `5a65d9b` · Lot 3 `d95b405` · Lot 4 (ce commit) |
+| Revue Codex de la PR | ⏳ en attente |
+| Mise en production (guide README.md) | ⏳ après revue |
 
 ### Corrections Codex appliquées
 
