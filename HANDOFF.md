@@ -120,8 +120,6 @@ Ces éléments doivent être prêts **avant** de démarrer l'implémentation. R�
 - [ ] **Export des statuts v1 de Djamel** (D9) : dans la console du navigateur sur Detectus v1 → `copy(localStorage.getItem('detectus-statuts'))` → coller le JSON + capture d'écran du board
 - [ ] **Après la mise en service de la v2** : couper le Worker Cloudflare `typeform-proxy.djamel-753.workers.dev` et la page GitHub Pages v1 (`djamel-lab/detectus`) — ils exposent la donnée des porteurs sans authentification, c'est la faille que la v2 corrige
 
-> ⚠️ **Transmission des clés** : jamais en clair sur WhatsApp ni dans le repo. Gestionnaire de mots de passe, ou saisie directe dans les secrets Supabase (`supabase secrets set` / Dashboard) à deux.
-
 ### 5b. Côté Adrien / équipe
 
 - [x] **Décision D11 tranchée** (envoi des réunions à l'API Anthropic) → **OUI**, confirmé par Adrien le 02/06/2026
@@ -143,13 +141,13 @@ Ces éléments doivent être prêts **avant** de démarrer l'implémentation. R�
 >
 > **3. Anthropic** → La clé API de Lina_fathom_CRM, ou dis-moi et j'en crée une nouvelle.
 >
-> **4. Tes statuts actuels dans Detectus** (pour ne rien perdre à la bascule) → Ouvre Detectus, console du navigateur (F12), tape : `copy(localStorage.getItem('detectus-statuts'))` → colle le résultat ici + envoie une capture d'écran de ton board.
->
-> ⚠️ Pour les clés (1, 2, 3) : ne les envoie pas en clair ici — passe par un gestionnaire de mots de passe, ou on se cale 10 min et on les met ensemble directement dans Supabase.
+> **4. Tes statuts actuels dans Detectus** (pour ne rien perdre à la bascule) → Ouvre Detectus, console du navigateur (F12), tape : `copy(localStorage.getItem('detectus-statuts'))` → colle-moi le résultat ici + une capture d'écran de ton board.
 >
 > Dernière chose : une fois la v2 en ligne, on coupera ton Worker Cloudflare (typeform-proxy) et la page GitHub Pages actuelle — c'est la faille « URL ouverte » qu'on corrige.
 >
 > Merci 🙏
+
+Une fois reçues, les clés sont mises dans les **secrets des Edge Functions Supabase** (`supabase secrets set`) — jamais dans le code ni dans le repo.
 
 ---
 
