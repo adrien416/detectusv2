@@ -45,11 +45,11 @@ Front statique (Netlify)          Supabase (région EU)              APIs extern
 
 ## État du projet
 
-📋 **Plan révisé après revue Codex** — le code v2 n'est pas encore écrit. Ce repo contient :
+✅ **Plan validé** (revue Codex appliquée, décisions tranchées) — le code v2 n'est pas encore écrit. Ce repo contient :
 1. Le code v1 de Djamel (baseline, `index.html`)
 2. Les documents de spécification v2, mis à jour selon la revue Codex (ci-dessus)
 
-L'implémentation démarrera après validation finale du plan par Adrien (décision D11, voir HANDOFF.md §9).
+Prochaine étape : la session d'implémentation (4 lots, voir HANDOFF.md §7).
 
 ## Setup (à réaliser lors de l'implémentation)
 

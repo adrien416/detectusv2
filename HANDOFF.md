@@ -12,9 +12,9 @@
 |---|---|
 | Plan initial (SPECS, CLAUDE, VERSIONS, HANDOFF) | ✅ commit `cb70736` |
 | Revue Codex (`CODEX_REVIEW.md`) | ✅ commit `b852da6` — **« validé sous réserves »** |
-| Révision du plan selon la revue | ✅ ce commit |
-| Validation finale par Adrien (dont décision D11 ci-dessous) | ⏳ en attente |
-| Implémentation (4 lots) | ⏳ après validation |
+| Révision du plan selon la revue | ✅ commit `2a3aea5` |
+| Décision D11 (analyse Anthropic) tranchée par Adrien | ✅ **OUI** — 02/06/2026 (résumé + transcript, comme Lina_fathom_CRM) |
+| Implémentation (4 lots) | ⏳ prête à démarrer |
 
 ### Corrections Codex appliquées
 
@@ -24,7 +24,7 @@
 | 2 | Jamais de rattachement automatique ambigu | Nouvelle règle de matching : 1 match = auto · 0 ou plusieurs = « À rattacher » (SPECS F6, statut `ambigu` + `matchs_candidats`) |
 | 3 | Transcript : analyser sans stocker | Transcript reçu par webhook, utilisé en mémoire pour Claude, expurgé de `payload_brut` avant stockage (SPECS F6 + non-négociable #7) |
 | 4 | Visibilité des champs confidentiels | Sans objet en v2 : les seuls comptes sont les 3 admins. Le masquage par rôle est **obligatoire en v2.1** avant toute invitation de non-admin |
-| 5 | RGPD / envoi des données à Anthropic | Documenté comme **décision D11 — à confirmer explicitement par Adrien** (voir §6) |
+| 5 | RGPD / envoi des données à Anthropic | Décision **D11 tranchée par Adrien : OUI** (voir §6) |
 | 6 | Corriger `config.example.js` | ✅ Fait : ne contient plus que `SUPABASE_URL` + `SUPABASE_ANON_KEY` (plus aucun exemple de secret) |
 | 7 | Modèle Claude versionné | `claude-haiku-4-5-20251001` épinglé partout (SPECS, CLAUDE.md) |
 
@@ -79,7 +79,7 @@ La v2 reprend les statuts et le scoring **du code**, et règle le problème de p
 | D8 | **Hébergement front : Netlify** | Repo privé compatible. Déploiement auto sur push. |
 | D9 | **Statuts localStorage v1 non migrés** (repart de zéro) **avec capture préalable** | ⬆ Complétée par la revue Codex : faire une capture manuelle des statuts v1 d'Adrien/Djamel avant la bascule (filet de sécurité). |
 | D10 | **Région Supabase EU** | RGPD — données financières et personnelles. |
-| D11 | **🔶 Analyse des réunions par l'API Anthropic — À CONFIRMER PAR ADRIEN** | Le résumé + transcript de chaque réunion prospect part vers l'API Anthropic pour produire les 3 scores. C'est le même traitement que `Lina_fathom_CRM` (déjà en production), mais la revue Codex demande une acceptation explicite (RGPD : la chaîne ne reste pas 100 % européenne). Alternative si refus : pas d'extraction Haiku, rattachement par email seul. |
+| D11 | ✅ **Analyse des réunions par l'API Anthropic — CONFIRMÉE par Adrien (02/06/2026)** | Le résumé + transcript de chaque réunion prospect part vers l'API Anthropic pour produire les 3 scores — même traitement que `Lina_fathom_CRM` (déjà en production). La revue Codex demandait une acceptation explicite (RGPD : la chaîne ne reste pas 100 % européenne) : c'est fait. |
 | D12 | **Périmètre v2 réduit** : page admin, invitations in-app et backfill Fathom → v2.1 | Revue Codex : mieux vaut une v2 courte et stable qu'une grosse version où chaque intégration peut bloquer les autres. |
 | D13 | **Périmètre Fathom = `my_recordings` uniquement** | Revue Codex Q2 : les réunions partagées ajoutent du bruit ; à élargir en v2.1 après test. |
 
@@ -110,11 +110,11 @@ Détails complets : **SPECS.md** (schéma SQL, RLS, pipeline Fathom 6 étapes, c
 
 Ces éléments doivent être prêts **avant** de démarrer l'implémentation :
 
-- [ ] **Décision D11 tranchée** (envoi des réunions à l'API Anthropic : oui / non)
+- [x] **Décision D11 tranchée** (envoi des réunions à l'API Anthropic) → **OUI**, confirmé par Adrien le 02/06/2026
 - [ ] **Projet Supabase créé** (région EU) — et décider qui en est propriétaire (compte/orga, facturation)
 - [ ] **Accès admin au formulaire Typeform `pUE5Jgae`** (pour configurer le webhook) — sinon on garde uniquement le polling
 - [ ] **Clé API Fathom** (Settings → API Access du compte qui enregistre les calls) + vérifier que le plan Fathom inclut l'API publique et les webhooks
-- [ ] **Clé API Anthropic** (pour la classification/extraction Haiku) — si D11 = oui
+- [ ] **Clé API Anthropic** (pour la classification/extraction Haiku)
 - [ ] **Compte Netlify** relié au repo GitHub `adrien416/detectusv2`
 - [ ] **Capture des statuts v1** (revue Codex Q3) : export ou capture d'écran du board d'Adrien et/ou Djamel avant la bascule (les statuts localStorage ne seront pas migrés)
 - [ ] Les 3 admins disponibles pour définir leur mot de passe (email d'invitation Dashboard)
@@ -135,7 +135,7 @@ Ces éléments doivent être prêts **avant** de démarrer l'implémentation :
 | Q8 | Quel modèle Haiku ? | **`claude-haiku-4-5-20251001`** (version épinglée) | ✅ Appliqué partout (SPECS, CLAUDE.md) |
 | Q9 | Réduire le scope v2 ? | **Oui** — reporter page admin + backfill Fathom | ✅ D12 — v2.1 créée dans VERSIONS.md |
 
-**Seule décision encore ouverte : D11** (envoi des données de réunion à Anthropic). Tout le reste est tranché.
+**Toutes les décisions sont tranchées** — D11 (Anthropic) confirmée par Adrien le 02/06/2026.
 
 ---
 
@@ -196,6 +196,6 @@ La v2 est terminée quand **tous les critères d'acceptation de SPECS.md** sont 
 
 ## 9. Prochaine étape
 
-1. **Adrien tranche D11** (analyse Anthropic : oui / non) — seule décision encore ouverte
-2. Adrien valide le plan révisé (ou demande des ajustements)
-3. La session d'implémentation démarre sur cette même branche, en suivant les 4 lots du §7 (un commit par lot minimum)
+Le plan est complet : revue Codex appliquée, toutes les décisions tranchées (D1 → D13).
+
+La session d'implémentation peut démarrer sur cette même branche, en suivant les 4 lots du §7 (un commit par lot minimum). Les pré-requis humains du §5 (projet Supabase, clés API, compte Netlify) doivent être prêts au moment d'attaquer le lot concerné — le Lot 1 ne nécessite que le projet Supabase et le token Typeform.

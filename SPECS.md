@@ -378,7 +378,7 @@ Bouton « + Nouveau dossier » dans la sidebar : formulaire modal (prénom, nom,
 - L'**anon key** Supabase est faite pour être publique (la sécurité vient du RLS + JWT) — contrairement aux clés v1 qui étaient des secrets exposés
 - **Région Supabase : EU** (Francfort ou Paris) — données financières confidentielles, RGPD
 - **Transcript Fathom** : reçu dans le payload webhook (`include_transcript: true`), utilisé **en mémoire uniquement** pour l'analyse Claude, puis supprimé — jamais stocké (ni en base, ni dans `payload_brut`)
-- **RGPD / Anthropic** : le résumé et le transcript des réunions sont envoyés à l'API Anthropic pour produire les 3 scores. Ce traitement est identique à celui de `Lina_fathom_CRM` (déjà en production) — il doit rester explicitement accepté par l'équipe. S'il ne l'est plus : désactiver l'étape d'extraction Haiku (le rattachement par email continue de fonctionner, sans scores).
+- **RGPD / Anthropic** : le résumé et le transcript des réunions sont envoyés à l'API Anthropic pour produire les 3 scores. Ce traitement est identique à celui de `Lina_fathom_CRM` (déjà en production) — **accepté explicitement par Adrien le 02/06/2026 (décision D11, voir HANDOFF.md)**.
 - Idempotence partout : upsert sur `typeform_id` et `fathom_recording_id`, le rejeu d'un webhook ne crée pas de doublon
 - Les prompts Claude Haiku (classification + extraction 3 scores) sont repris **à l'identique** de `Lina_fathom_CRM/classifier.py` — logique métier déjà validée par l'équipe
 - **Modèle épinglé : `claude-haiku-4-5-20251001`** (revue Codex : jamais d'alias non versionné, pour qu'un changement silencieux de modèle ne modifie pas les scores)
