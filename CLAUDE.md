@@ -77,12 +77,12 @@ const CONFIG = {
 
 ### Côté serveur (secrets Supabase — `supabase secrets set`)
 ```
-TYPEFORM_TOKEN            ← Personal Access Token Typeform
+TYPEFORM_TOKEN            ← Personal Access Token Typeform, tous scopes (fourni par Djamel)
 TYPEFORM_FORM_ID          ← pUE5Jgae
-TYPEFORM_WEBHOOK_SECRET   ← secret du webhook Typeform
-FATHOM_API_KEY            ← clé API Fathom (enregistrement du webhook ; backfill en v2.1)
+TYPEFORM_WEBHOOK_SECRET   ← secret du webhook Typeform (créé via API avec le token)
+FATHOM_API_KEY            ← clé API Fathom du compte qui enregistre les calls (Adrien ou Mahefa)
 FATHOM_WEBHOOK_SECRET     ← secret de signature du webhook Fathom (whsec_...)
-ANTHROPIC_API_KEY         ← clé API Anthropic (classification/extraction Haiku)
+ANTHROPIC_API_KEY         ← clé API Anthropic d'Adrien (celle de Lina_fathom_CRM)
 ```
 (`SUPABASE_URL` et `SUPABASE_SERVICE_ROLE_KEY` sont injectés automatiquement dans les Edge Functions.)
 

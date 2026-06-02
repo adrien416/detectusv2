@@ -261,7 +261,7 @@ Remplace le proxy Cloudflare Worker v1 (`typeform-proxy.djamel-753.workers.dev`)
 
 C'était la v6 du backlog de Djamel ; la v2 la réalise.
 
-- **Déclencheur** : webhook Typeform configuré sur le form `pUE5Jgae` (Connect → Webhooks)
+- **Déclencheur** : webhook Typeform sur le form `pUE5Jgae`, **créé via l'API Typeform** (`PUT /forms/{form_id}/webhooks/{tag}` avec le token tous scopes) — aucune action manuelle dans le Dashboard Typeform n'est nécessaire
 - **Sécurité** : vérification de la signature `Typeform-Signature` (HMAC-SHA256, encodage base64, préfixe `sha256=`)
 - **Logique** : parse `form_response` → autoScore → upsert deal (dédup `typeform_id` = `form_response.token`, `payload_brut` = `form_response` complet) → event `import` → Realtime propage aux membres connectés
 - **Secrets** : `TYPEFORM_WEBHOOK_SECRET`
