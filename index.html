@@ -258,6 +258,55 @@ body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direc
 .modal-btn-ok:hover{opacity:.88}
 .modal-btn-annuler{padding:12px 20px;border-radius:8px;border:1.5px solid var(--card-border);background:transparent;color:var(--text-sub);font-weight:700;font-size:14.5px;cursor:pointer;font-family:var(--font)}
 .modal-btn-annuler:hover{color:var(--text-main);border-color:var(--text-sub)}
+
+/* ── v2 : réunions Fathom (F9) ────────────────────────────────────────────── */
+.reunion-card{background:var(--input-bg);border:1px solid var(--card-border);border-radius:10px;padding:12px 14px;margin-bottom:10px}
+.reunion-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px}
+.reunion-titre{font-weight:700;font-size:15px;color:var(--text-main);line-height:1.3}
+.reunion-meta{font-size:12.5px;color:var(--text-sub);margin-top:2px}
+.reunion-lien{font-size:12px;font-weight:700;color:var(--teal);text-decoration:none;white-space:nowrap;flex-shrink:0}
+.reunion-lien:hover{text-decoration:underline}
+.reunion-scores{display:flex;gap:8px;margin:8px 0;flex-wrap:wrap}
+.score-pill{display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 12px;border-radius:8px;border:1.5px solid;min-width:86px}
+.score-pill .sp-val{font-size:19px;font-weight:800;line-height:1}
+.score-pill .sp-lbl{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;text-align:center}
+.reunion-resume{font-size:13.5px;line-height:1.5;color:var(--text-main);max-height:72px;overflow:hidden;position:relative;cursor:pointer;white-space:pre-wrap}
+.reunion-resume.deplie{max-height:none}
+.reunion-resume:not(.deplie)::after{content:'';position:absolute;bottom:0;left:0;right:0;height:28px;background:linear-gradient(transparent,var(--input-bg))}
+.reunion-actions-items{margin-top:8px;padding-top:8px;border-top:1px solid var(--card-border)}
+.reunion-ai-item{display:flex;gap:6px;font-size:13px;color:var(--text-main);margin-bottom:3px;align-items:flex-start}
+.reunion-ai-item::before{content:'☐';color:var(--teal);flex-shrink:0}
+.reunion-structure{display:inline-block;background:var(--navy);color:var(--teal);font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;margin-top:6px}
+.reunion-alerte{display:inline-block;background:#fdf0f0;color:var(--red);border:1px solid var(--red);font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;margin-top:6px;margin-left:6px}
+
+/* ── v2 : vue « À rattacher » (F8) ────────────────────────────────────────── */
+.vt-badge{display:inline-flex;align-items:center;justify-content:center;background:var(--red);color:#fff;font-size:10.5px;font-weight:800;border-radius:99px;min-width:18px;height:18px;padding:0 5px;margin-left:5px}
+#view-rattacher{position:absolute;inset:0;overflow-y:auto;padding:18px 28px;display:none}
+#view-rattacher.active{display:block}
+#view-rattacher::-webkit-scrollbar{width:5px}
+#view-rattacher::-webkit-scrollbar-thumb{background:var(--pale);border-radius:99px}
+.ratt-titre{font-size:19px;font-weight:800;color:var(--text-main);margin-bottom:4px}
+.ratt-sous-titre{font-size:14px;color:var(--text-sub);margin-bottom:18px}
+.ratt-grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:14px}
+.ratt-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:12px;padding:16px 18px}
+.ratt-ambigu{border:2px solid var(--orange)}
+.ratt-bandeau-ambigu{background:#fef5e8;color:var(--orange);border:1px solid var(--orange);border-radius:8px;padding:8px 12px;font-size:13px;font-weight:700;margin-bottom:10px}
+.ratt-candidats{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+.ratt-candidat{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-radius:8px;border:1.5px solid var(--card-border);background:var(--input-bg);cursor:pointer;transition:all .15s;font-size:14px;color:var(--text-main)}
+.ratt-candidat:hover{border-color:var(--teal);background:var(--li-hover)}
+.ratt-candidat .rc-email{font-size:12px;color:var(--text-sub)}
+.ratt-recherche{position:relative;margin-top:10px}
+.ratt-recherche input{width:100%;padding:9px 12px;border-radius:8px;border:1.5px solid var(--card-border);background:var(--input-bg);color:var(--text-main);font-size:14px;font-family:var(--font);outline:none}
+.ratt-recherche input:focus{border-color:var(--teal)}
+.ratt-resultats{position:absolute;top:100%;left:0;right:0;background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px;margin-top:4px;max-height:200px;overflow-y:auto;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,.12)}
+.ratt-resultat{padding:9px 12px;cursor:pointer;font-size:14px;color:var(--text-main);border-bottom:1px solid var(--card-border)}
+.ratt-resultat:last-child{border-bottom:none}
+.ratt-resultat:hover{background:var(--li-hover)}
+.ratt-resultat .rr-email{font-size:12px;color:var(--text-sub)}
+.ratt-boutons{display:flex;gap:8px;margin-top:12px}
+.ratt-btn-ignorer{padding:8px 14px;border-radius:8px;border:1.5px solid var(--card-border);background:transparent;color:var(--text-sub);font-weight:700;font-size:12.5px;cursor:pointer;font-family:var(--font)}
+.ratt-btn-ignorer:hover{color:var(--red);border-color:var(--red)}
+.ratt-vide{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 20px;color:var(--text-sub);gap:10px;font-size:15px}
 </style>
 </head>
 <body>
@@ -309,6 +358,7 @@ body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direc
   <div class="view-tabs">
     <button class="view-tab on" onclick="switchView('list',this)">Liste</button>
     <button class="view-tab" onclick="switchView('board',this)">Board</button>
+    <button class="view-tab" onclick="switchView('rattacher',this)">À rattacher<span id="badge-rattacher" class="vt-badge" style="display:none">0</span></button>
   </div>
   <div class="tb-kpis" id="tb-kpis"></div>
   <div style="display:flex;align-items:center">
@@ -404,6 +454,7 @@ body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direc
   </div>
   </div>
   <div id="view-board"></div>
+  <div id="view-rattacher"></div>
 </div>
 
 <!-- ══ v2 : Modal de création manuelle de dossier (F13) ══ -->
@@ -478,6 +529,7 @@ let sb=null;
 
 /* ── État global ─────────────────────────────────────────────────────────── */
 let LEADS=[];
+let MEETINGS=[];               // toutes les réunions Fathom (détail + vue À rattacher)
 let UTILISATEUR=null;          // utilisateur Supabase Auth connecté
 let PROFILS={};                // id profil → {email, nom_complet, role}
 let NOTES_DOSSIER=[];          // notes du dossier affiché
@@ -579,7 +631,7 @@ function initialiserAuth(){
       // Déconnexion : purge complète de l'état local (F1)
       appDemarree=false;
       UTILISATEUR=null;
-      LEADS=[];currentL=null;selectedIds.clear();
+      LEADS=[];MEETINGS=[];currentL=null;selectedIds.clear();
       NOTES_DOSSIER=[];EVENTS_DOSSIER=[];PROFILS={};
       if(sb)sb.removeAllChannels();
       render();
@@ -589,10 +641,65 @@ function initialiserAuth(){
 }
 
 async function demarrerApp(){
-  await Promise.all([chargerProfils(),chargerDeals()]);
+  await Promise.all([chargerProfils(),chargerDeals(),chargerReunions()]);
+  render();
   demarrerRealtime();
   // La synchro Typeform se lance en arrière-plan au chargement (comme la v1)
   synchroniserTypeform(true);
+}
+
+/* ═══ F6/F8 — Réunions Fathom ═════════════════════════════════════════════ */
+
+async function chargerReunions(){
+  if(!sb)return;
+  try{
+    const {data,error}=await sb.from('meetings').select('*').order('debut',{ascending:false,nullsFirst:false});
+    if(error)throw error;
+    MEETINGS=data||[];
+  }catch(e){
+    // Non bloquant : le CRM fonctionne sans les réunions
+    MEETINGS=[];
+  }
+}
+
+/* Réunions rattachées à un dossier */
+function reunionsDuDossier(dealId){return MEETINGS.filter(m=>m.deal_id===dealId);}
+
+/* Réunions en attente de rattachement (0 match ou ambiguës) */
+function reunionsARattacher(){return MEETINGS.filter(m=>!m.deal_id&&m.statut_match!=='ignore');}
+
+/* Rattachement manuel d'une réunion à un dossier */
+async function rattacherReunion(meetingId,dealId){
+  if(!sb)return;
+  const meeting=MEETINGS.find(m=>m.id===meetingId);
+  const lead=LEADS.find(l=>l.id===dealId);
+  if(!meeting||!lead)return;
+  try{
+    const {error}=await sb.from('meetings').update({deal_id:dealId,statut_match:'manuel'}).eq('id',meetingId);
+    if(error)throw error;
+    meeting.deal_id=dealId;meeting.statut_match='manuel';
+    enregistrerEvenement(dealId,'reunion',`Réunion Fathom rattachée manuellement : « ${meeting.titre||'Sans titre'} »`,{meeting_id:meetingId});
+    afficherToast(`Réunion rattachée à ${lead.prenom} ${lead.nom}`,C.green);
+    render();
+  }catch(e){
+    afficherToast('Rattachement impossible : '+(e.message||e),C.red);
+  }
+}
+
+/* Ignorer une réunion (ne concerne pas le deal-flow) */
+async function ignorerReunion(meetingId){
+  if(!sb)return;
+  const meeting=MEETINGS.find(m=>m.id===meetingId);
+  if(!meeting)return;
+  try{
+    const {error}=await sb.from('meetings').update({statut_match:'ignore'}).eq('id',meetingId);
+    if(error)throw error;
+    meeting.statut_match='ignore';
+    afficherToast('Réunion ignorée',C.grey);
+    render();
+  }catch(e){
+    afficherToast('Action impossible : '+(e.message||e),C.red);
+  }
 }
 
 /* ── Profils (pour afficher les auteurs des notes et de la timeline) ─────── */
@@ -619,9 +726,36 @@ function demarrerRealtime(){
   if(!sb)return;
   sb.channel('crm-live')
     .on('postgres_changes',{event:'*',schema:'public',table:'deals'},gererChangementDeal)
+    .on('postgres_changes',{event:'*',schema:'public',table:'meetings'},gererChangementReunion)
     .on('postgres_changes',{event:'*',schema:'public',table:'notes'},gererChangementAnnexe)
     .on('postgres_changes',{event:'*',schema:'public',table:'deal_events'},gererChangementAnnexe)
     .subscribe();
+}
+
+/* Changement sur la table meetings (webhook Fathom, rattachement par un membre) */
+function gererChangementReunion(payload){
+  try{
+    if(payload.eventType==='INSERT'){
+      if(!MEETINGS.find(m=>m.id===payload.new.id)){
+        MEETINGS.unshift(payload.new);
+        const titre=payload.new.titre||'Sans titre';
+        if(payload.new.deal_id){
+          afficherToast(`Réunion Fathom rattachée : « ${titre} »`,C.purple);
+        }else{
+          afficherToast(`Nouvelle réunion Fathom à rattacher : « ${titre} »`,C.orange);
+        }
+        render();
+      }
+    }else if(payload.eventType==='UPDATE'){
+      const idx=MEETINGS.findIndex(m=>m.id===payload.new.id);
+      if(idx>=0){MEETINGS[idx]=payload.new;render();}
+    }else if(payload.eventType==='DELETE'){
+      MEETINGS=MEETINGS.filter(m=>m.id!==(payload.old&&payload.old.id));
+      render();
+    }
+  }catch(e){
+    // Un événement Realtime mal formé ne doit jamais casser l'UI
+  }
 }
 
 /* Changement sur la table deals (autre membre, webhook Typeform…) */
@@ -973,7 +1107,9 @@ function renderKpis(){
 
 function render(){
   renderKpis();
+  majBadgeRattacher();
   if(currentView==='board'){renderBoard();return}
+  if(currentView==='rattacher'){renderRattacher();return}
   const q=document.getElementById('sb-search').value.toLowerCase();
   let list=LEADS.filter(l=>{const mia=filterIA==="Tous"||(filterIA==="Santé"?l.sante:l.dec===filterIA);const mst=filterST==="Tous"||l.statut===filterST;const ms=!q||`${l.prenom} ${l.nom} ${l.act} ${l.desc}`.toLowerCase().includes(q);return mia&&mst&&ms;});
   list=sortLeads([...list]);
@@ -1055,6 +1191,56 @@ function blocNotes(l){
     </div></div>`;
 }
 
+/* ── Réunions Fathom dans le panneau détail (F9) ─────────────────────────── */
+function couleurScore(note){return note>=4?C.green:note>=3?C.orange:C.red;}
+
+function formaterDateReunion(iso){
+  if(!iso)return '—';
+  const d=new Date(iso);
+  return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+function carteReunion(m){
+  const scores=[
+    {lbl:'Intérêt projet',val:m.score_interet_lina},
+    {lbl:'Intérêt porteur',val:m.score_interet_porteur},
+    {lbl:'Conformité',val:m.score_conformite},
+  ].filter(s=>s.val&&s.val.note);
+  const invites=(Array.isArray(m.invitees)?m.invitees:[]).map(i=>i.nom||i.email||i).join(', ');
+  const actionItems=(Array.isArray(m.action_items)?m.action_items:[]).map(a=>{
+    const texte=typeof a==='string'?a:(a.description||a.text||JSON.stringify(a));
+    return `<div class="reunion-ai-item">${String(texte).replace(/</g,'&lt;')}</div>`;
+  }).join('');
+  return `<div class="reunion-card">
+    <div class="reunion-head">
+      <div>
+        <div class="reunion-titre">${(m.titre||'Réunion sans titre').replace(/</g,'&lt;')}</div>
+        <div class="reunion-meta">${formaterDateReunion(m.debut)}${m.duree_minutes?` · ${m.duree_minutes} min`:''}${m.enregistre_par?` · enregistrée par ${m.enregistre_par}`:''}</div>
+        ${invites?`<div class="reunion-meta">Participants : ${invites.replace(/</g,'&lt;')}</div>`:''}
+      </div>
+      ${m.share_url?`<a class="reunion-lien" href="${m.share_url}" target="_blank" rel="noopener">▶ Voir la réunion</a>`:''}
+    </div>
+    ${scores.length?`<div class="reunion-scores">
+      ${scores.map(s=>`<div class="score-pill" style="border-color:${couleurScore(s.val.note)};color:${couleurScore(s.val.note)}" title="${(s.val.explication||'').replace(/"/g,'&quot;')}"><div class="sp-val">${s.val.note}/5</div><div class="sp-lbl">${s.lbl}</div></div>`).join('')}
+      ${m.score_global?`<div class="score-pill" style="border-color:${couleurScore(m.score_global)};color:${couleurScore(m.score_global)}"><div class="sp-val">${m.score_global}</div><div class="sp-lbl">Score global</div></div>`:''}
+    </div>`:''}
+    ${m.structure_recommandee&&m.structure_recommandee!=='aucune'?`<span class="reunion-structure">${m.structure_recommandee}</span>`:''}
+    ${m.alertes_charia&&!/^aucune/i.test(m.alertes_charia)?`<span class="reunion-alerte">⚠ ${m.alertes_charia.replace(/</g,'&lt;')}</span>`:''}
+    ${m.resume?`<div class="reunion-resume" onclick="this.classList.toggle('deplie')" title="Cliquer pour déplier/replier">${m.resume.replace(/</g,'&lt;')}</div>`:''}
+    ${actionItems?`<div class="reunion-actions-items"><div class="clbl" style="margin-bottom:5px">Actions</div>${actionItems}</div>`:''}
+    ${m.prochaine_etape?`<div class="reunion-meta" style="margin-top:8px">→ Prochaine étape : <b>${m.prochaine_etape.replace(/</g,'&lt;')}</b>${m.date_prochaine_etape?` (${m.date_prochaine_etape})`:''}</div>`:''}
+  </div>`;
+}
+
+function blocReunions(l){
+  const reunions=reunionsDuDossier(l.id);
+  if(!reunions.length)return '';
+  return `<div class="card"><div class="cb">
+    <div class="clbl">Réunions Fathom (${reunions.length})</div>
+    ${reunions.map(m=>carteReunion(m)).join('')}
+  </div></div>`;
+}
+
 /* ── Timeline (F9) ────────────────────────────────────────────────────────── */
 const TL_ICONES={statut:{ic:'⇄',bg:'#e8f0ff',col:C.blue},note:{ic:'✎',bg:'#fef5e8',col:C.orange},reunion:{ic:'▦',bg:'#f3effe',col:C.purple},email:{ic:'✉',bg:'#e8f8f0',col:C.green},import:{ic:'↓',bg:'#eef1f5',col:C.grey},champ:{ic:'✏',bg:'#fdf0f0',col:C.red}};
 function blocTimeline(){
@@ -1120,9 +1306,78 @@ function renderDetail(){
 /* ── Redimensionnement de la sidebar (v1) ────────────────────────────────── */
 (function(){const handle=document.getElementById('resize-handle');const sidebar=document.getElementById('sidebar');let dragging=false,startX,startW;handle.addEventListener('mousedown',e=>{dragging=true;startX=e.clientX;startW=sidebar.offsetWidth;handle.classList.add('dragging');document.body.style.cursor='col-resize';document.body.style.userSelect='none';e.preventDefault();});document.addEventListener('mousemove',e=>{if(!dragging)return;const w=Math.min(Math.max(startW+(e.clientX-startX),200),600);sidebar.style.width=w+'px';});document.addEventListener('mouseup',()=>{if(!dragging)return;dragging=false;handle.classList.remove('dragging');document.body.style.cursor='';document.body.style.userSelect='';});})();
 
-/* ── Vue Board Kanban (v1, ids en chaînes) ───────────────────────────────── */
+/* ── Vues : Liste / Board / À rattacher ──────────────────────────────────── */
 let currentView='list';
-function switchView(v,btn){currentView=v;document.querySelectorAll('.view-tab').forEach(b=>b.classList.remove('on'));if(btn)btn.classList.add('on');document.getElementById('view-list').classList.toggle('hidden',v==='board');document.getElementById('view-board').classList.toggle('active',v==='board');if(v==='board')renderBoard();}
+function switchView(v,btn){
+  currentView=v;
+  document.querySelectorAll('.view-tab').forEach(b=>b.classList.remove('on'));
+  if(btn)btn.classList.add('on');
+  document.getElementById('view-list').classList.toggle('hidden',v!=='list');
+  document.getElementById('view-board').classList.toggle('active',v==='board');
+  document.getElementById('view-rattacher').classList.toggle('active',v==='rattacher');
+  if(v==='board')renderBoard();
+  if(v==='rattacher')renderRattacher();
+}
+
+/* ═══ F8 — Vue « Réunions à rattacher » ═══════════════════════════════════ */
+
+function majBadgeRattacher(){
+  const badge=document.getElementById('badge-rattacher');
+  const nb=reunionsARattacher().length;
+  badge.style.display=nb>0?'inline-flex':'none';
+  badge.textContent=nb;
+}
+
+function rechercherDossierPourReunion(meetingId,texte){
+  const conteneur=document.getElementById('ratt-resultats-'+meetingId);
+  if(!conteneur)return;
+  const q=(texte||'').toLowerCase().trim();
+  if(q.length<2){conteneur.innerHTML='';return;}
+  const resultats=LEADS.filter(l=>`${l.prenom} ${l.nom} ${l.email} ${l.act}`.toLowerCase().includes(q)).slice(0,8);
+  conteneur.innerHTML=resultats.map(l=>
+    `<div class="ratt-resultat" onclick="rattacherReunion('${meetingId}','${l.id}')">
+      <b>${l.prenom} ${l.nom}</b> · ${l.act}
+      <div class="rr-email">${l.email||'sans email'} · ${ST[l.statut].label}</div>
+    </div>`
+  ).join('')||'<div class="ratt-resultat" style="cursor:default;color:var(--text-sub)">Aucun dossier trouvé</div>';
+}
+
+function renderRattacher(){
+  const conteneur=document.getElementById('view-rattacher');
+  const reunions=reunionsARattacher();
+  if(!reunions.length){
+    conteneur.innerHTML=`<div class="ratt-vide">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--grey)" stroke-width="1.5" opacity=".3"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Aucune réunion en attente de rattachement
+    </div>`;
+    return;
+  }
+  conteneur.innerHTML=`
+    <div class="ratt-titre">Réunions à rattacher</div>
+    <div class="ratt-sous-titre">${reunions.length} réunion${reunions.length>1?'s':''} Fathom en attente d'être reliée${reunions.length>1?'s':''} à un dossier</div>
+    <div class="ratt-grille">
+      ${reunions.map(m=>{
+        const estAmbigu=m.statut_match==='ambigu';
+        const candidats=Array.isArray(m.matchs_candidats)?m.matchs_candidats:[];
+        return `<div class="ratt-card${estAmbigu?' ratt-ambigu':''}">
+          ${estAmbigu?`<div class="ratt-bandeau-ambigu">⚠ Plusieurs dossiers possibles — choisissez le bon</div>`:''}
+          ${carteReunion(m)}
+          ${estAmbigu&&candidats.length?`<div class="clbl" style="margin-bottom:6px">Dossiers candidats</div>
+          <div class="ratt-candidats">
+            ${candidats.map(c=>`<div class="ratt-candidat" onclick="rattacherReunion('${m.id}','${c.deal_id}')"><span><b>${(c.prenom||'')+' '+(c.nom||'')}</b></span><span class="rc-email">${c.email||''}</span></div>`).join('')}
+          </div>`:''}
+          <div class="clbl" style="margin-bottom:2px">${estAmbigu?'Ou rattacher à un autre dossier':'Rattacher à un dossier'}</div>
+          <div class="ratt-recherche">
+            <input type="text" placeholder="Rechercher un dossier (nom, email, activité)…" oninput="rechercherDossierPourReunion('${m.id}',this.value)">
+            <div class="ratt-resultats" id="ratt-resultats-${m.id}"></div>
+          </div>
+          <div class="ratt-boutons">
+            <button class="ratt-btn-ignorer" onclick="ignorerReunion('${m.id}')">Ignorer — ne concerne pas le deal-flow</button>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
 
 function renderBoard(){
   const board=document.getElementById('view-board');
