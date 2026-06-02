@@ -209,6 +209,55 @@ body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direc
 .tb-btn:disabled{opacity:.4;cursor:wait}
 .tb-btn.sync-en-cours svg{animation:rotation 1s linear infinite}
 @keyframes rotation{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+
+/* ── v2 : bloc Confidentiel (F9) ──────────────────────────────────────────── */
+.conf-box{background:var(--navy);border-radius:10px;padding:14px 16px;margin-bottom:10px}
+.conf-head{color:var(--teal);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;display:flex;align-items:center;gap:7px}
+.conf-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px}
+.conf-field label{display:block;color:rgba(255,255,255,.45);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.conf-field input,.conf-field textarea{width:100%;padding:8px 10px;border-radius:7px;border:1.5px solid rgba(255,255,255,.15);background:rgba(255,255,255,.07);color:#fff;font-size:14px;font-family:var(--font);outline:none;transition:border .15s}
+.conf-field input:focus,.conf-field textarea:focus{border-color:var(--teal)}
+.conf-field textarea{resize:vertical;min-height:64px;line-height:1.5}
+[data-theme="dark"] .conf-box{background:#0a1322;border:1px solid rgba(71,211,176,.2)}
+
+/* ── v2 : notes internes (F9) ─────────────────────────────────────────────── */
+.note-form{display:flex;gap:8px;margin-bottom:12px;align-items:flex-start}
+.note-form textarea{flex:1;padding:9px 12px;border-radius:8px;border:1.5px solid var(--card-border);background:var(--input-bg);color:var(--text-main);font-size:14px;font-family:var(--font);outline:none;resize:vertical;min-height:42px;transition:border .15s}
+.note-form textarea:focus{border-color:var(--teal)}
+.note-form button{padding:9px 16px;border-radius:8px;border:none;background:var(--teal);color:#061D39;font-weight:800;font-size:13px;cursor:pointer;font-family:var(--font);white-space:nowrap}
+.note-form button:hover{opacity:.88}
+.note-item{padding:10px 12px;border-radius:8px;background:var(--input-bg);border:1px solid var(--card-border);margin-bottom:8px}
+.note-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.note-auteur{font-size:12px;font-weight:700;color:var(--teal)}
+.note-date{font-size:11.5px;color:var(--text-sub)}
+.note-contenu{font-size:14.5px;line-height:1.5;color:var(--text-main);white-space:pre-wrap}
+.note-suppr{background:none;border:none;color:var(--text-sub);cursor:pointer;font-size:13px;padding:2px 6px;border-radius:4px}
+.note-suppr:hover{color:var(--red);background:#fdf0f0}
+
+/* ── v2 : timeline (F9) ───────────────────────────────────────────────────── */
+.tl-item{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--card-border)}
+.tl-item:last-child{border-bottom:none}
+.tl-icone{width:26px;height:26px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px}
+.tl-corps{flex:1;min-width:0}
+.tl-resume{font-size:14px;color:var(--text-main);line-height:1.4}
+.tl-meta{font-size:11.5px;color:var(--text-sub);margin-top:1px}
+
+/* ── v2 : bouton + modal nouveau dossier (F13) ────────────────────────────── */
+.btn-nouveau{width:100%;margin-top:8px;padding:9px;border-radius:8px;border:1.5px dashed var(--card-border);background:transparent;color:var(--text-sub);font-weight:700;font-size:13px;cursor:pointer;font-family:var(--font);transition:all .15s}
+.btn-nouveau:hover{border-color:var(--teal);color:var(--teal)}
+.modal-fond{position:fixed;inset:0;background:rgba(6,29,57,.65);z-index:8000;display:flex;align-items:center;justify-content:center}
+.modal-carte{background:var(--card-bg);border-radius:14px;padding:26px 30px;width:440px;max-height:85vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.35)}
+.modal-titre{font-size:19px;font-weight:800;color:var(--text-main);margin-bottom:18px}
+.modal-field{margin-bottom:12px}
+.modal-field label{display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-sub);margin-bottom:5px}
+.modal-field input,.modal-field textarea{width:100%;padding:10px 12px;border-radius:8px;border:1.5px solid var(--card-border);background:var(--input-bg);color:var(--text-main);font-size:14.5px;font-family:var(--font);outline:none;transition:border .15s}
+.modal-field input:focus,.modal-field textarea:focus{border-color:var(--teal)}
+.modal-field textarea{resize:vertical;min-height:70px}
+.modal-actions{display:flex;gap:10px;margin-top:18px}
+.modal-btn-ok{flex:1;padding:12px;border-radius:8px;border:none;background:var(--teal);color:#061D39;font-weight:800;font-size:14.5px;cursor:pointer;font-family:var(--font)}
+.modal-btn-ok:hover{opacity:.88}
+.modal-btn-annuler{padding:12px 20px;border-radius:8px;border:1.5px solid var(--card-border);background:transparent;color:var(--text-sub);font-weight:700;font-size:14.5px;cursor:pointer;font-family:var(--font)}
+.modal-btn-annuler:hover{color:var(--text-main);border-color:var(--text-sub)}
 </style>
 </head>
 <body>
@@ -333,6 +382,7 @@ body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direc
           <span class="sel-range">Au <input type="date" id="sel-date-to" onchange="selectByDate()"></span>
         </div>
       </div>
+      <button class="btn-nouveau" onclick="ouvrirModalNouveauDossier()">+ Nouveau dossier</button>
     </div>
     <div class="multi-bar" id="multi-bar" style="display:none">
       <span class="mb-count" id="mb-count">0</span>
@@ -354,6 +404,27 @@ body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direc
   </div>
   </div>
   <div id="view-board"></div>
+</div>
+
+<!-- ══ v2 : Modal de création manuelle de dossier (F13) ══ -->
+<div id="modal-nouveau" class="modal-fond" style="display:none" onclick="if(event.target===this)fermerModalNouveauDossier()">
+  <div class="modal-carte">
+    <div class="modal-titre">Nouveau dossier</div>
+    <form onsubmit="creerDossierManuel(event)">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="modal-field"><label>Prénom *</label><input type="text" id="nd-prenom" required></div>
+        <div class="modal-field"><label>Nom *</label><input type="text" id="nd-nom" required></div>
+      </div>
+      <div class="modal-field"><label>Email</label><input type="email" id="nd-email"></div>
+      <div class="modal-field"><label>Activité</label><input type="text" id="nd-activite"></div>
+      <div class="modal-field"><label>Description du projet</label><textarea id="nd-description"></textarea></div>
+      <div class="modal-field"><label>Montant demandé (€)</label><input type="number" id="nd-montant" min="0" step="1000"></div>
+      <div class="modal-actions">
+        <button type="submit" class="modal-btn-ok" id="nd-btn-creer">Créer le dossier</button>
+        <button type="button" class="modal-btn-annuler" onclick="fermerModalNouveauDossier()">Annuler</button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <div class="toast" id="toast"><span class="t-dot"></span><span class="t-msg"></span></div>
@@ -408,6 +479,9 @@ let sb=null;
 /* ── État global ─────────────────────────────────────────────────────────── */
 let LEADS=[];
 let UTILISATEUR=null;          // utilisateur Supabase Auth connecté
+let PROFILS={};                // id profil → {email, nom_complet, role}
+let NOTES_DOSSIER=[];          // notes du dossier affiché
+let EVENTS_DOSSIER=[];         // timeline du dossier affiché
 let appDemarree=false;
 let filterIA="Tous",filterST="Tous",currentL=null,currentSort="score",selectedIds=new Set();
 let dataSource='chargement…';
@@ -506,6 +580,8 @@ function initialiserAuth(){
       appDemarree=false;
       UTILISATEUR=null;
       LEADS=[];currentL=null;selectedIds.clear();
+      NOTES_DOSSIER=[];EVENTS_DOSSIER=[];PROFILS={};
+      if(sb)sb.removeAllChannels();
       render();
       afficherLogin();
     }
@@ -513,9 +589,72 @@ function initialiserAuth(){
 }
 
 async function demarrerApp(){
-  await chargerDeals();
+  await Promise.all([chargerProfils(),chargerDeals()]);
+  demarrerRealtime();
   // La synchro Typeform se lance en arrière-plan au chargement (comme la v1)
   synchroniserTypeform(true);
+}
+
+/* ── Profils (pour afficher les auteurs des notes et de la timeline) ─────── */
+async function chargerProfils(){
+  if(!sb)return;
+  try{
+    const {data,error}=await sb.from('profiles').select('*');
+    if(error)throw error;
+    PROFILS={};
+    (data||[]).forEach(p=>PROFILS[p.id]=p);
+  }catch(e){
+    // Non bloquant : les auteurs s'afficheront « — »
+  }
+}
+function nomAuteur(id){
+  if(!id)return 'Système';
+  const p=PROFILS[id];
+  return p?(p.nom_complet||p.email):'—';
+}
+
+/* ═══ F10 — Temps réel (Realtime) ═════════════════════════════════════════ */
+
+function demarrerRealtime(){
+  if(!sb)return;
+  sb.channel('crm-live')
+    .on('postgres_changes',{event:'*',schema:'public',table:'deals'},gererChangementDeal)
+    .on('postgres_changes',{event:'*',schema:'public',table:'notes'},gererChangementAnnexe)
+    .on('postgres_changes',{event:'*',schema:'public',table:'deal_events'},gererChangementAnnexe)
+    .subscribe();
+}
+
+/* Changement sur la table deals (autre membre, webhook Typeform…) */
+function gererChangementDeal(payload){
+  try{
+    if(payload.eventType==='INSERT'){
+      const lead=dealVersLead(payload.new);
+      if(!LEADS.find(l=>l.id===lead.id)){
+        LEADS.unshift(lead);
+        afficherToast(`Nouveau dossier : ${lead.prenom} ${lead.nom}`,C.green);
+        render();
+      }
+    }else if(payload.eventType==='UPDATE'){
+      const idx=LEADS.findIndex(l=>l.id===payload.new.id);
+      if(idx>=0){
+        LEADS[idx]=dealVersLead(payload.new);
+        if(currentL&&currentL.id===payload.new.id)currentL=LEADS[idx];
+        render();
+      }
+    }else if(payload.eventType==='DELETE'){
+      LEADS=LEADS.filter(l=>l.id!==(payload.old&&payload.old.id));
+      if(currentL&&payload.old&&currentL.id===payload.old.id)currentL=null;
+      render();
+    }
+  }catch(e){
+    // Un événement Realtime mal formé ne doit jamais casser l'UI
+  }
+}
+
+/* Changement sur notes / deal_events : recharger le détail si le dossier est affiché */
+function gererChangementAnnexe(payload){
+  const ligne=payload.new&&payload.new.deal_id?payload.new:payload.old;
+  if(currentL&&ligne&&ligne.deal_id===currentL.id)chargerDetailDossier(currentL.id);
 }
 
 /* ═══ F3/F4 — Données : chargement depuis Postgres ════════════════════════ */
@@ -603,12 +742,28 @@ async function synchroniserTypeform(silencieux){
   }
 }
 
-/* ═══ Changement de statut (écrit dans Postgres) ══════════════════════════ */
+/* ═══ Timeline — insertion d'événements (deal_events, append-only) ════════ */
+
+async function enregistrerEvenement(dealId,type,resume,payload){
+  if(!sb||!UTILISATEUR)return;
+  try{
+    await sb.from('deal_events').insert({
+      deal_id:dealId,type,resume,
+      payload:payload||null,
+      auteur_id:UTILISATEUR.id,
+    });
+  }catch(e){
+    // Non bloquant : l'action principale a réussi, seule la trace a échoué
+  }
+}
+
+/* ═══ Changement de statut (écrit dans Postgres + timeline) ═══════════════ */
 
 async function changerStatut(id,nouveauStatut){
   const lead=LEADS.find(x=>x.id===id);
   if(!lead||!sb)return;
   const ancienStatut=lead.statut;
+  if(ancienStatut===nouveauStatut)return;
   // Mise à jour optimiste de l'UI, annulée si l'écriture échoue
   lead.statut=nouveauStatut;
   render();
@@ -616,6 +771,7 @@ async function changerStatut(id,nouveauStatut){
     const {error}=await sb.from('deals').update({statut:nouveauStatut}).eq('id',id);
     if(error)throw error;
     afficherToast(`${lead.prenom} ${lead.nom} → ${ST[nouveauStatut].label}`,ST[nouveauStatut].color);
+    enregistrerEvenement(id,'statut',`Statut : ${ST[ancienStatut].label} → ${ST[nouveauStatut].label}`);
   }catch(e){
     lead.statut=ancienStatut;
     render();
@@ -639,10 +795,154 @@ async function multiAction(nouveauStatut){
     const {error}=await sb.from('deals').update({statut:nouveauStatut}).in('id',ids);
     if(error)throw error;
     afficherToast(`${nb} dossiers → ${ST[nouveauStatut].label}`,ST[nouveauStatut].color);
+    // Timeline : un événement par dossier modifié
+    ids.forEach(id=>{
+      const ancien=anciens[id];
+      if(ancien&&ancien!==nouveauStatut)enregistrerEvenement(id,'statut',`Statut : ${ST[ancien].label} → ${ST[nouveauStatut].label} (action groupée)`);
+    });
   }catch(e){
     ids.forEach(id=>{const l=LEADS.find(x=>x.id===id);if(l&&anciens[id])l.statut=anciens[id];});
     render();
     afficherToast('Mise à jour groupée impossible : '+(e.message||e),C.red);
+  }
+}
+
+/* ═══ F9 — Détail du dossier : notes, timeline, confidentiel ══════════════ */
+
+/* Chargement des notes + timeline du dossier sélectionné */
+let chargementDetailEnCours=null;
+async function chargerDetailDossier(dealId){
+  if(!sb)return;
+  chargementDetailEnCours=dealId;
+  try{
+    const [resNotes,resEvents]=await Promise.all([
+      sb.from('notes').select('*').eq('deal_id',dealId).order('cree_le',{ascending:false}),
+      sb.from('deal_events').select('*').eq('deal_id',dealId).order('cree_le',{ascending:false}).limit(50),
+    ]);
+    // Ignorer la réponse si l'utilisateur a changé de dossier entre-temps
+    if(chargementDetailEnCours!==dealId)return;
+    if(resNotes.error)throw resNotes.error;
+    if(resEvents.error)throw resEvents.error;
+    NOTES_DOSSIER=resNotes.data||[];
+    EVENTS_DOSSIER=resEvents.data||[];
+    renderDetail();
+  }catch(e){
+    afficherToast('Chargement du détail impossible : '+(e.message||e),C.red);
+  }
+}
+
+/* Sauvegarde des champs confidentiels (à la perte de focus) */
+async function sauvegarderConfidentiel(id){
+  if(!sb)return;
+  const lead=LEADS.find(x=>x.id===id);
+  if(!lead)return;
+  const valeurNum=el=>{const v=document.getElementById(el)?.value;return v===''||v===undefined?null:Number(v);};
+  const valeurTxt=el=>{const v=document.getElementById(el)?.value;return v===''||v===undefined?null:v;};
+  const champs={
+    montant_demande:valeurNum('conf-montant'),
+    valorisation:valeurNum('conf-valo'),
+    montant_investi:valeurNum('conf-ticket'),
+    societe:valeurTxt('conf-societe'),
+    prochaine_etape:valeurTxt('conf-etape'),
+    date_prochaine_etape:valeurTxt('conf-date-etape'),
+    notes_dd:valeurTxt('conf-notes-dd'),
+  };
+  // Ne rien faire si rien n'a changé
+  const aChange=Object.keys(champs).some(k=>{
+    const avant=lead[k]===undefined||lead[k]===null?null:String(lead[k]);
+    const apres=champs[k]===null?null:String(champs[k]);
+    return avant!==apres;
+  });
+  if(!aChange)return;
+  try{
+    const {error}=await sb.from('deals').update(champs).eq('id',id);
+    if(error)throw error;
+    Object.assign(lead,champs);
+    afficherToast('Informations confidentielles enregistrées',C.teal);
+    enregistrerEvenement(id,'champ','Informations confidentielles mises à jour');
+  }catch(e){
+    afficherToast('Enregistrement impossible : '+(e.message||e),C.red);
+  }
+}
+
+/* Notes internes : ajout / suppression */
+async function ajouterNote(dealId){
+  if(!sb||!UTILISATEUR)return;
+  const champ=document.getElementById('nouvelle-note');
+  const contenu=(champ?.value||'').trim();
+  if(!contenu)return;
+  try{
+    const {error}=await sb.from('notes').insert({deal_id:dealId,contenu,auteur_id:UTILISATEUR.id});
+    if(error)throw error;
+    champ.value='';
+    enregistrerEvenement(dealId,'note',`Note ajoutée : ${contenu.slice(0,80)}${contenu.length>80?'…':''}`);
+    await chargerDetailDossier(dealId);
+    afficherToast('Note ajoutée',C.teal);
+  }catch(e){
+    afficherToast('Ajout de note impossible : '+(e.message||e),C.red);
+  }
+}
+
+async function supprimerNote(noteId,dealId){
+  if(!sb)return;
+  try{
+    const {error}=await sb.from('notes').delete().eq('id',noteId);
+    if(error)throw error;
+    await chargerDetailDossier(dealId);
+    afficherToast('Note supprimée',C.grey);
+  }catch(e){
+    afficherToast('Suppression impossible (notes des autres membres : admin uniquement)',C.red);
+  }
+}
+
+/* F12 — Traçabilité des emails : événement au clic sur « Ouvrir dans ma messagerie » */
+function tracerEmailEnvoye(id){
+  const lead=LEADS.find(x=>x.id===id);
+  if(!lead)return;
+  enregistrerEvenement(id,'email',`Email « ${EMAIL_LABELS[lead.statut]||lead.statut} » ouvert dans la messagerie → ${lead.email}`);
+}
+
+/* ═══ F13 — Création manuelle de dossier ══════════════════════════════════ */
+
+function ouvrirModalNouveauDossier(){document.getElementById('modal-nouveau').style.display='flex';document.getElementById('nd-prenom').focus();}
+function fermerModalNouveauDossier(){document.getElementById('modal-nouveau').style.display='none';}
+
+async function creerDossierManuel(event){
+  event.preventDefault();
+  if(!sb||!UTILISATEUR)return;
+  const bouton=document.getElementById('nd-btn-creer');
+  bouton.disabled=true;
+  try{
+    const montant=document.getElementById('nd-montant').value;
+    const ligne={
+      prenom:document.getElementById('nd-prenom').value.trim()||'Inconnu',
+      nom:document.getElementById('nd-nom').value.trim()||'—',
+      email:document.getElementById('nd-email').value.trim()||null,
+      activite:document.getElementById('nd-activite').value.trim()||'Non précisée',
+      description:document.getElementById('nd-description').value.trim()||'',
+      montant_demande:montant?Number(montant):null,
+      source:'manuel',
+      statut:'nouveau',
+      score:30,
+      decision:'À ÉTUDIER',
+      motif:'Dossier créé manuellement',
+      action_reco:'Qualifier ce dossier',
+      cree_par:UTILISATEUR.id,
+    };
+    const {data,error}=await sb.from('deals').insert(ligne).select().single();
+    if(error)throw error;
+    enregistrerEvenement(data.id,'import',`Dossier créé manuellement par ${nomAuteur(UTILISATEUR.id)}`);
+    // Ajout local immédiat (le Realtime l'aurait fait, mais on veut le sélectionner tout de suite)
+    if(!LEADS.find(l=>l.id===data.id))LEADS.unshift(dealVersLead(data));
+    currentL=LEADS.find(l=>l.id===data.id);
+    fermerModalNouveauDossier();
+    document.querySelectorAll('#modal-nouveau input, #modal-nouveau textarea').forEach(el=>el.value='');
+    render();
+    afficherToast(`Dossier ${ligne.prenom} ${ligne.nom} créé`,C.green);
+  }catch(e){
+    afficherToast('Création impossible : '+(e.message||e),C.red);
+  }finally{
+    bouton.disabled=false;
   }
 }
 
@@ -685,7 +985,16 @@ function render(){
   renderDetail();
 }
 
-function pick(id){currentL=LEADS.find(l=>l.id===id);render()}
+function pick(id){
+  const precedent=currentL?.id;
+  currentL=LEADS.find(l=>l.id===id);
+  // Nouveau dossier sélectionné → recharger ses notes + timeline
+  if(currentL&&currentL.id!==precedent){
+    NOTES_DOSSIER=[];EVENTS_DOSSIER=[];
+    chargerDetailDossier(currentL.id);
+  }
+  render();
+}
 
 function actionButtons(l){
   const s=l.statut,id=l.id;
@@ -701,18 +1010,85 @@ function relance(id){const l=LEADS.find(x=>x.id===id);if(!l)return;afficherToast
 
 function mailtoLink(l){const st=l.statut,tpl=EMAIL_ST[st];if(!tpl)return null;const subj=encodeURIComponent(EMAIL_SUBJECTS[st]||'Lina Finance');const body=encodeURIComponent(tpl(l.prenom));return `mailto:${l.email}?subject=${subj}&body=${body}`;}
 
-function emailBlock(l){const st=l.statut;if(st==='nouveau')return '';const tpl=EMAIL_ST[st];if(!tpl)return '';const href=mailtoLink(l);return `<div class="ebox"><div class="ehead"><span class="elbl">${EMAIL_LABELS[st]||'Email'}</span><span class="eto">→ ${l.email}</span></div><div class="ebody">${tpl(l.prenom)}</div></div><a href="${href}" class="sbtn" style="display:block;text-align:center;text-decoration:none">✉  Ouvrir dans ma messagerie</a>`;}
+function emailBlock(l){const st=l.statut;if(st==='nouveau')return '';const tpl=EMAIL_ST[st];if(!tpl)return '';const href=mailtoLink(l);return `<div class="ebox"><div class="ehead"><span class="elbl">${EMAIL_LABELS[st]||'Email'}</span><span class="eto">→ ${l.email}</span></div><div class="ebody">${tpl(l.prenom)}</div></div><a href="${href}" class="sbtn" style="display:block;text-align:center;text-decoration:none" onclick="tracerEmailEnvoye('${l.id}')">✉  Ouvrir dans ma messagerie</a>`;}
+
+/* ── Bloc Confidentiel (F9) ───────────────────────────────────────────────── */
+function blocConfidentiel(l){
+  const val=v=>v===null||v===undefined?'':v;
+  return `
+    <div class="conf-box">
+      <div class="conf-head">🔒 Confidentiel — Due diligence</div>
+      <div class="conf-grid">
+        <div class="conf-field"><label>Montant demandé (€)</label><input type="number" id="conf-montant" value="${val(l.montant_demande)}" onblur="sauvegarderConfidentiel('${l.id}')"></div>
+        <div class="conf-field"><label>Valorisation (€)</label><input type="number" id="conf-valo" value="${val(l.valorisation)}" onblur="sauvegarderConfidentiel('${l.id}')"></div>
+        <div class="conf-field"><label>Ticket Lina (€)</label><input type="number" id="conf-ticket" value="${val(l.montant_investi)}" onblur="sauvegarderConfidentiel('${l.id}')"></div>
+        <div class="conf-field"><label>Société</label><input type="text" id="conf-societe" value="${val(l.societe).replace(/"/g,'&quot;')}" onblur="sauvegarderConfidentiel('${l.id}')"></div>
+        <div class="conf-field"><label>Prochaine étape</label><input type="text" id="conf-etape" value="${val(l.prochaine_etape).replace(/"/g,'&quot;')}" onblur="sauvegarderConfidentiel('${l.id}')"></div>
+        <div class="conf-field"><label>Date prochaine étape</label><input type="date" id="conf-date-etape" value="${val(l.date_prochaine_etape)}" onblur="sauvegarderConfidentiel('${l.id}')"></div>
+      </div>
+      <div class="conf-field"><label>Notes de due diligence</label><textarea id="conf-notes-dd" onblur="sauvegarderConfidentiel('${l.id}')">${val(l.notes_dd)}</textarea></div>
+    </div>`;
+}
+
+/* ── Notes internes (F9) ──────────────────────────────────────────────────── */
+function blocNotes(l){
+  const items=NOTES_DOSSIER.map(n=>{
+    const estAuteur=UTILISATEUR&&n.auteur_id===UTILISATEUR.id;
+    const d=new Date(n.cree_le);
+    const dateStr=`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    return `<div class="note-item">
+      <div class="note-meta">
+        <span class="note-auteur">${nomAuteur(n.auteur_id)}</span>
+        <span class="note-date">${dateStr}${estAuteur?` <button class="note-suppr" onclick="supprimerNote('${n.id}','${l.id}')" title="Supprimer">✕</button>`:''}</span>
+      </div>
+      <div class="note-contenu">${n.contenu.replace(/</g,'&lt;')}</div>
+    </div>`;
+  }).join('');
+  return `
+    <div class="card"><div class="cb">
+      <div class="clbl">Notes internes</div>
+      <div class="note-form">
+        <textarea id="nouvelle-note" placeholder="Ajouter une note…"></textarea>
+        <button onclick="ajouterNote('${l.id}')">Ajouter</button>
+      </div>
+      ${items||'<div class="pnone">Aucune note pour l\'instant</div>'}
+    </div></div>`;
+}
+
+/* ── Timeline (F9) ────────────────────────────────────────────────────────── */
+const TL_ICONES={statut:{ic:'⇄',bg:'#e8f0ff',col:C.blue},note:{ic:'✎',bg:'#fef5e8',col:C.orange},reunion:{ic:'▦',bg:'#f3effe',col:C.purple},email:{ic:'✉',bg:'#e8f8f0',col:C.green},import:{ic:'↓',bg:'#eef1f5',col:C.grey},champ:{ic:'✏',bg:'#fdf0f0',col:C.red}};
+function blocTimeline(){
+  const items=EVENTS_DOSSIER.map(e=>{
+    const ic=TL_ICONES[e.type]||TL_ICONES.import;
+    const d=new Date(e.cree_le);
+    const dateStr=`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    return `<div class="tl-item">
+      <div class="tl-icone" style="background:${ic.bg};color:${ic.col}">${ic.ic}</div>
+      <div class="tl-corps">
+        <div class="tl-resume">${e.resume.replace(/</g,'&lt;')}</div>
+        <div class="tl-meta">${nomAuteur(e.auteur_id)} · ${dateStr}</div>
+      </div>
+    </div>`;
+  }).join('');
+  return `
+    <div class="card"><div class="cb">
+      <div class="clbl">Timeline</div>
+      ${items||'<div class="pnone">Aucune activité enregistrée</div>'}
+    </div></div>`;
+}
 
 function renderDetail(){
   const l=currentL;
   document.getElementById('empty').style.display=l?'none':'flex';
   const di=document.getElementById('d-inner');
   if(!l){di.style.display='none';return}
+  // Ne pas régénérer le panneau pendant une saisie (confidentiel, note…)
+  if(di.contains(document.activeElement)&&['INPUT','TEXTAREA'].includes(document.activeElement.tagName))return;
   di.style.display='block';
   const col=dc(l.dec),s=ST[l.statut];
   di.innerHTML=`
     <div class="dbar" style="background:${col}">
-      <div class="db-left"><div class="db-name">${l.prenom} ${l.nom}</div><div class="db-email">${l.email} · ${l.date}</div><div class="db-meta">${l.act} · Entreprise : ${l.ent} · CA : ${l.ca}</div></div>
+      <div class="db-left"><div class="db-name">${l.prenom} ${l.nom}</div><div class="db-email">${l.email} · ${l.date}</div><div class="db-meta">${l.act} · Entreprise : ${l.ent} · CA : ${l.ca}${l.source==='manuel'?' · Créé manuellement':''}</div></div>
       <div class="db-right"><div class="db-score">${l.score}</div><div class="db-slbl">/100</div><div class="db-dec">${l.dec}</div></div>
     </div>
     <div class="action-bar">
@@ -720,6 +1096,7 @@ function renderDetail(){
       <div class="action-bar-status" style="background:${s.color}18;color:${s.color};border:2px solid ${s.color}"><span class="st-icon" style="background:${s.color}"></span>${s.label}</div>
       ${actionButtons(l)}
     </div>
+    ${blocConfidentiel(l)}
     <div class="card"><div class="cb"><div class="clbl">Projet</div><div class="ctxt">${l.desc||'<i>Aucune description</i>'}</div></div></div>
     <div class="card motif" style="border-left-color:${col}"><div class="cb"><div class="clbl">Analyse IA</div><div class="cmotif">${l.motif}</div></div></div>
     <div class="pgrid">
@@ -733,6 +1110,9 @@ function renderDetail(){
       <span class="badge" style="background:var(--light);color:var(--grey);border-color:var(--pale)">CA : ${l.ca}</span>
     </div>
     <div class="abox"><div><div class="albl">Action recommandée</div><div class="atxt">${l.action}</div></div></div>
+    ${typeof blocReunions==='function'?blocReunions(l):''}
+    ${blocNotes(l)}
+    ${blocTimeline()}
     ${emailBlock(l)}
   `;
 }
