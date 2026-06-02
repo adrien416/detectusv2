@@ -80,6 +80,7 @@ La v2 reprend les statuts et le scoring **du code**, et règle le problème de p
 | D9 | **Statuts localStorage v1 non migrés** (repart de zéro) **avec capture préalable** | ⬆ Complétée par la revue Codex : faire une capture manuelle des statuts v1 d'Adrien/Djamel avant la bascule (filet de sécurité). |
 | D10 | **Région Supabase EU** | RGPD — données financières et personnelles. |
 | D11 | ✅ **Analyse des réunions par l'API Anthropic — CONFIRMÉE par Adrien (02/06/2026)** | Le résumé + transcript de chaque réunion prospect part vers l'API Anthropic pour produire les 3 scores — même traitement que `Lina_fathom_CRM` (déjà en production). La revue Codex demandait une acceptation explicite (RGPD : la chaîne ne reste pas 100 % européenne) : c'est fait. |
+| D14 | **Sanctuarisation des réponses Typeform** (ajoutée le 02/06/2026 suite à la question d'Adrien) | La donnée des porteurs de projet est l'actif principal : import **exhaustif** (suppression de la limite v1 de 1 000 réponses), réponse brute conservée dans `deals.payload_brut`, historique propriété de Lina Capital dans son Postgres (Typeform n'est plus un point de défaillance unique). |
 | D12 | **Périmètre v2 réduit** : page admin, invitations in-app et backfill Fathom → v2.1 | Revue Codex : mieux vaut une v2 courte et stable qu'une grosse version où chaque intégration peut bloquer les autres. |
 | D13 | **Périmètre Fathom = `my_recordings` uniquement** | Revue Codex Q2 : les réunions partagées ajoutent du bruit ; à élargir en v2.1 après test. |
 

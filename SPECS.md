@@ -15,7 +15,7 @@ Detectus devient le CRM sécurisé de Lina Capital : l'équipe se connecte avec 
 2. **Les seuls comptes de la v2 sont les 3 admins** : `adrien@prouesse.vc`, `djamel@lina.finance`, `mahefa@prouesse.vc` — créés manuellement via le Dashboard Supabase. L'invitation de membres depuis l'app arrive en v2.1, **obligatoirement accompagnée du masquage des champs confidentiels par rôle**
 3. **Aucun secret côté client** — toutes les clés API (Typeform, Fathom, Anthropic) vivent dans les Edge Functions Supabase (corrige la faille v1 : clés dans `config.js`)
 4. **Persistance partagée** (Postgres + Realtime) — le localStorage ne stocke plus aucune donnée métier (uniquement le thème)
-5. **Deal-flow Typeform conservé sans régression** — déduplication par `typeform_id`, mêmes champs, même scoring
+5. **La donnée des porteurs de projet (réponses Typeform) est sanctuarisée** — import exhaustif (sans la limite v1 de 1 000 réponses), réponse brute conservée dans `payload_brut`, déduplication par `typeform_id`, mêmes champs, même scoring. Une fois importée, cette donnée appartient à Lina Capital dans son propre Postgres : le CRM ne dépend plus de Typeform pour son historique
 6. **Réunions Fathom rattachées automatiquement uniquement si le match est sans ambiguïté** (exactement 1 dossier correspondant) — tout autre cas passe par la vue « À rattacher »
 7. **Le transcript Fathom n'est jamais stocké** — ni en base, ni dans `payload_brut` ; il n'est utilisé qu'en mémoire le temps de l'analyse Claude
 8. **Esprit v1 préservé** : un seul `index.html` vanilla JS, zéro framework, zéro build step, palette Lina, board Kanban, français partout
@@ -122,6 +122,7 @@ create table public.deals (
   description          text,
   document_url         text,
   date_soumission      timestamptz,
+  payload_brut         jsonb,                    -- réponse Typeform complète et brute (la donnée du porteur ne dépend jamais du mapping)
 
   -- Scoring (autoScore v1, recalculé à l'import)
   score                int default 0,
@@ -248,10 +249,10 @@ Remplace le proxy Cloudflare Worker v1 (`typeform-proxy.djamel-753.workers.dev`)
 
 - **Déclencheur** : bouton « ⟳ Synchroniser » + au chargement de l'app (comme v1), JWT utilisateur requis
 - **Logique** :
-  1. `GET https://api.typeform.com/forms/{TYPEFORM_FORM_ID}/responses?page_size=200` avec pagination `before` (max 5 pages, comme v1)
+  1. `GET https://api.typeform.com/forms/{TYPEFORM_FORM_ID}/responses?page_size=200` avec pagination `before` **jusqu'à épuisement** (⚠️ la limite v1 de 5 pages / 1 000 réponses est supprimée — l'import doit être exhaustif, aucune réponse de porteur ne doit manquer)
   2. Parsing avec le **même mapping de refs** que v1 (`parseTypeformAnswers` / `typeformToLead`, form `pUE5Jgae`)
   3. Calcul `autoScore` (logique v1 portée dans la fonction)
-  4. Upsert sur `deals` avec `on conflict (typeform_id)` — **sans jamais écraser** `statut`, les champs CRM et confidentiels d'une ligne existante
+  4. Upsert sur `deals` avec `on conflict (typeform_id)` — **sans jamais écraser** `statut`, les champs CRM et confidentiels d'une ligne existante ; la réponse Typeform brute est stockée dans `payload_brut` (la donnée originale du porteur est conservée même si le mapping de refs change un jour)
   5. Pour chaque nouveau deal : insert `deal_events` type `import`
   6. Retour `{ inserted, updated, total }` affiché dans le bandeau de statut v1
 - **Secrets** : `TYPEFORM_TOKEN`, `TYPEFORM_FORM_ID`
@@ -262,7 +263,7 @@ C'était la v6 du backlog de Djamel ; la v2 la réalise.
 
 - **Déclencheur** : webhook Typeform configuré sur le form `pUE5Jgae` (Connect → Webhooks)
 - **Sécurité** : vérification de la signature `Typeform-Signature` (HMAC-SHA256, encodage base64, préfixe `sha256=`)
-- **Logique** : parse `form_response` → autoScore → upsert deal (dédup `typeform_id` = `form_response.token`) → event `import` → Realtime propage aux membres connectés
+- **Logique** : parse `form_response` → autoScore → upsert deal (dédup `typeform_id` = `form_response.token`, `payload_brut` = `form_response` complet) → event `import` → Realtime propage aux membres connectés
 - **Secrets** : `TYPEFORM_WEBHOOK_SECRET`
 
 ---
@@ -357,6 +358,8 @@ Bouton « + Nouveau dossier » dans la sidebar : formulaire modal (prénom, nom,
 - [ ] F2 — Les inscriptions publiques sont désactivées (aucune création de compte possible hors Dashboard Supabase)
 - [ ] F3 — Aucune table accessible sans JWT (test direct API REST Supabase → 401 / 0 ligne)
 - [ ] F4 — Le bouton Synchroniser importe les leads Typeform sans créer de doublons
+- [ ] F4 — L'import est **exhaustif** : le nombre de deals en base = le nombre de réponses du form `pUE5Jgae` (vérification croisée avec le Dashboard Typeform)
+- [ ] F4 — Chaque deal importé conserve sa réponse Typeform brute dans `payload_brut`
 - [ ] F4 — Une re-synchronisation n'écrase jamais les statuts ni les champs confidentiels
 - [ ] F5 — Une nouvelle soumission Typeform apparaît dans l'app sans clic (< 30 s)
 - [ ] F6 — Une réunion Fathom dont un participant correspond à **exactement un** dossier se rattache automatiquement
@@ -380,6 +383,7 @@ Bouton « + Nouveau dossier » dans la sidebar : formulaire modal (prénom, nom,
 - **Transcript Fathom** : reçu dans le payload webhook (`include_transcript: true`), utilisé **en mémoire uniquement** pour l'analyse Claude, puis supprimé — jamais stocké (ni en base, ni dans `payload_brut`)
 - **RGPD / Anthropic** : le résumé et le transcript des réunions sont envoyés à l'API Anthropic pour produire les 3 scores. Ce traitement est identique à celui de `Lina_fathom_CRM` (déjà en production) — **accepté explicitement par Adrien le 02/06/2026 (décision D11, voir HANDOFF.md)**.
 - Idempotence partout : upsert sur `typeform_id` et `fathom_recording_id`, le rejeu d'un webhook ne crée pas de doublon
+- **Pérennité de la donnée Typeform** : après l'import initial, les réponses des porteurs vivent dans le Postgres de Lina Capital (région EU, sauvegardes automatiques Supabase). Typeform reste la source d'entrée, mais n'est plus un point de défaillance unique : même si le form ou le compte Typeform disparaît, l'historique du CRM est intact
 - Les prompts Claude Haiku (classification + extraction 3 scores) sont repris **à l'identique** de `Lina_fathom_CRM/classifier.py` — logique métier déjà validée par l'équipe
 - **Modèle épinglé : `claude-haiku-4-5-20251001`** (revue Codex : jamais d'alias non versionné, pour qu'un changement silencieux de modèle ne modifie pas les scores)
 - Gestion d'erreur : tout échec d'API externe (Typeform, Fathom, Anthropic) est loggé et n'interrompt pas le pipeline (retry 3x avec backoff, comme Lina_fathom_CRM)

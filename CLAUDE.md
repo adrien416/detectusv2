@@ -140,6 +140,12 @@ Trois scores de 1 à 5 extraits de chaque réunion prospect :
 | `96c42553-d4d5-44aa-b088-07c5894a5c07` | telephone |
 | token de la réponse | typeform_id (clé de déduplication) |
 | submitted_at | date_soumission |
+| réponse complète (JSON) | payload_brut (copie brute) |
+
+**Règles de pérennité de la donnée porteur (non négociables) :**
+- Import **exhaustif** : pagination `before` jusqu'à épuisement — jamais de limite de pages (la limite v1 de 5 pages / 1 000 réponses est une régression interdite)
+- La réponse Typeform **brute** est toujours stockée dans `payload_brut` : la donnée du porteur survit à tout changement du mapping de refs
+- Après import, l'historique vit dans le Postgres de Lina Capital — Typeform n'est plus un point de défaillance unique
 
 ---
 
