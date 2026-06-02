@@ -1,8 +1,32 @@
-# HANDOFF — Revue du plan Detectus v2 avant implémentation
+# HANDOFF — Plan Detectus v2 (révisé après revue Codex)
 
-> **Destinataire :** Codex (relecteur du plan) et l'équipe Lina Capital (Adrien, Djamel, Mahefa)
-> **Objet :** valider le plan de la v2 avant d'écrire la moindre ligne de code applicatif
+> **Destinataire :** l'équipe Lina Capital (Adrien, Djamel, Mahefa)
+> **Objet :** plan v2 révisé suite à la revue Codex — prêt pour validation finale avant implémentation
 > **Date :** 02/06/2026
+
+---
+
+## 0. Cycle de revue
+
+| Étape | Statut |
+|---|---|
+| Plan initial (SPECS, CLAUDE, VERSIONS, HANDOFF) | ✅ commit `cb70736` |
+| Revue Codex (`CODEX_REVIEW.md`) | ✅ commit `b852da6` — **« validé sous réserves »** |
+| Révision du plan selon la revue | ✅ ce commit |
+| Validation finale par Adrien (dont décision D11 ci-dessous) | ⏳ en attente |
+| Implémentation (4 lots) | ⏳ après validation |
+
+### Corrections Codex appliquées
+
+| # | Demande Codex | Application dans le plan révisé |
+|---|---|---|
+| 1 | Réduire le périmètre v2 | Page admin, `inviter-membre` et `fathom-backfill` reportés en **v2.1** (SPECS « Hors scope », VERSIONS.md) |
+| 2 | Jamais de rattachement automatique ambigu | Nouvelle règle de matching : 1 match = auto · 0 ou plusieurs = « À rattacher » (SPECS F6, statut `ambigu` + `matchs_candidats`) |
+| 3 | Transcript : analyser sans stocker | Transcript reçu par webhook, utilisé en mémoire pour Claude, expurgé de `payload_brut` avant stockage (SPECS F6 + non-négociable #7) |
+| 4 | Visibilité des champs confidentiels | Sans objet en v2 : les seuls comptes sont les 3 admins. Le masquage par rôle est **obligatoire en v2.1** avant toute invitation de non-admin |
+| 5 | RGPD / envoi des données à Anthropic | Documenté comme **décision D11 — à confirmer explicitement par Adrien** (voir §6) |
+| 6 | Corriger `config.example.js` | ✅ Fait : ne contient plus que `SUPABASE_URL` + `SUPABASE_ANON_KEY` (plus aucun exemple de secret) |
+| 7 | Modèle Claude versionné | `claude-haiku-4-5-20251001` épinglé partout (SPECS, CLAUDE.md) |
 
 ---
 
@@ -14,10 +38,10 @@
 
 | Commit | Contenu |
 |---|---|
-| 1 — `v1 : baseline detectus` | Le code v1 de Djamel copié tel quel (index.html, config.example.js, docs v1) |
-| 2 — `v2 : plan et spécifications` | Les documents de plan v2 : SPECS.md, CLAUDE.md, VERSIONS.md, README.md, ce HANDOFF.md |
-
-Le diff entre les deux commits montre exactement ce que le plan change par rapport à la v1.
+| `5fec7c7` — v1 baseline | Le code v1 de Djamel copié tel quel (index.html, config.example.js, docs v1) |
+| `cb70736` — plan v2 | Les documents de plan v2 : SPECS.md, CLAUDE.md, VERSIONS.md, README.md, HANDOFF.md |
+| `b852da6` — revue Codex | CODEX_REVIEW.md : validation sous réserves + réponses aux questions ouvertes |
+| (ce commit) — plan révisé | Tous les documents mis à jour selon la revue |
 
 **Sources analysées pour ce plan :**
 - Le code complet de detectus v1 (zip fourni par Adrien)
@@ -41,20 +65,23 @@ La v2 reprend les statuts et le scoring **du code**, et règle le problème de p
 
 ---
 
-## 3. Décisions prises (à challenger si besoin)
+## 3. Décisions (mises à jour après revue Codex)
 
 | # | Décision | Justification |
 |---|---|---|
-| D1 | **Backend Supabase** (Postgres + Auth + Realtime + Edge Functions) | Validé par Adrien. Permet login + données partagées + RLS + webhooks sans gérer de serveur. Gratuit à ce volume. |
+| D1 | **Backend Supabase** (Postgres + Auth + Realtime + Edge Functions) | Validé par Adrien et Codex. Login + données partagées + RLS + webhooks sans gérer de serveur. Gratuit à ce volume. |
 | D2 | **Front vanilla JS conservé** (un seul index.html, pas de framework) | Esprit v1 de Djamel = interdit absolu de framework. supabase-js via CDN est la seule dépendance ajoutée. |
 | D3 | **Prompts Claude Haiku repris à l'identique** de Lina_fathom_CRM | Logique métier (3 scores, classification prospect/interne) déjà validée par l'équipe en production. |
 | D4 | **Les secrets passent tous côté serveur** (Edge Functions) | Corrige la faille v1 (clés API dans config.js côté client). |
-| D5 | **Le scoring autoScore reste côté front** | Logique simple et dérivable, pas une donnée à protéger. Évite de dupliquer la logique en 2 langages. Porté aussi dans typeform-sync pour le calcul à l'import. |
-| D6 | **Transcript Fathom non stocké** | Volumineux. Le résumé + action items + lien share_url suffisent. |
-| D7 | **Réunion sans deal correspondant → liste « À rattacher »** (pas de création auto de dossier) | Évite de polluer le pipeline avec des réunions hors deal-flow. Rattachement manuel en 2 clics. |
-| D8 | **Hébergement front : Netlify** | Repo privé compatible (GitHub Pages exigerait un plan payant ou un repo public). Déploiement auto sur push. |
-| D9 | **Statuts localStorage v1 non migrés** (repart de zéro) | Les statuts v1 sont par navigateur, non fiables. Le volume de dossiers permet une reclassification rapide. |
+| D5 | **Le scoring autoScore reste côté front** (et porté dans typeform-sync) | Logique simple et dérivable, pas une donnée à protéger. |
+| D6 | **Transcript Fathom jamais stocké** — utilisé en mémoire pour l'analyse Claude uniquement | ⬆ Renforcée par la revue Codex : le transcript alimente le scoring Haiku puis est jeté ; `payload_brut` est expurgé. |
+| D7 | **Rattachement automatique uniquement si match unique** — 0 ou plusieurs matchs → « À rattacher » | ⬆ Modifiée par la revue Codex : une réunion mal rattachée est plus dangereuse qu'un clic manuel. |
+| D8 | **Hébergement front : Netlify** | Repo privé compatible. Déploiement auto sur push. |
+| D9 | **Statuts localStorage v1 non migrés** (repart de zéro) **avec capture préalable** | ⬆ Complétée par la revue Codex : faire une capture manuelle des statuts v1 d'Adrien/Djamel avant la bascule (filet de sécurité). |
 | D10 | **Région Supabase EU** | RGPD — données financières et personnelles. |
+| D11 | **🔶 Analyse des réunions par l'API Anthropic — À CONFIRMER PAR ADRIEN** | Le résumé + transcript de chaque réunion prospect part vers l'API Anthropic pour produire les 3 scores. C'est le même traitement que `Lina_fathom_CRM` (déjà en production), mais la revue Codex demande une acceptation explicite (RGPD : la chaîne ne reste pas 100 % européenne). Alternative si refus : pas d'extraction Haiku, rattachement par email seul. |
+| D12 | **Périmètre v2 réduit** : page admin, invitations in-app et backfill Fathom → v2.1 | Revue Codex : mieux vaut une v2 courte et stable qu'une grosse version où chaque intégration peut bloquer les autres. |
+| D13 | **Périmètre Fathom = `my_recordings` uniquement** | Revue Codex Q2 : les réunions partagées ajoutent du bruit ; à élargir en v2.1 après test. |
 
 ---
 
@@ -62,17 +89,17 @@ La v2 reprend les statuts et le scoring **du code**, et règle le problème de p
 
 ```
 Front statique (Netlify) ── anon key + JWT ──▶ Supabase EU
-                                               ├── Auth (invite-only, 3 admins)
+                                               ├── Auth (signups désactivés, 3 admins)
                                                ├── Postgres + RLS (profiles, deals,
                                                │   deal_events, notes, meetings)
                                                ├── Realtime (sync live entre membres)
-                                               └── Edge Functions :
-                                                   ├── typeform-webhook  ◀── Typeform (temps réel)
+                                               └── Edge Functions (3 en v2) :
                                                    ├── typeform-sync     ──▶ Typeform API
-                                                   ├── fathom-webhook    ◀── Fathom (réunion traitée)
-                                                   ├── fathom-backfill   ──▶ Fathom API
-                                                   └── inviter-membre    (admin)
-                                                   (+ Claude Haiku pour classification/extraction)
+                                                   ├── typeform-webhook  ◀── Typeform (temps réel)
+                                                   └── fathom-webhook    ◀── Fathom (réunion traitée)
+                                                       └─▶ Claude Haiku (classification + 3 scores)
+
+                                               (v2.1 : fathom-backfill, inviter-membre)
 ```
 
 Détails complets : **SPECS.md** (schéma SQL, RLS, pipeline Fathom 6 étapes, critères d'acceptation).
@@ -83,66 +110,73 @@ Détails complets : **SPECS.md** (schéma SQL, RLS, pipeline Fathom 6 étapes, c
 
 Ces éléments doivent être prêts **avant** de démarrer l'implémentation :
 
+- [ ] **Décision D11 tranchée** (envoi des réunions à l'API Anthropic : oui / non)
 - [ ] **Projet Supabase créé** (région EU) — et décider qui en est propriétaire (compte/orga, facturation)
 - [ ] **Accès admin au formulaire Typeform `pUE5Jgae`** (pour configurer le webhook) — sinon on garde uniquement le polling
 - [ ] **Clé API Fathom** (Settings → API Access du compte qui enregistre les calls) + vérifier que le plan Fathom inclut l'API publique et les webhooks
-- [ ] **Clé API Anthropic** (pour la classification/extraction Haiku)
+- [ ] **Clé API Anthropic** (pour la classification/extraction Haiku) — si D11 = oui
 - [ ] **Compte Netlify** relié au repo GitHub `adrien416/detectusv2`
-- [ ] Les 3 admins disponibles pour définir leur mot de passe (email d'invitation)
+- [ ] **Capture des statuts v1** (revue Codex Q3) : export ou capture d'écran du board d'Adrien et/ou Djamel avant la bascule (les statuts localStorage ne seront pas migrés)
+- [ ] Les 3 admins disponibles pour définir leur mot de passe (email d'invitation Dashboard)
 
 ---
 
-## 6. Questions ouvertes pour la revue
+## 6. Questions ouvertes → réponses Codex → décisions appliquées
 
-**Décisions produit :**
-1. La stratégie « réunion non rattachée → liste À rattacher » (D7) convient-elle, ou faut-il créer automatiquement un dossier pour tout prospect inconnu ?
-2. Périmètre Fathom : seulement les réunions enregistrées par l'équipe (`my_recordings`) ou aussi celles partagées avec l'équipe (`my_shared_with_team_recordings`) ?
-3. Repart-on de zéro pour les statuts (D9) ou faut-il migrer le localStorage d'un des membres ?
-4. Les membres non-admin doivent-ils voir les champs confidentiels (montants, valorisation) ? Le plan actuel dit **oui** (équipe de confiance) — le cloisonnement par rôle est en backlog v6.
+| # | Question | Réponse Codex | Décision appliquée |
+|---|---|---|---|
+| Q1 | Réunion non rattachée : créer un dossier automatiquement ? | **Non** — garder la liste « À rattacher » | ✅ D7 confirmée (création manuelle si besoin, F13) |
+| Q2 | Périmètre Fathom : `my_recordings` seul ou aussi les réunions partagées ? | **`my_recordings` d'abord**, élargir après test | ✅ D13 — réunions partagées reportées en v2.1 |
+| Q3 | Repartir de zéro pour les statuts v1 ? | **Oui, avec capture préalable** | ✅ D9 complétée — capture ajoutée à la checklist §5 |
+| Q4 | Les non-admins voient-ils les champs confidentiels ? | Oui **seulement** si l'équipe reste très restreinte | ✅ Sans objet en v2 (3 admins seulement) ; masquage par rôle obligatoire en v2.1 avec les invitations |
+| Q5 | Vérifier le payload webhook Fathom sur la doc live | Champs confirmés : `recording_id`, `calendar_invitees`, `recorded_by`, `default_summary`, `action_items` + signature svix ([doc](https://developers.fathom.ai/webhooks)) | ✅ À re-vérifier au début du Lot 3 (tâche d'implémentation) |
+| Q6 | Vérifier la signature webhook Typeform | Header `Typeform-Signature`, HMAC SHA-256, préfixe `sha256=` ([doc](https://www.typeform.com/developers/webhooks/secure-your-webhooks/)) | ✅ Intégré dans SPECS F5 ; à re-vérifier au Lot 4 |
+| Q7 | Vérifier le mapping des refs Typeform (form `pUE5Jgae`) | Oui, point fragile — un changement de question casse le mapping silencieusement | ✅ Tâche obligatoire au début du Lot 1 (avant d'écrire typeform-sync) |
+| Q8 | Quel modèle Haiku ? | **`claude-haiku-4-5-20251001`** (version épinglée) | ✅ Appliqué partout (SPECS, CLAUDE.md) |
+| Q9 | Réduire le scope v2 ? | **Oui** — reporter page admin + backfill Fathom | ✅ D12 — v2.1 créée dans VERSIONS.md |
 
-**Vérifications techniques à faire à l'implémentation :**
-5. Confirmer sur la doc Fathom live (developers.fathom.ai) : noms exacts des champs du payload webhook (`calendar_invitees`, `is_external`, `default_summary`, `action_items`), nom du header de signature, événements disponibles. Le plan se base sur le code de Lina_fathom_CRM (qui fonctionne en production) — l'API a pu évoluer.
-6. Confirmer l'algorithme de signature du webhook Typeform (header `Typeform-Signature`, HMAC-SHA256 base64).
-7. Vérifier que le mapping des refs Typeform (CLAUDE.md §6) est toujours valide sur le form `pUE5Jgae`.
-8. Choisir le modèle Haiku : `claude-haiku-4-5` (recommandé) vs le modèle utilisé dans Lina_fathom_CRM.
-
-**Risque de scope :**
-9. La v2 est volumineuse (auth + BDD + 5 Edge Functions + refonte persistance + UI Fathom). Le plan la découpe en **4 sous-lots** committés séparément (voir VERSIONS.md). Ce découpage convient-il, ou faut-il réduire le périmètre de la v2 (ex. reporter la page admin et fathom-backfill en v2.1) ?
+**Seule décision encore ouverte : D11** (envoi des données de réunion à Anthropic). Tout le reste est tranché.
 
 ---
 
-## 7. Ordre d'implémentation proposé (session de code, après validation)
+## 7. Ordre d'implémentation (4 lots — ordre validé par Codex)
 
 ```
-Sous-lot 1 — Socle (fondations)
-  1. supabase/migrations/001_schema.sql (tables, enums, RLS, triggers)
-  2. supabase/seed.sql (promotion des 3 admins)
-  3. Setup projet Supabase + comptes admin + désactivation signups
-  4. index.html : écran de login + gestion de session
-  5. Edge Function typeform-sync + bouton Synchroniser branché dessus
-  6. chargerDeals() depuis Postgres (remplace localStorage)
+Lot 1 — Socle
+  1. Vérification du mapping Typeform sur le form pUE5Jgae (Q7)
+  2. supabase/migrations/001_schema.sql (tables, enums, RLS, triggers)
+  3. supabase/seed.sql (promotion des 3 admins)
+  4. Setup projet Supabase + comptes admin (Dashboard) + désactivation signups
+  5. index.html : écran de login + gestion de session
+  6. Edge Function typeform-sync + bouton Synchroniser branché dessus
+  7. chargerDeals() depuis Postgres (remplace localStorage)
   ✓ Critère : l'équipe se connecte et voit les dossiers Typeform
 
-Sous-lot 2 — CRM
-  7. Changements de statut → update deals + deal_events (+ Kanban)
-  8. Realtime (sync live entre membres)
-  9. Bloc Confidentiel + notes + timeline dans le panneau détail
-  10. Création manuelle de dossier
-  ✓ Critère : le suivi des dossiers est partagé et tracé
+Lot 2 — CRM partagé
+  8. Changements de statut → update deals + deal_events (+ Kanban)
+  9. Realtime (sync live entre membres)
+  10. Bloc Confidentiel + notes + timeline dans le panneau détail
+  11. Création manuelle de dossier
+  12. Événement timeline au clic sur le bouton email (mailto)
+  ✓ Critère : le CRM remplace vraiment le localStorage, le suivi est partagé et tracé
 
-Sous-lot 3 — Fathom
-  11. Edge Function fathom-webhook (pipeline 6 étapes + Haiku)
-  12. Edge Function fathom-backfill
-  13. UI : réunions dans le panneau détail + vue « À rattacher »
-  14. Enregistrement du webhook Fathom
-  ✓ Critère : une réunion test se rattache automatiquement à un dossier
+Lot 3 — Fathom courant
+  13. Vérification du payload webhook Fathom sur la doc live (Q5)
+  14. Edge Function fathom-webhook (pipeline 6 étapes + Haiku + matching strict)
+  15. UI : réunions dans le panneau détail + vue « À rattacher » (avec cas ambigu)
+  16. Enregistrement du webhook Fathom (my_recordings, transcript + summary + action items)
+  ✓ Critère : une réunion test à 1 match se rattache automatiquement ;
+              une réunion ambiguë apparaît dans « À rattacher » sans rattachement
 
-Sous-lot 4 — Admin et finitions
-  15. Page admin (liste profils, inviter-membre, rôles)
-  16. Webhook Typeform temps réel
-  17. netlify.toml + déploiement + tests des critères d'acceptation SPECS.md
-  ✓ Critère : tous les critères d'acceptation de SPECS.md cochés
+Lot 4 — Finitions v2
+  17. Webhook Typeform temps réel (typeform-webhook + signature)
+  18. Tests de sécurité (RLS sans JWT, navigation privée, pas de secret dans le front)
+  19. netlify.toml + déploiement Netlify
+  20. Vérification de tous les critères d'acceptation SPECS.md
+  ✓ Critère : tous les critères d'acceptation cochés
 ```
+
+**Reporté en v2.1** : page admin, Edge Function `inviter-membre`, Edge Function `fathom-backfill`, masquage des champs confidentiels par rôle, réunions Fathom partagées.
 
 ---
 
@@ -152,17 +186,16 @@ La v2 est terminée quand **tous les critères d'acceptation de SPECS.md** sont 
 - Aucune donnée accessible sans login (test en navigation privée)
 - Les 3 admins peuvent se connecter et ont le rôle admin
 - Un lead Typeform de test apparaît en temps réel
-- Une réunion Fathom de test se rattache au bon dossier avec ses 3 scores
+- Une réunion Fathom de test (match unique) se rattache au bon dossier avec ses 3 scores
+- Une réunion Fathom ambiguë (plusieurs matchs) n'est PAS rattachée et apparaît dans « À rattacher »
+- Aucun transcript stocké en base
 - Le drag & drop Kanban se propage entre deux navigateurs connectés
 - Aucun secret dans le code front ni dans le repo
 
 ---
 
-## 9. Comment répondre à cette revue
+## 9. Prochaine étape
 
-Merci de commenter directement :
-- soit en ouvrant une **issue GitHub** sur ce repo,
-- soit en ouvrant une **PR de commentaires** sur les documents,
-- soit en répondant point par point aux questions du §6 dans un document de réponse.
-
-Une fois les questions tranchées et le plan validé, la session d'implémentation démarre sur cette même branche en suivant l'ordre du §7.
+1. **Adrien tranche D11** (analyse Anthropic : oui / non) — seule décision encore ouverte
+2. Adrien valide le plan révisé (ou demande des ajustements)
+3. La session d'implémentation démarre sur cette même branche, en suivant les 4 lots du §7 (un commit par lot minimum)

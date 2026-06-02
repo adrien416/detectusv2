@@ -25,10 +25,10 @@ Front statique (Netlify)          Supabase (région EU)              APIs extern
                                   │  typeform-webhook    │◀─webhook─│          │
                                   │  typeform-sync       │          ├──────────┤
                                   │  fathom-webhook      │◀─webhook─│ Fathom   │
-                                  │  fathom-backfill     │─────────▶│          │
-                                  │  inviter-membre      │          ├──────────┤
-                                  └──────────────────────┘─────────▶│ Anthropic│
-                                                                     └──────────┘
+                                  └──────────────────────┘─────────▶├──────────┤
+                                                                     │ Anthropic│
+                                  (v2.1 : fathom-backfill,           └──────────┘
+                                   inviter-membre)
 ```
 
 **Stack** : HTML/CSS/JS vanilla (un seul fichier, zéro framework, zéro build) + Supabase (Postgres, Auth, Realtime, Edge Functions Deno).
@@ -39,16 +39,17 @@ Front statique (Netlify)          Supabase (région EU)              APIs extern
 |---|---|
 | [SPECS.md](SPECS.md) | Spécification fonctionnelle complète de la v2 (avec schéma SQL) |
 | [CLAUDE.md](CLAUDE.md) | Cahier des charges permanent (stack, conventions, interdits, règles métier) |
-| [VERSIONS.md](VERSIONS.md) | Historique des versions et backlog |
-| [HANDOFF.md](HANDOFF.md) | Document de passation pour la revue du plan (Codex) |
+| [VERSIONS.md](VERSIONS.md) | Historique des versions et backlog (dont v2.1) |
+| [HANDOFF.md](HANDOFF.md) | Document de passation : cycle de revue, décisions, ordre d'implémentation |
+| [CODEX_REVIEW.md](CODEX_REVIEW.md) | Revue Codex du plan initial (validation sous réserves) |
 
 ## État du projet
 
-📋 **Plan en revue** — le code v2 n'est pas encore écrit. Ce repo contient :
+📋 **Plan révisé après revue Codex** — le code v2 n'est pas encore écrit. Ce repo contient :
 1. Le code v1 de Djamel (baseline, `index.html`)
-2. Les documents de spécification v2 (ci-dessus)
+2. Les documents de spécification v2, mis à jour selon la revue Codex (ci-dessus)
 
-L'implémentation démarrera après validation du plan par Codex (voir HANDOFF.md).
+L'implémentation démarrera après validation finale du plan par Adrien (décision D11, voir HANDOFF.md §9).
 
 ## Setup (à réaliser lors de l'implémentation)
 
@@ -68,9 +69,11 @@ Dans le Dashboard Supabase → Authentication → Users → *Add user* (avec « 
 
 Puis : Authentication → Settings → **désactiver « Allow new users to sign up »**
 
+> En v2, ajouter un utilisateur = répéter cette procédure dans le Dashboard. La page admin et l'invitation depuis l'app arrivent en v2.1 (avec le masquage des champs confidentiels par rôle).
+
 ### 3. Edge Functions et secrets
 ```bash
-supabase functions deploy typeform-sync typeform-webhook fathom-webhook fathom-backfill inviter-membre
+supabase functions deploy typeform-sync typeform-webhook fathom-webhook
 
 supabase secrets set \
   TYPEFORM_TOKEN=xxx \
@@ -83,7 +86,7 @@ supabase secrets set \
 
 ### 4. Webhooks externes
 - **Typeform** : form pUE5Jgae → Connect → Webhooks → `https://<project>.supabase.co/functions/v1/typeform-webhook`
-- **Fathom** : `POST /external/v1/webhooks` → `https://<project>.supabase.co/functions/v1/fathom-webhook`
+- **Fathom** : `POST /external/v1/webhooks` → `https://<project>.supabase.co/functions/v1/fathom-webhook` (avec `include_transcript`, `include_summary`, `include_action_items` — périmètre `my_recordings`)
 
 ### 5. Front (Netlify)
 ```bash

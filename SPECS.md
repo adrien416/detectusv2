@@ -1,5 +1,8 @@
 # SPECS v2 — Detectus CRM
 
+> **Révision du 02/06/2026** — plan ajusté suite à la revue Codex (`CODEX_REVIEW.md`).
+> Changements principaux : périmètre resserré (page admin, invitations in-app et backfill Fathom reportés en v2.1), rattachement Fathom jamais automatique en cas d'ambiguïté, transcript utilisé pour l'analyse mais jamais stocké, modèle Claude épinglé.
+
 ## Résumé en une phrase
 
 Detectus devient le CRM sécurisé de Lina Capital : l'équipe se connecte avec un login, suit l'avancement des dossiers dans un pipeline partagé en temps réel, stocke des informations confidentielles, et les comptes-rendus de réunions Fathom se rattachent automatiquement aux bons dossiers.
@@ -8,17 +11,28 @@ Detectus devient le CRM sécurisé de Lina Capital : l'équipe se connecte avec 
 
 ## Non-négociables v2
 
-1. **Authentification obligatoire** (Supabase Auth) — aucune donnée visible sans login, inscriptions publiques désactivées (invite-only)
-2. **3 comptes admin par défaut** : `adrien@prouesse.vc`, `djamel@lina.finance`, `mahefa@prouesse.vc`
+1. **Authentification obligatoire** (Supabase Auth) — aucune donnée visible sans login, inscriptions publiques désactivées
+2. **Les seuls comptes de la v2 sont les 3 admins** : `adrien@prouesse.vc`, `djamel@lina.finance`, `mahefa@prouesse.vc` — créés manuellement via le Dashboard Supabase. L'invitation de membres depuis l'app arrive en v2.1, **obligatoirement accompagnée du masquage des champs confidentiels par rôle**
 3. **Aucun secret côté client** — toutes les clés API (Typeform, Fathom, Anthropic) vivent dans les Edge Functions Supabase (corrige la faille v1 : clés dans `config.js`)
 4. **Persistance partagée** (Postgres + Realtime) — le localStorage ne stocke plus aucune donnée métier (uniquement le thème)
 5. **Deal-flow Typeform conservé sans régression** — déduplication par `typeform_id`, mêmes champs, même scoring
-6. **Réunions Fathom rattachées automatiquement** aux dossiers (matching par email des participants) avec résumé, action items et scores de qualification
-7. **Esprit v1 préservé** : un seul `index.html` vanilla JS, zéro framework, zéro build step, palette Lina, board Kanban, français partout
+6. **Réunions Fathom rattachées automatiquement uniquement si le match est sans ambiguïté** (exactement 1 dossier correspondant) — tout autre cas passe par la vue « À rattacher »
+7. **Le transcript Fathom n'est jamais stocké** — ni en base, ni dans `payload_brut` ; il n'est utilisé qu'en mémoire le temps de l'analyse Claude
+8. **Esprit v1 préservé** : un seul `index.html` vanilla JS, zéro framework, zéro build step, palette Lina, board Kanban, français partout
 
 ---
 
-## Hors scope v2 (backlog)
+## Hors scope v2
+
+### Reporté en v2.1 (décision revue Codex : réduire le périmètre)
+
+- **Page admin** (liste des profils, changement de rôle membre ↔ admin)
+- **Invitation de membres depuis l'app** (Edge Function `inviter-membre`)
+- **Import historique Fathom** (Edge Function `fathom-backfill`)
+- **Masquage des champs confidentiels pour les non-admins** — à livrer dans le même lot que les invitations : tant qu'il n'existe pas, aucun compte non-admin ne doit être créé
+- **Réunions Fathom partagées** (`my_shared_with_team_recordings`) — la v2 ne traite que les réunions enregistrées par l'équipe (`my_recordings`)
+
+### Backlog (v3+)
 
 - Pas d'envoi automatique d'email (toujours via mailto + messagerie du membre)
 - Pas d'application mobile ni de responsive complet (desktop 13 pouces comme v1)
@@ -48,19 +62,14 @@ Overlay plein écran affiché tant qu'aucune session n'est active. **Rien de l'a
 
 ### F2 — Utilisateurs et rôles
 
-Deux rôles : `admin` et `membre`.
+Deux rôles existent dans le schéma : `admin` et `membre`. **En v2, les seuls comptes sont les 3 admins** — le rôle `membre` est prévu par le schéma (pour éviter toute migration en v2.1) mais n'a aucune UI.
 
-| Action | membre | admin |
+| Action | membre (v2.1) | admin |
 |---|---|---|
 | Lire/créer/modifier dossiers, notes, statuts | ✓ | ✓ |
 | Voir et rattacher les réunions Fathom | ✓ | ✓ |
 | Supprimer un dossier | ✗ | ✓ |
-| Inviter un utilisateur, changer un rôle | ✗ | ✓ |
-
-**Page admin** (visible uniquement si `role = 'admin'`) :
-- Liste des profils (email, nom, rôle, date de création)
-- Bouton « Inviter un membre » → Edge Function `inviter-membre` (envoi d'email d'invitation Supabase)
-- Changement de rôle membre ↔ admin
+| Inviter un utilisateur, changer un rôle (v2.1) | ✗ | ✓ |
 
 **Bootstrap des 3 admins** (étape de setup, documentée dans README) :
 1. Création des 3 comptes via le Dashboard Supabase (*Authentication → Users → Add user*, avec « Send invite » ou mot de passe temporaire)
@@ -70,6 +79,9 @@ Deux rôles : `admin` et `membre`.
 update public.profiles set role = 'admin'
 where lower(email) in ('adrien@prouesse.vc','djamel@lina.finance','mahefa@prouesse.vc');
 ```
+4. Désactivation des inscriptions publiques (*Authentication → Settings → « Allow new users to sign up » : OFF*)
+
+**Ajouter un utilisateur en v2** : opération manuelle d'un admin dans le Dashboard Supabase (même procédure que le bootstrap). La page admin et l'invitation depuis l'app arrivent en v2.1.
 
 > Note : on ne crée jamais de `auth.users` par INSERT SQL (non supporté proprement par GoTrue). Le passage par le Dashboard ou l'API admin est obligatoire.
 
@@ -192,11 +204,13 @@ create table public.meetings (
   prochaine_etape       text,
   date_prochaine_etape  date,
 
-  -- Matching
+  -- Matching (règle revue Codex : jamais de rattachement automatique ambigu)
   matched_email         text,
-  statut_match          text not null default 'non_rattache',  -- 'auto' | 'manuel' | 'non_rattache'
+  statut_match          text not null default 'non_rattache',
+                        -- 'auto' (1 seul match) | 'manuel' | 'non_rattache' (0 match) | 'ambigu' (plusieurs matchs)
+  matchs_candidats      jsonb default '[]'::jsonb,  -- si ambigu : [{deal_id, email, prenom, nom}] des dossiers possibles
 
-  payload_brut          jsonb,   -- payload webhook complet (rejouabilité)
+  payload_brut          jsonb,   -- payload webhook complet SANS le transcript (rejouabilité)
   recu_le               timestamptz not null default now()
 );
 create index idx_meetings_deal      on public.meetings(deal_id);
@@ -247,7 +261,7 @@ Remplace le proxy Cloudflare Worker v1 (`typeform-proxy.djamel-753.workers.dev`)
 C'était la v6 du backlog de Djamel ; la v2 la réalise.
 
 - **Déclencheur** : webhook Typeform configuré sur le form `pUE5Jgae` (Connect → Webhooks)
-- **Sécurité** : vérification de la signature `Typeform-Signature` (HMAC-SHA256 base64)
+- **Sécurité** : vérification de la signature `Typeform-Signature` (HMAC-SHA256, encodage base64, préfixe `sha256=`)
 - **Logique** : parse `form_response` → autoScore → upsert deal (dédup `typeform_id` = `form_response.token`) → event `import` → Realtime propage aux membres connectés
 - **Secrets** : `TYPEFORM_WEBHOOK_SECRET`
 
@@ -257,31 +271,30 @@ C'était la v6 du backlog de Djamel ; la v2 la réalise.
 
 Pipeline repris de `Lina_fathom_CRM` (Python → Deno/TypeScript), déclenché à chaque réunion traitée par Fathom.
 
-- **Déclencheur** : webhook Fathom (`POST /webhooks` enregistré avec `include_summary: true, include_action_items: true`)
+- **Déclencheur** : webhook Fathom — enregistré via `POST /webhooks` avec `include_transcript: true`, `include_summary: true`, `include_action_items: true`, périmètre `my_recordings` uniquement (revue Codex Q2)
 - **Sécurité** : vérification de signature style svix (headers `webhook-id`, `webhook-timestamp`, `webhook-signature`, secret `whsec_`, HMAC-SHA256 base64)
 - **Pipeline** (6 étapes) :
   1. **Déduplication** : si `fathom_recording_id` existe → update idempotent, stop
   2. **Invités externes** : extraire les emails des `calendar_invitees` hors domaines internes (`lina.finance`, `prouesse.vc`, `leveo.fr`) et hors liste d'emails internes
   3. **Réunion interne ?** : aucun invité externe → skip (la réunion n'entre pas dans le CRM)
-  4. **Matching deal** : chercher `deals` où `lower(email)` ∈ emails externes
-     - **1 match** → rattacher (`statut_match = 'auto'`, `matched_email` renseigné)
-     - **0 match** → classification Claude Haiku (prompt `CLASSIFICATION_SYSTEM_PROMPT` de Lina_fathom_CRM : prospect vs interne) ; si prospect → stocker non rattachée (visible dans « À rattacher ») ; si interne → skip
-     - **>1 match** → rattacher au deal le plus récent + event explicite mentionnant l'ambiguïté
-  5. **Extraction Haiku** (si rattachée ou prospect) : prompt `EXTRACTION_SYSTEM_PROMPT` de Lina_fathom_CRM → 3 scores (intérêt projet Lina / intérêt porteur / conformité islamique), structure recommandée, alertes charia, prochaine étape
-  6. **Stockage** : insert `meetings` (+ `payload_brut`) ; si rattachée → insert `deal_events` type `reunion`
+  4. **Matching deal** — règle stricte (revue Codex : jamais de rattachement ambigu) : chercher `deals` où `lower(email)` ∈ emails externes
+     - **exactement 1 match** → rattachement automatique (`statut_match = 'auto'`, `matched_email` renseigné)
+     - **0 match** → classification Claude Haiku (prompt `CLASSIFICATION_SYSTEM_PROMPT` de Lina_fathom_CRM : prospect vs interne) ; si prospect → stockée non rattachée (`statut_match = 'non_rattache'`, visible dans « À rattacher ») ; si interne → skip
+     - **plusieurs matchs** → **jamais de rattachement automatique** : stockée avec `statut_match = 'ambigu'` + `matchs_candidats` (liste des dossiers possibles), visible dans « À rattacher » avec mention explicite de l'ambiguïté
+  5. **Extraction Haiku** (si rattachée ou prospect) : prompt `EXTRACTION_SYSTEM_PROMPT` de Lina_fathom_CRM, alimenté par le **résumé + le transcript complet** (meilleure qualité de scoring) → 3 scores (intérêt projet Lina / intérêt porteur / conformité islamique), structure recommandée, alertes charia, prochaine étape
+  6. **Stockage** : insert `meetings` avec `payload_brut` **expurgé du transcript** ; si rattachée → insert `deal_events` type `reunion`
+- **Gestion du transcript** (revue Codex) : le transcript n'existe qu'en mémoire pendant l'exécution de la fonction — envoyé à Claude pour l'analyse, puis supprimé du payload avant toute écriture en base. Aucune colonne ne le stocke.
 - **Secrets** : `FATHOM_WEBHOOK_SECRET`, `ANTHROPIC_API_KEY`
 
-### F7 — Import historique Fathom (`fathom-backfill`)
+### F7 — Import historique Fathom (`fathom-backfill`) — ⏭ REPORTÉ EN v2.1
 
-- **Déclencheur** : appel HTTP one-shot par un admin (depuis la page admin)
-- **Logique** : `GET https://api.fathom.ai/external/v1/meetings` (header `X-Api-Key`, pagination `next_cursor`, `include_summary=true`, `include_action_items=true`) → même pipeline que F6 pour chaque réunion
-- **Attention** : rate limit Fathom 60 appels/min → traiter par lots avec pause
-- **Secrets** : `FATHOM_API_KEY`, `ANTHROPIC_API_KEY`
+> **Décision revue Codex** : le backfill historique (`GET /external/v1/meetings`, pagination `next_cursor`, rate limit 60 appels/min) est reporté en v2.1 pour réduire le périmètre. La v2 ne traite que les réunions reçues par webhook à partir de sa mise en service. Spécification conservée dans VERSIONS.md (backlog v2.1).
 
 ### F8 — Vue « Réunions à rattacher »
 
 - Badge compteur dans la topbar (à côté des KPIs) : nombre de `meetings` où `deal_id is null`
 - Vue listant ces réunions : titre, date, invités, résumé (premières lignes)
+- **Cas ambigu** (`statut_match = 'ambigu'`) : bandeau « ⚠ Plusieurs dossiers possibles » + liste des dossiers candidats (`matchs_candidats`) cliquables — rattachement en 1 clic vers le bon dossier
 - Sélecteur de dossier (recherche par nom/email) → rattachement manuel : `update meetings set deal_id = …, statut_match = 'manuel'` + insert `deal_events`
 - Bouton « Ignorer » (la réunion ne concerne pas le deal-flow) → suppression ou flag
 
@@ -298,6 +311,7 @@ Sections v1 conservées : barre de décision, carte Projet, Analyse IA, Points f
    - Prochaine étape + date
    - Notes de due diligence (textarea)
    - Sauvegarde directe à la perte de focus (update `deals`)
+   - *Visibilité : tous les membres connectés (en v2, tous sont admins). Le masquage par rôle arrive en v2.1 avec les invitations.*
 2. **Réunions Fathom** : une carte par réunion rattachée — titre, date, durée, qui a enregistré, lien `share_url`, résumé déplié/replié, action items en liste, les 3 scores Haiku avec code couleur
 3. **Notes internes** : fil de notes horodatées avec auteur (ajout, édition de ses propres notes, suppression admin)
 4. **Timeline** : liste chronologique des `deal_events` (icône par type : changement de statut, note, réunion, email, import)
@@ -330,8 +344,8 @@ Bouton « + Nouveau dossier » dans la sidebar : formulaire modal (prénom, nom,
 ### F14 — Déploiement
 
 - **Front** : Netlify (recommandé — repo privé OK, déploiement auto sur push, pas de build : `publish = "."`) ; GitHub Pages en alternative si le repo devient public
-- **Supabase** : projet région EU (RGPD), migrations SQL, Edge Functions déployées via CLI, secrets configurés
-- **Webhooks** : Fathom (`POST /webhooks` vers l'URL de la fonction) + Typeform (Connect → Webhooks)
+- **Supabase** : projet région EU (RGPD), migrations SQL, **3 Edge Functions** déployées via CLI (`typeform-sync`, `typeform-webhook`, `fathom-webhook`), secrets configurés
+- **Webhooks** : Fathom (`POST /webhooks` vers l'URL de la fonction, avec transcript + summary + action items) + Typeform (Connect → Webhooks)
 
 ---
 
@@ -340,14 +354,15 @@ Bouton « + Nouveau dossier » dans la sidebar : formulaire modal (prénom, nom,
 - [ ] F1 — Impossible de voir un dossier ou une donnée sans être connecté (test : ouvrir l'URL en navigation privée → login uniquement)
 - [ ] F1 — La déconnexion ramène à l'écran de login et purge l'état local
 - [ ] F2 — Les 3 admins par défaut ont le rôle `admin` à leur premier login
-- [ ] F2 — Un membre invité par un admin reçoit l'email et peut définir son mot de passe
-- [ ] F2 — Un membre (non admin) ne voit pas la page admin et ne peut pas supprimer de dossier
+- [ ] F2 — Les inscriptions publiques sont désactivées (aucune création de compte possible hors Dashboard Supabase)
 - [ ] F3 — Aucune table accessible sans JWT (test direct API REST Supabase → 401 / 0 ligne)
 - [ ] F4 — Le bouton Synchroniser importe les leads Typeform sans créer de doublons
 - [ ] F4 — Une re-synchronisation n'écrase jamais les statuts ni les champs confidentiels
 - [ ] F5 — Une nouvelle soumission Typeform apparaît dans l'app sans clic (< 30 s)
-- [ ] F6 — Une réunion Fathom dont un participant a l'email d'un dossier se rattache automatiquement
+- [ ] F6 — Une réunion Fathom dont un participant correspond à **exactement un** dossier se rattache automatiquement
+- [ ] F6 — Une réunion dont l'email correspond à **plusieurs** dossiers n'est **pas** rattachée automatiquement et apparaît dans « À rattacher » avec la mention d'ambiguïté
 - [ ] F6 — Une réunion interne (que des emails @lina.finance / @prouesse.vc / @leveo.fr) n'apparaît pas dans le CRM
+- [ ] F6 — Aucun transcript n'est stocké en base (vérifier `payload_brut` et toutes les colonnes de `meetings` après une réunion test)
 - [ ] F8 — Une réunion prospect sans dossier correspondant apparaît dans « À rattacher »
 - [ ] F9 — Les champs confidentiels saisis sont persistés et visibles par les autres membres
 - [ ] F10 — Le déplacement d'une carte Kanban est visible chez un autre membre connecté en < 2 s
@@ -362,9 +377,9 @@ Bouton « + Nouveau dossier » dans la sidebar : formulaire modal (prénom, nom,
 - **supabase-js v2** chargé via CDN (`https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2`) — seule dépendance front ajoutée
 - L'**anon key** Supabase est faite pour être publique (la sécurité vient du RLS + JWT) — contrairement aux clés v1 qui étaient des secrets exposés
 - **Région Supabase : EU** (Francfort ou Paris) — données financières confidentielles, RGPD
-- **Rate limit Fathom** : 60 appels API/min → le backfill pagine avec pauses
-- **Transcript Fathom** : non stocké en v2 (volumineux) — le `share_url` suffit pour y accéder
+- **Transcript Fathom** : reçu dans le payload webhook (`include_transcript: true`), utilisé **en mémoire uniquement** pour l'analyse Claude, puis supprimé — jamais stocké (ni en base, ni dans `payload_brut`)
+- **RGPD / Anthropic** : le résumé et le transcript des réunions sont envoyés à l'API Anthropic pour produire les 3 scores. Ce traitement est identique à celui de `Lina_fathom_CRM` (déjà en production) — il doit rester explicitement accepté par l'équipe. S'il ne l'est plus : désactiver l'étape d'extraction Haiku (le rattachement par email continue de fonctionner, sans scores).
 - Idempotence partout : upsert sur `typeform_id` et `fathom_recording_id`, le rejeu d'un webhook ne crée pas de doublon
 - Les prompts Claude Haiku (classification + extraction 3 scores) sont repris **à l'identique** de `Lina_fathom_CRM/classifier.py` — logique métier déjà validée par l'équipe
-- Modèle utilisé pour la classification/extraction : `claude-haiku-4-5` (rapide, économique)
+- **Modèle épinglé : `claude-haiku-4-5-20251001`** (revue Codex : jamais d'alias non versionné, pour qu'un changement silencieux de modèle ne modifie pas les scores)
 - Gestion d'erreur : tout échec d'API externe (Typeform, Fathom, Anthropic) est loggé et n'interrompt pas le pipeline (retry 3x avec backoff, comme Lina_fathom_CRM)

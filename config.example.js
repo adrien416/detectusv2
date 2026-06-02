@@ -1,10 +1,11 @@
-// config.example.js — Copier ce fichier en config.js et renseigner les vraies clés
-// Ne jamais committer config.js (il est dans .gitignore)
+// config.example.js — Copier ce fichier en config.js et renseigner les valeurs
+// config.js est gitignored par convention, mais ne contient AUCUN secret :
+// l'URL Supabase et l'anon key sont publiques par conception (la sécurité vient du RLS + Auth).
+//
+// ⚠️ Les clés Typeform, Fathom et Anthropic ne vont JAMAIS ici : elles vivent
+//    côté serveur dans les secrets des Edge Functions Supabase (`supabase secrets set`).
 
 const CONFIG = {
-  TYPEFORM_TOKEN: "xxx",           // Personal Access Token Typeform
-  TYPEFORM_FORM_ID: "pUE5Jgae",    // ID du formulaire (déjà renseigné)
-  ANTHROPIC_API_KEY: "xxx",        // Clé API Anthropic Claude
-  SHEETS_API_KEY: "xxx",           // Google Sheets API Key
-  SHEETS_ID: "xxx",                // ID du Google Sheet Detectus
+  SUPABASE_URL: "https://xxxx.supabase.co",   // URL du projet Supabase
+  SUPABASE_ANON_KEY: "eyJ...",                // clé anonyme publique (protégée par RLS)
 };

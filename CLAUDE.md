@@ -48,19 +48,19 @@ detectusv2/
 │   │   └── 001_schema.sql  ← schéma complet (tables, RLS, triggers, enums)
 │   ├── seed.sql            ← promotion admin des 3 comptes par défaut
 │   └── functions/
-│       ├── typeform-sync/      ← backfill + bouton Synchroniser
+│       ├── typeform-sync/      ← import + bouton Synchroniser
 │       ├── typeform-webhook/   ← temps réel Typeform
-│       ├── fathom-webhook/     ← réunions Fathom → matching → dossiers
-│       ├── fathom-backfill/    ← import historique Fathom (one-shot)
-│       └── inviter-membre/     ← invitation utilisateur (admin only)
+│       └── fathom-webhook/     ← réunions Fathom → matching → dossiers
+│       (v2.1 : fathom-backfill/ et inviter-membre/ — reportés, revue Codex)
 ├── CLAUDE.md               ← ce fichier
 ├── SPECS.md                ← spec de la version en cours
 ├── VERSIONS.md             ← historique et roadmap
-├── HANDOFF.md              ← document de passation (revue Codex)
+├── HANDOFF.md              ← document de passation (cycle de revue Codex)
+├── CODEX_REVIEW.md         ← revue Codex du plan (validation sous réserves)
 └── .gitignore              ← config.js, .env, supabase/.temp
 ```
 
-> État actuel : seuls les documents existent (plan en revue). Le code v2 (`supabase/`, modifications d'index.html, netlify.toml) sera créé lors de la session d'implémentation, après validation du plan.
+> État actuel : seuls les documents existent (plan révisé après revue Codex). Le code v2 (`supabase/`, modifications d'index.html, netlify.toml) sera créé lors de la session d'implémentation, après validation finale du plan.
 
 ---
 
@@ -80,7 +80,7 @@ const CONFIG = {
 TYPEFORM_TOKEN            ← Personal Access Token Typeform
 TYPEFORM_FORM_ID          ← pUE5Jgae
 TYPEFORM_WEBHOOK_SECRET   ← secret du webhook Typeform
-FATHOM_API_KEY            ← clé API Fathom (Settings → API Access)
+FATHOM_API_KEY            ← clé API Fathom (enregistrement du webhook ; backfill en v2.1)
 FATHOM_WEBHOOK_SECRET     ← secret de signature du webhook Fathom (whsec_...)
 ANTHROPIC_API_KEY         ← clé API Anthropic (classification/extraction Haiku)
 ```
@@ -116,6 +116,9 @@ Trois scores de 1 à 5 extraits de chaque réunion prospect :
 
 > Les prompts exacts sont dans `Lina_fathom_CRM/classifier.py` (CLASSIFICATION_SYSTEM_PROMPT et EXTRACTION_SYSTEM_PROMPT) — à reprendre à l'identique.
 
+**Modèle : `claude-haiku-4-5-20251001`** — toujours la version épinglée, jamais d'alias (`claude-haiku-4-5`), pour qu'un changement silencieux de modèle ne modifie pas les scores (revue Codex).
+**Entrée de l'analyse :** résumé + transcript complet de la réunion — le transcript n'est utilisé qu'en mémoire, jamais stocké.
+
 ---
 
 ## 6. Source des données — Typeform
@@ -143,10 +146,14 @@ Trois scores de 1 à 5 extraits de chaque réunion prospect :
 ## 7. Source des données — Fathom
 
 **API :** `https://api.fathom.ai/external/v1` — header `X-Api-Key`
-**Webhook :** enregistré via `POST /webhooks` avec `include_summary: true`, `include_action_items: true`
+**Webhook :** enregistré via `POST /webhooks` avec `include_transcript: true`, `include_summary: true`, `include_action_items: true` — périmètre `my_recordings` uniquement
 **Signature :** style svix — headers `webhook-id` / `webhook-timestamp` / `webhook-signature`, secret préfixé `whsec_`, HMAC-SHA256 base64 sur `{webhook-id}.{webhook-timestamp}.{body}`
 **Domaines internes** (jamais des prospects) : `lina.finance`, `prouesse.vc`, `leveo.fr`
-**Matching :** email d'un invité externe = email d'un deal → rattachement automatique
+**Matching (règle revue Codex — jamais de rattachement ambigu) :**
+- exactement 1 deal correspondant → rattachement automatique
+- 0 match → vue « À rattacher »
+- plusieurs matchs → vue « À rattacher » avec mention de l'ambiguïté et liste des dossiers candidats
+**Transcript :** reçu par le webhook, utilisé en mémoire pour l'analyse Claude, **jamais stocké** (ni en base, ni dans `payload_brut`)
 **Rate limit :** 60 appels/min
 
 ---
@@ -191,7 +198,7 @@ Chaque version se code en une seule session. Si une idée émerge pendant le dev
 - Ne PAS l'ajouter à la version en cours
 - Committer ce qui fonctionne avant d'ouvrir une nouvelle version
 
-**Exception v2 :** la v2 est volumineuse (auth + BDD + 5 Edge Functions + refonte persistance). Elle se découpe en 4 sous-lots committés séparément (voir VERSIONS.md), tous sur la même branche.
+**Exception v2 :** la v2 reste volumineuse (auth + BDD + 3 Edge Functions + refonte persistance). Elle se découpe en 4 lots committés séparément (voir VERSIONS.md), tous sur la même branche. La page admin, l'invitation in-app et le backfill Fathom sont reportés en v2.1 (décision revue Codex — réduction du périmètre).
 
 ---
 
