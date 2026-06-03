@@ -59,6 +59,7 @@ export interface LigneDeal {
   points_faibles: string[];
   action_reco: string;
   sante: boolean;
+  statut: string;
   source: string;
 }
 
@@ -146,11 +147,22 @@ export function autoScore(l: EntreeScore): ResultatScore {
     };
   }
 
-  let s = 30;
   const sante = SECTEURS_SANTE.some((x) =>
     (l.activite + " " + l.description).toLowerCase().includes(x.toLowerCase())
   );
-  if (sante) s += 25;
+  if (sante) {
+    return {
+      score: 15,
+      decision: "REFUSÉ",
+      motif: "Santé — segment conservé en base, non financé pour l'instant",
+      points_forts: ["Dossier conservé pour réouverture future"],
+      points_faibles: ["Professions de santé non financées pour l'instant"],
+      action_reco: "Refuser santé — garder le dossier en suivi",
+      sante: true,
+    };
+  }
+
+  let s = 30;
   if (l.entrepriseCreee) s += 15;
   if (l.caPlus50K) s += 15;
   if (l.documentFourni) s += 10;
@@ -161,7 +173,6 @@ export function autoScore(l: EntreeScore): ResultatScore {
 
   const points_forts: string[] = [];
   const points_faibles: string[] = [];
-  if (sante) points_forts.push("Secteur santé (priorité Lina)");
   if (l.entrepriseCreee) points_forts.push("Entreprise existante");
   else points_faibles.push("Entreprise non créée");
   if (l.caPlus50K) points_forts.push("CA positif");
@@ -227,6 +238,7 @@ export function reponseVersDeal(reponse: ReponseTypeform): LigneDeal {
     date_soumission: reponse.submitted_at,
     payload_brut: reponse,   // réponse brute complète (D14 — sanctuarisation)
     ...scoring,
+    statut: scoring.sante ? "sante" : "nouveau",
     source: "typeform",
   };
 }

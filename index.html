@@ -116,6 +116,8 @@ body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direc
 .act-btn.orange:hover{background:var(--orange);color:#fff}
 .act-btn.purple{background:#f3effe;color:var(--purple);border-color:var(--purple)}
 .act-btn.purple:hover{background:var(--purple);color:#fff}
+.act-btn.teal{background:#e8fffa;color:#00a88f;border-color:#00a88f}
+.act-btn.teal:hover{background:#00a88f;color:#fff}
 .act-btn.navy{background:var(--input-bg);color:var(--text-main);border-color:var(--card-border)}
 .act-btn.navy:hover{background:var(--teal);color:#061D39}
 .card{background:var(--card-bg);border-radius:10px;border:1px solid var(--card-border);margin-bottom:10px}
@@ -419,6 +421,7 @@ body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direc
           <button class="fb" onclick="setF('info',this,'st')">Info</button>
           <button class="fb" onclick="setF('pitch',this,'st')">Attente Pitch</button>
           <button class="fb" onclick="setF('attente',this,'st')">Liste d'attente</button>
+          <button class="fb" onclick="setF('sante',this,'st')">Santé plus tard</button>
           <button class="fb" onclick="setF('accepte',this,'st')">Acceptés</button>
           <button class="fb" onclick="setF('refuse',this,'st')">Refusés</button>
         </div>
@@ -547,10 +550,11 @@ const ST={
   info:{label:'Info demandée',color:C.orange},
   pitch:{label:'Attente Pitch',color:C.blue},
   attente:{label:"Liste d'attente",color:C.teal},
+  sante:{label:'Santé plus tard',color:'#00a88f'},
   accepte:{label:'Accepté',color:C.green},
   refuse:{label:'Refusé',color:C.red},
 };
-const ST_ORDER=['nouveau','info','pitch','attente','accepte','refuse'];
+const ST_ORDER=['nouveau','info','pitch','attente','sante','accepte','refuse'];
 
 const EMAIL_DEFAULTS={
   info:{label:'Demande de documents',subject:'Lina Finance — Compléments nécessaires pour votre dossier',body:`Bonjour {{prenom}},
@@ -565,13 +569,16 @@ Nous revenons vers vous rapidement après réception.
 
 Cordialement,
 L'Équipe Lina Finance`},
-  pitch:{label:'Invitation pitch',subject:'Lina Finance — Invitation à un appel de présentation',body:`Bonjour {{prenom}},
+  pitch:{label:'Invitation pitch',subject:'Lina Capital — Invitation à un appel de présentation',body:`Bonjour {{prenom}},
 
-Nous avons bien étudié votre dossier pour {{societe}} et souhaitons aller plus loin.
+Merci grandement d'avoir rempli le typeform pour votre demande de financement auprès de Lina Capital.
+
+Nous avons bien étudié votre dossier {{societe}} et souhaitons aller plus loin.
 
 Nous vous proposons un appel de 30 minutes afin d'échanger sur votre projet et vous présenter nos conditions de financement halal.
 
-Pouvez-vous nous indiquer vos disponibilités cette semaine ?
+Voici nos disponibilités :
+prouesse.vc/cal/30min
 
 Cordialement,
 L'Équipe Lina Finance`},
@@ -602,6 +609,20 @@ Nous vous remercions pour l'intérêt que vous portez à Lina Finance et pour le
 Après étude attentive de votre dossier, nous ne sommes malheureusement pas en mesure de donner une suite favorable, en raison de critères propres à notre politique de financement.
 
 Nous vous souhaitons plein succès dans votre projet.
+
+Cordialement,
+L'Équipe Lina Finance`},
+  sante:{label:'Refus santé temporaire',subject:'Lina Capital — Suite à votre demande de financement',body:`Bonjour {{prenom}},
+
+Merci grandement d'avoir rempli le typeform pour votre demande de financement auprès de Lina Capital.
+
+Nous avons bien étudié votre dossier {{societe}}.
+
+À ce stade, nous ne finançons pas encore les professions de santé. Ce segment fait bien partie de notre feuille de route et nous souhaitons pouvoir revenir vers vous lorsque l'offre sera ouverte.
+
+Nous conservons donc votre dossier dans notre base de suivi afin de pouvoir vous recontacter le moment venu.
+
+Nous vous souhaitons sincèrement le meilleur pour votre recherche de financement.
 
 Cordialement,
 L'Équipe Lina Finance`},
@@ -1339,7 +1360,7 @@ function filtrerStatutDepuisKpi(statut){
   const backlogTab=[...document.querySelectorAll('.ftab')].find(b=>b.textContent.trim()==='Backlog');
   if(backlogTab)showPanel('st',backlogTab);
   document.querySelectorAll('#filters-st .fb').forEach(b=>b.classList.remove('on'));
-  const labels={Tous:'Tous',nouveau:'Nouveaux',info:'Info',pitch:'Attente Pitch',attente:"Liste d'attente",accepte:'Acceptés',refuse:'Refusés'};
+  const labels={Tous:'Tous',nouveau:'Nouveaux',info:'Info',pitch:'Attente Pitch',attente:"Liste d'attente",sante:'Santé plus tard',accepte:'Acceptés',refuse:'Refusés'};
   const cible=[...document.querySelectorAll('#filters-st .fb')].find(b=>b.textContent.trim()===labels[statut]);
   if(cible)cible.classList.add('on');
   render();
@@ -1374,15 +1395,28 @@ function pick(id){
 
 function actionButtons(l){
   const s=l.statut,id=l.id;
-  if(s==='nouveau')return`<button class="act-btn orange" onclick="setStatus('${id}','info')">Demander info</button><button class="act-btn purple" onclick="setStatus('${id}','pitch')">Planifier pitch</button><button class="act-btn red" onclick="setStatus('${id}','refuse')">Refuser</button>`;
-  if(s==='info')return`<button class="act-btn purple" onclick="setStatus('${id}','pitch')">Doc reçu — Planifier pitch</button><button class="act-btn orange" onclick="relance('${id}')">Relancer</button><button class="act-btn red" onclick="setStatus('${id}','refuse')">Refuser</button>`;
-  if(s==='pitch')return`<button class="act-btn green" onclick="setStatus('${id}','accepte')">Accepter</button><button class="act-btn navy" onclick="setStatus('${id}','attente')">Liste d'attente</button><button class="act-btn red" onclick="setStatus('${id}','refuse')">Refuser</button>`;
-  if(s==='attente')return`<button class="act-btn purple" onclick="setStatus('${id}','pitch')">Replanifier pitch</button><button class="act-btn red" onclick="setStatus('${id}','refuse')">Refuser</button>`;
+  const boutonSante=l.sante?`<button class="act-btn teal" onclick="setStatus('${id}','sante')">Refuser santé</button>`:'';
+  if(s==='nouveau')return`<button class="act-btn orange" onclick="setStatus('${id}','info')">Demander info</button><button class="act-btn purple" onclick="setStatus('${id}','pitch')">Planifier pitch</button>${boutonSante}<button class="act-btn red" onclick="setStatus('${id}','refuse')">Refuser</button>`;
+  if(s==='info')return`<button class="act-btn purple" onclick="setStatus('${id}','pitch')">Doc reçu — Planifier pitch</button><button class="act-btn orange" onclick="relance('${id}')">Relancer</button>${boutonSante}<button class="act-btn red" onclick="setStatus('${id}','refuse')">Refuser</button>`;
+  if(s==='pitch')return`<button class="act-btn orange" onclick="setStatus('${id}','info')">Demander info</button><button class="act-btn green" onclick="setStatus('${id}','accepte')">Accepter</button><button class="act-btn navy" onclick="setStatus('${id}','attente')">Liste d'attente</button>${boutonSante}<button class="act-btn red" onclick="setStatus('${id}','refuse')">Refuser</button>`;
+  if(s==='attente')return`<button class="act-btn orange" onclick="setStatus('${id}','info')">Demander info</button><button class="act-btn purple" onclick="setStatus('${id}','pitch')">Replanifier pitch</button>${boutonSante}<button class="act-btn red" onclick="setStatus('${id}','refuse')">Refuser</button>`;
+  if(s==='sante')return`<button class="act-btn orange" onclick="setStatus('${id}','info')">Demander info</button><button class="act-btn purple" onclick="setStatus('${id}','pitch')">Planifier pitch</button><button class="act-btn red" onclick="setStatus('${id}','refuse')">Refuser définitivement</button>`;
   if(s==='accepte'||s==='refuse')return`<button class="act-btn navy" onclick="setStatus('${id}','nouveau')">Réouvrir le dossier</button>`;
   return '';
 }
 
-function relance(id){const l=LEADS.find(x=>x.id===id);if(!l)return;afficherToast(`Relance envoyée → ${l.prenom} ${l.nom}`,C.orange);}
+function relance(id){
+  const l=LEADS.find(x=>x.id===id);
+  if(!l)return;
+  const href=mailtoLink(l);
+  if(!href){
+    afficherToast('Aucun email prêt pour ce dossier',C.red);
+    return;
+  }
+  window.open(href,'_blank','noopener');
+  tracerEmailEnvoye(id);
+  afficherToast(`Relance ouverte dans la messagerie → ${l.email}`,C.orange);
+}
 
 function mailtoLink(l){const tpl=templateEmail(l.statut);if(!tpl)return null;const subj=encodeURIComponent(tpl.subject||'Lina Finance');const body=encodeURIComponent(appliquerVariablesTemplate(tpl.body,l));const email=encodeURIComponent(String(l.email||'').trim());return `mailto:${email}?subject=${subj}&body=${body}`;}
 

@@ -41,14 +41,17 @@ Nous revenons vers vous rapidement après réception.
 
 Cordialement,
 L''Équipe Lina Finance'),
-('pitch', 'Invitation pitch', 'Lina Finance — Invitation à un appel de présentation',
+('pitch', 'Invitation pitch', 'Lina Capital — Invitation à un appel de présentation',
 'Bonjour {{prenom}},
 
-Nous avons bien étudié votre dossier pour {{societe}} et souhaitons aller plus loin.
+Merci grandement d''avoir rempli le typeform pour votre demande de financement auprès de Lina Capital.
+
+Nous avons bien étudié votre dossier {{societe}} et souhaitons aller plus loin.
 
 Nous vous proposons un appel de 30 minutes afin d''échanger sur votre projet et vous présenter nos conditions de financement halal.
 
-Pouvez-vous nous indiquer vos disponibilités cette semaine ?
+Voici nos disponibilités :
+prouesse.vc/cal/30min
 
 Cordialement,
 L''Équipe Lina Finance'),
