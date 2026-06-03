@@ -17,7 +17,7 @@
 | Implémentation (4 lots) | ✅ Lot 1 `c42c464` · Lot 2 `5a65d9b` · Lot 3 `d95b405` · Lot 4 `5ed979f` |
 | Revue Codex du code (PR #1) | ✅ 2 commentaires P2 + correctif `18f960e` (XSS, grants SQL, publication Netlify restreinte, signatures à temps constant) |
 | Merge de la PR #1 vers `main` | ✅ commit `8968038` — 02/06/2026, autorisé par Adrien |
-| **Mise en production** (guide README.md + HANDOFF §10) | ⏳ **EN COURS** — étape actuelle : création du projet Supabase |
+| **Mise en production** (guide README.md + HANDOFF §10) | ✅ **EN PRODUCTION** — site Netlify + Supabase branchés ; mise à jour templates/santé à appliquer |
 
 ### Corrections Codex appliquées
 
@@ -86,6 +86,7 @@ La v2 reprend les statuts et le scoring **du code**, et règle le problème de p
 | D12 | **Périmètre v2 réduit** : page admin, invitations in-app et backfill Fathom → v2.1 | Revue Codex : mieux vaut une v2 courte et stable qu'une grosse version où chaque intégration peut bloquer les autres. |
 | D13 | **Périmètre Fathom = `my_recordings` uniquement** | Revue Codex Q2 : les réunions partagées ajoutent du bruit ; à élargir en v2.1 après test. |
 | D14 | **Sanctuarisation des réponses Typeform** (ajoutée le 02/06/2026 suite à la question d'Adrien) | La donnée des porteurs de projet est l'actif principal : import **exhaustif** (suppression de la limite v1 de 1 000 réponses), réponse brute conservée dans `deals.payload_brut`, historique propriété de Lina Capital dans son Postgres (Typeform n'est plus un point de défaillance unique). |
+| D15 | **Professions de santé conservées mais non traitées pour l'instant** (03/06/2026) | Les dossiers santé ne sont plus qualifiés comme priorité immédiate. Ils restent en base avec le statut `sante` / « Santé plus tard » et un email poli dédié explique que Lina ne finance pas encore ce segment mais garde le dossier pour réouverture future. |
 
 ---
 
@@ -235,10 +236,42 @@ Le cycle complet plan → revue → implémentation → revue du code → merge 
 > Guide détaillé : **README.md** (chaque étape avec les commandes exactes).
 > Réalisée par Adrien (non-développeur) avec assistance Claude — terminal nécessaire uniquement pour les Edge Functions et les webhooks.
 
+### Mise à jour Codex du 03/06/2026 — templates emails + santé
+
+Objectif : améliorer le CRM sans perdre les données déjà en production.
+
+Inclus dans la mise à jour :
+- Mode admin « Emails » : les admins peuvent modifier les templates depuis l'app.
+- Variables disponibles dans les emails : `{{prenom}}`, `{{nom}}`, `{{email}}`, `{{activite}}`, `{{societe}}`, `{{entreprise}}`.
+- Le bouton « Ouvrir dans ma messagerie » ouvre un nouvel onglet pour ne pas perdre Detectus.
+- Les compteurs du haut deviennent cliquables et filtrent les dossiers.
+- Le template pitch reprend le format validé : remerciement Typeform + lien `prouesse.vc/cal/30min`.
+- Nouveau statut `sante` / « Santé plus tard ».
+- Nouveau bouton « Refuser santé » avec email poli : Lina ne finance pas encore les professions de santé, mais conserve le dossier pour réouverture future.
+- Le bouton « Relancer » ouvre maintenant la messagerie avec l'email prêt à envoyer ; il n'envoie pas automatiquement l'email.
+- Les dossiers déjà marqués santé seront déplacés vers « Santé plus tard » lors de la migration Supabase.
+
+Commandes manuelles à lancer après le push sur `main` :
+
+```powershell
+cd C:\Users\PC\Documents\detectusv2
+git pull
+npx supabase db push
+npx supabase functions deploy typeform-sync
+npx supabase functions deploy typeform-webhook --no-verify-jwt
+```
+
+Après ces commandes :
+- vérifier que Netlify a terminé son deploy ;
+- ouvrir `https://detectus2.netlify.app` ;
+- se connecter en admin ;
+- vérifier que le bouton « Emails » apparaît ;
+- vérifier qu'un dossier santé affiche « Santé plus tard » et le bouton « Refuser santé ».
+
 ### Checklist de déploiement
 
 **A. Supabase — via le Dashboard (sans terminal)**
-- [x] A1. Projet Supabase créé : ref `qobmctcloqekfascyrcs` (PC Windows, PowerShell)
+- [x] A1. Projet Supabase créé : ref `qobmctcloqekfascyrqs` (PC Windows, PowerShell)
 - [ ] A2. URL du projet + anon key + mot de passe BDD notés en lieu sûr
 - [x] A3. Schéma de base appliqué via `npx supabase db push` — succès confirmé par Adrien le 03/06/2026
 - [ ] A4. Seed appliqué (SQL Editor → contenu de `supabase/seed.sql` → Run)
@@ -246,21 +279,22 @@ Le cycle complet plan → revue → implémentation → revue du code → merge 
 - [ ] A6. ⚠️ Inscriptions publiques désactivées (Authentication → Sign In / Up → « Allow new users to sign up » : OFF)
 - [x] A7. Secrets configurés via `npx supabase secrets set` — succès confirmé le 03/06/2026
 
-**B. Edge Functions — via le terminal (10 copier-coller)**
+**B. Edge Functions — via le terminal**
 - [x] B1. Environnement PC Windows utilisé : PowerShell + `npx supabase`
 - [x] B2. Code du repo cloné dans `C:\Users\PC\Documents\detectusv2`, branche `main`
-- [x] B3. `npx supabase login` + `npx supabase link --project-ref qobmctcloqekfascyrcs` effectués
+- [x] B3. `npx supabase login` + `npx supabase link --project-ref qobmctcloqekfascyrqs` effectués
 - [x] B3bis. Secrets Edge Functions relancés après token CLI Supabase
 - [x] B4. Les 3 fonctions déployées : typeform-sync, typeform-webhook (--no-verify-jwt), fathom-webhook (--no-verify-jwt)
+- [ ] B5. Après push Codex templates/santé : redéployer `typeform-sync` + `typeform-webhook` pour appliquer la nouvelle règle santé
 
-**C. Webhooks externes — via le terminal (2 copier-coller)**
-- [ ] C1. Webhook Typeform créé (curl PUT, form pUE5Jgae → typeform-webhook) — bloqué le 03/06/2026 : `INSUFFICIENT_PERMISSIONS` sur le token Typeform
-- [ ] C2. Webhook Fathom créé (curl POST → fathom-webhook) + secret whsec_ reçu mis dans les secrets Supabase + fonction redéployée
+**C. Webhooks externes — via le terminal**
+- [x] C1. Webhook Typeform créé (curl PUT, form pUE5Jgae → typeform-webhook) — résolu après régénération du token Typeform avec les droits suffisants
+- [x] C2. Webhook Fathom créé (curl POST → fathom-webhook) + secret reçu mis dans les secrets Supabase + fonction redéployée
 
 **D. Front — via le Dashboard Netlify (sans terminal)**
-- [ ] D1. Site Netlify créé depuis le repo `adrien416/detectusv2`, branche `main`
-- [ ] D2. Variables d'environnement SUPABASE_URL + SUPABASE_ANON_KEY renseignées AVANT le premier déploiement
-- [ ] D3. Site déployé et accessible
+- [x] D1. Site Netlify créé depuis le repo `adrien416/detectusv2`, branche `main`
+- [x] D2. Variables d'environnement SUPABASE_URL + SUPABASE_ANON_KEY renseignées
+- [x] D3. Site déployé et accessible : `https://detectus2.netlify.app`
 
 **E. Vérifications finales (critères d'acceptation SPECS.md)**
 - [ ] E1. Login obligatoire (navigation privée → rien sans connexion)
@@ -268,6 +302,8 @@ Le cycle complet plan → revue → implémentation → revue du code → merge 
 - [ ] E3. Soumission Typeform de test → apparaît en < 30 s sans recharger
 - [ ] E4. Drag & drop visible chez un autre membre en < 2 s
 - [ ] E5. Réunion Fathom de test → rattachée (1 match) ou dans « À rattacher »
+- [ ] E6. Après push Codex templates/santé : bouton admin « Emails » visible pour Adrien
+- [ ] E7. Après push Codex templates/santé : dossiers santé dans « Santé plus tard » + email dédié ouvrable dans la messagerie
 
 **F. Après quelques jours de v2 stable**
 - [ ] F1. Couper la page GitHub Pages v1 (`djamel-lab/detectus`) — action Djamel
