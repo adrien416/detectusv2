@@ -244,17 +244,17 @@ Le cycle complet plan → revue → implémentation → revue du code → merge 
 - [ ] A4. Seed appliqué (SQL Editor → contenu de `supabase/seed.sql` → Run)
 - [ ] A5. Les 3 comptes admin créés (Authentication → Users) : adrien@prouesse.vc, djamel@lina.finance, mahefa@prouesse.vc
 - [ ] A6. ⚠️ Inscriptions publiques désactivées (Authentication → Sign In / Up → « Allow new users to sign up » : OFF)
-- [ ] A7. Secrets configurés (Edge Functions → Secrets) : TYPEFORM_TOKEN, TYPEFORM_FORM_ID, TYPEFORM_WEBHOOK_SECRET, ANTHROPIC_API_KEY
+- [x] A7. Secrets configurés via `npx supabase secrets set` — succès confirmé le 03/06/2026
 
 **B. Edge Functions — via le terminal (10 copier-coller)**
 - [x] B1. Environnement PC Windows utilisé : PowerShell + `npx supabase`
 - [x] B2. Code du repo cloné dans `C:\Users\PC\Documents\detectusv2`, branche `main`
 - [x] B3. `npx supabase login` + `npx supabase link --project-ref qobmctcloqekfascyrcs` effectués
-- [ ] B3bis. Secrets Edge Functions à relancer après reconnexion CLI : `npx supabase secrets set ...`
-- [ ] B4. Les 3 fonctions déployées : typeform-sync, typeform-webhook (--no-verify-jwt), fathom-webhook (--no-verify-jwt)
+- [x] B3bis. Secrets Edge Functions relancés après token CLI Supabase
+- [x] B4. Les 3 fonctions déployées : typeform-sync, typeform-webhook (--no-verify-jwt), fathom-webhook (--no-verify-jwt)
 
 **C. Webhooks externes — via le terminal (2 copier-coller)**
-- [ ] C1. Webhook Typeform créé (curl PUT, form pUE5Jgae → typeform-webhook)
+- [ ] C1. Webhook Typeform créé (curl PUT, form pUE5Jgae → typeform-webhook) — bloqué le 03/06/2026 : `INSUFFICIENT_PERMISSIONS` sur le token Typeform
 - [ ] C2. Webhook Fathom créé (curl POST → fathom-webhook) + secret whsec_ reçu mis dans les secrets Supabase + fonction redéployée
 
 **D. Front — via le Dashboard Netlify (sans terminal)**
@@ -288,3 +288,27 @@ Reprise recommandée :
 1. Relancer `npx supabase login` dans PowerShell.
 2. Si l'erreur persiste, créer un token personnel Supabase dans le Dashboard Supabase, puis le mettre dans PowerShell avec `$env:SUPABASE_ACCESS_TOKEN="..."`.
 3. Relancer uniquement la commande `npx supabase secrets set ...`, puis continuer avec le déploiement des 3 fonctions.
+
+Résolu : un token personnel Supabase a permis de reprendre. Les secrets ont été posés et les 3 fonctions ont été déployées.
+
+### Incident Typeform du 03/06/2026
+
+Adrien a tenté de créer le webhook Typeform avec le token fourni, via :
+
+```powershell
+Invoke-RestMethod -Method Put -Uri "https://api.typeform.com/forms/pUE5Jgae/webhooks/detectus-v2" ...
+```
+
+Erreur reçue :
+
+```text
+INSUFFICIENT_PERMISSIONS — not enough permissions to complete the action
+```
+
+Cause probable : le token Typeform n'a pas le scope `webhooks:write` ou son propriétaire n'a pas les droits suffisants sur le formulaire `pUE5Jgae`.
+
+Reprise recommandée :
+1. Régénérer un token Typeform depuis le compte propriétaire/admin du formulaire `pUE5Jgae`, avec au minimum les droits réponses + webhooks.
+2. Mettre à jour `$TYPEFORM_TOKEN` dans PowerShell.
+3. Mettre à jour le secret Supabase `TYPEFORM_TOKEN`.
+4. Relancer uniquement la commande de création du webhook Typeform.
