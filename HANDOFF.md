@@ -14,9 +14,10 @@
 | Revue Codex (`CODEX_REVIEW.md`) | ✅ commit `b852da6` — **« validé sous réserves »** |
 | Révision du plan selon la revue | ✅ commit `2a3aea5` |
 | Décision D11 (analyse Anthropic) tranchée par Adrien | ✅ **OUI** — 02/06/2026 (résumé + transcript, comme Lina_fathom_CRM) |
-| Implémentation (4 lots) | ✅ Lot 1 `c42c464` · Lot 2 `5a65d9b` · Lot 3 `d95b405` · Lot 4 (ce commit) |
-| Revue Codex de la PR | ⏳ en attente |
-| Mise en production (guide README.md) | ⏳ après revue |
+| Implémentation (4 lots) | ✅ Lot 1 `c42c464` · Lot 2 `5a65d9b` · Lot 3 `d95b405` · Lot 4 `5ed979f` |
+| Revue Codex du code (PR #1) | ✅ 2 commentaires P2 + correctif `18f960e` (XSS, grants SQL, publication Netlify restreinte, signatures à temps constant) |
+| Merge de la PR #1 vers `main` | ✅ commit `8968038` — 02/06/2026, autorisé par Adrien |
+| **Mise en production** (guide README.md + HANDOFF §10) | ⏳ **EN COURS** — étape actuelle : création du projet Supabase |
 
 ### Corrections Codex appliquées
 
@@ -223,10 +224,50 @@ La v2 est terminée quand **tous les critères d'acceptation de SPECS.md** sont 
 
 ---
 
-## 9. Prochaine étape
+## 9. Historique du projet (résumé)
 
-Le plan est complet : revue Codex appliquée, toutes les décisions tranchées (D1 → D14).
+Le cycle complet plan → revue → implémentation → revue du code → merge est terminé (voir §0). Le code v2 est sur `main`. Le token Typeform a été fourni par Djamel le 02/06/2026.
 
-**En cours : collecte des pré-requis** — message envoyé à Djamel (§5c) pour le token Typeform tous scopes (la seule chose qui vient de lui). Côté Adrien/Mahefa : clé Anthropic (Lina_fathom_CRM = clé d'Adrien), clé Fathom (compte d'Adrien ou Mahefa), projet Supabase (région EU), compte Netlify.
+---
 
-La session d'implémentation démarre dès que les éléments du Lot 1 sont là — il ne nécessite que **le projet Supabase et le token Typeform**. Les 4 lots du §7 s'enchaînent ensuite (un commit par lot minimum) ; les clés Fathom/Anthropic ne sont nécessaires qu'à partir du Lot 3.
+## 10. Mise en production — suivi d'avancement
+
+> Guide détaillé : **README.md** (chaque étape avec les commandes exactes).
+> Réalisée par Adrien (non-développeur) avec assistance Claude — terminal nécessaire uniquement pour les Edge Functions et les webhooks.
+
+### Checklist de déploiement
+
+**A. Supabase — via le Dashboard (sans terminal)**
+- [ ] A1. Projet `detectus` créé (orga Lina Capital, région EU Frankfurt ou Paris) — ⏳ en cours
+- [ ] A2. URL du projet + anon key + mot de passe BDD notés en lieu sûr
+- [ ] A3. Schéma de base appliqué (SQL Editor → contenu de `supabase/migrations/001_schema.sql` → Run)
+- [ ] A4. Seed appliqué (SQL Editor → contenu de `supabase/seed.sql` → Run)
+- [ ] A5. Les 3 comptes admin créés (Authentication → Users) : adrien@prouesse.vc, djamel@lina.finance, mahefa@prouesse.vc
+- [ ] A6. ⚠️ Inscriptions publiques désactivées (Authentication → Sign In / Up → « Allow new users to sign up » : OFF)
+- [ ] A7. Secrets configurés (Edge Functions → Secrets) : TYPEFORM_TOKEN, TYPEFORM_FORM_ID, TYPEFORM_WEBHOOK_SECRET, ANTHROPIC_API_KEY
+
+**B. Edge Functions — via le terminal (10 copier-coller)**
+- [ ] B1. Homebrew + CLI Supabase installés
+- [ ] B2. Code du repo téléchargé (ZIP depuis GitHub, branche main)
+- [ ] B3. `supabase login` + `supabase link` effectués
+- [ ] B4. Les 3 fonctions déployées : typeform-sync, typeform-webhook (--no-verify-jwt), fathom-webhook (--no-verify-jwt)
+
+**C. Webhooks externes — via le terminal (2 copier-coller)**
+- [ ] C1. Webhook Typeform créé (curl PUT, form pUE5Jgae → typeform-webhook)
+- [ ] C2. Webhook Fathom créé (curl POST → fathom-webhook) + secret whsec_ reçu mis dans les secrets Supabase + fonction redéployée
+
+**D. Front — via le Dashboard Netlify (sans terminal)**
+- [ ] D1. Site Netlify créé depuis le repo `adrien416/detectusv2`, branche `main`
+- [ ] D2. Variables d'environnement SUPABASE_URL + SUPABASE_ANON_KEY renseignées AVANT le premier déploiement
+- [ ] D3. Site déployé et accessible
+
+**E. Vérifications finales (critères d'acceptation SPECS.md)**
+- [ ] E1. Login obligatoire (navigation privée → rien sans connexion)
+- [ ] E2. Premier import : nombre de dossiers = nombre de réponses du Dashboard Typeform
+- [ ] E3. Soumission Typeform de test → apparaît en < 30 s sans recharger
+- [ ] E4. Drag & drop visible chez un autre membre en < 2 s
+- [ ] E5. Réunion Fathom de test → rattachée (1 match) ou dans « À rattacher »
+
+**F. Après quelques jours de v2 stable**
+- [ ] F1. Couper la page GitHub Pages v1 (`djamel-lab/detectus`) — action Djamel
+- [ ] F2. Supprimer le Worker Cloudflare `typeform-proxy.djamel-753.workers.dev` — action Djamel
