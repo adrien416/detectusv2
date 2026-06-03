@@ -238,18 +238,19 @@ Le cycle complet plan → revue → implémentation → revue du code → merge 
 ### Checklist de déploiement
 
 **A. Supabase — via le Dashboard (sans terminal)**
-- [ ] A1. Projet `detectus` créé (orga Lina Capital, région EU Frankfurt ou Paris) — ⏳ en cours
+- [x] A1. Projet Supabase créé : ref `qobmctcloqekfascyrcs` (PC Windows, PowerShell)
 - [ ] A2. URL du projet + anon key + mot de passe BDD notés en lieu sûr
-- [ ] A3. Schéma de base appliqué (SQL Editor → contenu de `supabase/migrations/001_schema.sql` → Run)
+- [x] A3. Schéma de base appliqué via `npx supabase db push` — succès confirmé par Adrien le 03/06/2026
 - [ ] A4. Seed appliqué (SQL Editor → contenu de `supabase/seed.sql` → Run)
 - [ ] A5. Les 3 comptes admin créés (Authentication → Users) : adrien@prouesse.vc, djamel@lina.finance, mahefa@prouesse.vc
 - [ ] A6. ⚠️ Inscriptions publiques désactivées (Authentication → Sign In / Up → « Allow new users to sign up » : OFF)
 - [ ] A7. Secrets configurés (Edge Functions → Secrets) : TYPEFORM_TOKEN, TYPEFORM_FORM_ID, TYPEFORM_WEBHOOK_SECRET, ANTHROPIC_API_KEY
 
 **B. Edge Functions — via le terminal (10 copier-coller)**
-- [ ] B1. Homebrew + CLI Supabase installés
-- [ ] B2. Code du repo téléchargé (ZIP depuis GitHub, branche main)
-- [ ] B3. `supabase login` + `supabase link` effectués
+- [x] B1. Environnement PC Windows utilisé : PowerShell + `npx supabase`
+- [x] B2. Code du repo cloné dans `C:\Users\PC\Documents\detectusv2`, branche `main`
+- [x] B3. `npx supabase login` + `npx supabase link --project-ref qobmctcloqekfascyrcs` effectués
+- [ ] B3bis. Secrets Edge Functions à relancer après reconnexion CLI : `npx supabase secrets set ...`
 - [ ] B4. Les 3 fonctions déployées : typeform-sync, typeform-webhook (--no-verify-jwt), fathom-webhook (--no-verify-jwt)
 
 **C. Webhooks externes — via le terminal (2 copier-coller)**
@@ -271,3 +272,19 @@ Le cycle complet plan → revue → implémentation → revue du code → merge 
 **F. Après quelques jours de v2 stable**
 - [ ] F1. Couper la page GitHub Pages v1 (`djamel-lab/detectus`) — action Djamel
 - [ ] F2. Supprimer le Worker Cloudflare `typeform-proxy.djamel-753.workers.dev` — action Djamel
+
+### Incident de déploiement du 03/06/2026
+
+Adrien a tenté de lancer `npx supabase secrets set ...` depuis PowerShell avec les variables locales déjà renseignées (`TYPEFORM_TOKEN`, `ANTHROPIC_KEY`, `TYPEFORM_SECRET`). La commande a échoué avec :
+
+```text
+Access token not provided. Supply an access token by running `supabase login`
+or setting the SUPABASE_ACCESS_TOKEN environment variable.
+```
+
+Cause probable : le login Supabase CLI n'est plus disponible pour la commande `npx supabase secrets set`, même si `login` avait fonctionné auparavant.
+
+Reprise recommandée :
+1. Relancer `npx supabase login` dans PowerShell.
+2. Si l'erreur persiste, créer un token personnel Supabase dans le Dashboard Supabase, puis le mettre dans PowerShell avec `$env:SUPABASE_ACCESS_TOKEN="..."`.
+3. Relancer uniquement la commande `npx supabase secrets set ...`, puis continuer avec le déploiement des 3 fonctions.
