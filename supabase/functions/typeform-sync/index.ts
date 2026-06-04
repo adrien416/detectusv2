@@ -14,8 +14,8 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders, reponseJson } from "../_shared/cors.ts";
-import { fetchAvecRetry } from "../_shared/retry.ts";
-import { marquerSante, reponseVersDeal, type LigneDeal } from "../_shared/typeform.ts";
+import { enArrierePlan, fetchAvecRetry } from "../_shared/retry.ts";
+import { reponseVersDeal, scoringSante, type LigneDeal } from "../_shared/typeform.ts";
 import { classifierSanteIA } from "../_shared/sante.ts";
 
 const TYPEFORM_API = "https://api.typeform.com";
@@ -113,34 +113,19 @@ Deno.serve(async (req) => {
 
     const idsExistants = new Set((existants ?? []).map((d) => d.typeform_id));
     const nouvelles = lignes.filter((l) => !idsExistants.has(l.typeform_id));
-
-    // ── 3bis. Classification santé par IA (uniquement sur les nouveaux dossiers
-    // que les mots-clés n'ont pas déjà classés en santé). Conservateur : ne fait
-    // qu'ajouter au segment « Santé plus tard ». Plafonné pour rester rapide. ──
     const cleAnthropic = Deno.env.get("ANTHROPIC_API_KEY");
-    if (cleAnthropic) {
-      let appelsIA = 0;
-      for (let i = 0; i < nouvelles.length; i++) {
-        if (nouvelles[i].sante) continue;
-        if (appelsIA >= MAX_CLASSIFICATION_IA) break;
-        appelsIA++;
-        const estSante = await classifierSanteIA(
-          nouvelles[i].activite,
-          nouvelles[i].description,
-          cleAnthropic,
-        );
-        if (estSante === true) nouvelles[i] = marquerSante(nouvelles[i]);
-      }
-    }
 
     // ── 4. Insertion des nouveaux deals (par lots de 100) ─────────────────────
+    // La santé est posée par mots-clés ici ; l'affinage IA se fait APRÈS, en
+    // arrière-plan (les dossiers sont enregistrés sans attendre l'IA — revue Codex).
     let inseres = 0;
+    const aClasser: Array<{ id: string; activite: string; description: string }> = [];
     for (let i = 0; i < nouvelles.length; i += 100) {
       const lot = nouvelles.slice(i, i + 100);
       const { data: insertes, error: erreurInsert } = await sb
         .from("deals")
         .upsert(lot, { onConflict: "typeform_id", ignoreDuplicates: true })
-        .select("id, prenom, nom");
+        .select("id, prenom, nom, activite, description, sante");
 
       if (erreurInsert) {
         console.error("typeform-sync insertion:", erreurInsert.message);
@@ -162,7 +147,32 @@ Deno.serve(async (req) => {
           console.error("deal_events import :", erreurEvents.message);
         }
         inseres += insertes.length;
+        // On ne classe par IA que ceux non déjà détectés santé par mots-clés.
+        for (const d of insertes) {
+          if (!d.sante) aClasser.push({ id: d.id, activite: d.activite ?? "", description: d.description ?? "" });
+        }
       }
+    }
+
+    // ── 5bis. Classification santé par IA EN ARRIÈRE-PLAN (hors chemin critique)
+    // Les dossiers sont déjà en base ; on repasse en « Santé plus tard » ceux que
+    // l'IA confirme. Plafonné (temps/coût) ; un échec ne bloque jamais l'import. ──
+    if (cleAnthropic && aClasser.length > 0) {
+      enArrierePlan((async () => {
+        const lot = aClasser.slice(0, MAX_CLASSIFICATION_IA);
+        for (const d of lot) {
+          const estSante = await classifierSanteIA(d.activite, d.description, cleAnthropic);
+          if (estSante === true) {
+            await sb.from("deals").update({ ...scoringSante(), statut: "sante" }).eq("id", d.id);
+            await sb.from("deal_events").insert({
+              deal_id: d.id,
+              type: "champ",
+              resume: "Classé « Santé plus tard » par l'IA à l'import",
+              auteur_id: null,
+            });
+          }
+        }
+      })());
     }
 
     // ── 6. Résultat ────────────────────────────────────────────────────────────

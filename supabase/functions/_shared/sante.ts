@@ -5,13 +5,18 @@
 // les cas manqués (ex. « cabinet d'ostéopathie », « téléconsultation »…).
 //
 // Conservateur : ne sert qu'à AJOUTER des dossiers au segment santé, jamais à en
-// retirer. En cas d'erreur, de doute ou d'absence de clé API → retourne null
-// (on garde alors le résultat des mots-clés, sans rien changer).
-
-import { fetchAvecRetry } from "./retry.ts";
+// retirer. En cas d'erreur, de doute, de délai dépassé ou d'absence de clé API →
+// retourne null (on garde alors le résultat des mots-clés, sans rien changer).
+//
+// Robustesse (revue Codex) : un seul essai, AUCUN retry, et un délai d'abandon
+// strict — cette classification est best-effort et ne doit jamais retarder
+// l'enregistrement d'un dossier (elle tourne en arrière-plan, voir les Edge Functions).
 
 // Modèle épinglé — cohérent avec fathom-webhook (jamais d'alias non versionné).
 const MODELE_CLAUDE = "claude-haiku-4-5-20251001";
+
+// Délai d'abandon de l'appel IA (best-effort, jamais bloquant).
+const DELAI_ABANDON_MS = 7000;
 
 const PROMPT_SANTE =
   `Tu es un classifieur pour Lina Capital, un fonds de financement participatif.
@@ -32,7 +37,8 @@ export async function classifierSanteIA(
   if (!apiKey) return null;
   try {
     const contenu = `Activité : ${activite || "(non précisée)"}\nDescription : ${description || "(vide)"}`;
-    const res = await fetchAvecRetry("https://api.anthropic.com/v1/messages", {
+    // Un seul appel, borné par un délai d'abandon : ne peut jamais hanger.
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
         "x-api-key": apiKey,
@@ -45,6 +51,7 @@ export async function classifierSanteIA(
         system: PROMPT_SANTE,
         messages: [{ role: "user", content: contenu }],
       }),
+      signal: AbortSignal.timeout(DELAI_ABANDON_MS),
     });
     if (!res.ok) return null;
     const data = await res.json();

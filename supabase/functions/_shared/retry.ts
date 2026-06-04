@@ -1,6 +1,19 @@
 // fetch avec retry (3 essais, backoff exponentiel 2s/4s/8s) pour les API externes.
 // Convention CLAUDE.md : toute API externe (Typeform, Fathom, Anthropic) passe par ici.
 
+// Exécute une tâche APRÈS avoir renvoyé la réponse HTTP, sans bloquer le client.
+// Sur Supabase Edge Runtime, EdgeRuntime.waitUntil garde l'instance vivante le
+// temps que la tâche se termine. Sinon, on la lance sans l'attendre (best-effort).
+export function enArrierePlan(tache: Promise<unknown>): void {
+  const securisee = tache.catch((e) => console.error("tâche arrière-plan:", e));
+  // deno-lint-ignore no-explicit-any
+  const edge = (globalThis as any).EdgeRuntime;
+  if (edge && typeof edge.waitUntil === "function") {
+    edge.waitUntil(securisee);
+  }
+  // Sinon : la promesse tourne en arrière-plan (déjà protégée par .catch).
+}
+
 export async function fetchAvecRetry(
   url: string,
   options: RequestInit,
