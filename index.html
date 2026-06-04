@@ -1182,7 +1182,7 @@ async function synchroniserTypeform(silencieux){
 /* ═══ Timeline — insertion d'événements (deal_events, append-only) ════════ */
 
 /* FullEnrich + LinkedIn assiste */
-const DOMAINES_EMAIL_PERSO=new Set(['gmail.com','googlemail.com','outlook.com','hotmail.com','live.com','msn.com','yahoo.com','yahoo.fr','icloud.com','me.com','orange.fr','wanadoo.fr','free.fr','laposte.net','sfr.fr','neuf.fr','bbox.fr','proton.me','protonmail.com']);
+const DOMAINES_EMAIL_PERSO=new Set(['gmail.com','googlemail.com','outlook.com','outlook.fr','hotmail.com','hotmail.fr','live.com','live.fr','msn.com','msn.fr','yahoo.com','yahoo.fr','ymail.com','icloud.com','me.com','orange.fr','wanadoo.fr','free.fr','laposte.net','sfr.fr','neuf.fr','bbox.fr','proton.me','protonmail.com','aol.com','gmx.com']);
 
 function domaineEmailPro(email){
   const domaine=String(email||'').split('@')[1]?.toLowerCase()||'';

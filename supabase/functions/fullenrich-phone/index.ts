@@ -10,9 +10,10 @@ import { contexteAdmin } from "../_shared/admin.ts";
 import { appelerFullEnrich, lireCreditsFullEnrich } from "../_shared/fullenrich.ts";
 
 const DOMAINES_PERSO = new Set([
-  "gmail.com", "googlemail.com", "outlook.com", "hotmail.com", "live.com", "msn.com",
-  "yahoo.com", "yahoo.fr", "icloud.com", "me.com", "orange.fr", "wanadoo.fr",
-  "free.fr", "laposte.net", "sfr.fr", "neuf.fr", "bbox.fr", "proton.me", "protonmail.com",
+  "gmail.com", "googlemail.com", "outlook.com", "outlook.fr", "hotmail.com", "hotmail.fr",
+  "live.com", "live.fr", "msn.com", "msn.fr", "yahoo.com", "yahoo.fr", "ymail.com",
+  "icloud.com", "me.com", "orange.fr", "wanadoo.fr", "free.fr", "laposte.net",
+  "sfr.fr", "neuf.fr", "bbox.fr", "proton.me", "protonmail.com", "aol.com", "gmx.com",
 ]);
 
 function domainePro(email: string | null): string | null {
