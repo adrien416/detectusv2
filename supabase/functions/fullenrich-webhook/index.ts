@@ -9,12 +9,32 @@ import { reponseJson } from "../_shared/cors.ts";
 import { lireCreditsFullEnrich } from "../_shared/fullenrich.ts";
 
 function premierTelephone(ligne: any): string | null {
-  const info = ligne?.contact_info ?? {};
-  const probable = info.most_probable_phone?.number;
-  if (probable) return String(probable).trim();
-  const phones = Array.isArray(info.phones) ? info.phones : [];
-  const premier = phones.find((p: any) => p?.number);
-  return premier ? String(premier.number).trim() : null;
+  // Parsing défensif : FullEnrich peut placer les téléphones à divers endroits.
+  const sources = [ligne?.contact_info, ligne?.contact, ligne].filter(Boolean);
+  for (const s of sources) {
+    const prob = s.most_probable_phone;
+    if (typeof prob === "string" && prob.trim()) return prob.trim();
+    if (prob?.number) return String(prob.number).trim();
+    const phones = Array.isArray(s.phones) ? s.phones : [];
+    for (const p of phones) {
+      const num = typeof p === "string" ? p : p?.number;
+      if (num) return String(num).trim();
+    }
+  }
+  return null;
+}
+
+// Recherche défensive d'un profil LinkedIn dans la réponse FullEnrich (format variable).
+function lienLinkedin(ligne: any): string | null {
+  try {
+    const m = JSON.stringify(ligne ?? {}).match(/https?:\/\/(?:[a-z]{2,3}\.)?linkedin\.com\/in\/[^\s"'\\]+/i);
+    if (!m) return null;
+    let url = m[0].split(/[?#]/)[0].replace(/\/+$/, "");
+    url = url.replace(/^http:/i, "https:").replace(/:\/\/(?:[a-z]{2,3}\.)?linkedin\.com/i, "://www.linkedin.com");
+    return /^https:\/\/(?:www\.)?linkedin\.com\/in\/[^\/\s]+/i.test(url) ? url : null;
+  } catch (_e) {
+    return null;
+  }
 }
 
 const STATUTS_FINAUX = new Set(["termine", "aucun_resultat", "credits_insuffisants"]);
@@ -94,34 +114,32 @@ Deno.serve(async (req) => {
           .eq("deal_id", dealId);
       }
 
-      if (telephone) {
-        const { data: dealAvant } = await sb
+      const { data: dealAvant } = await sb
+        .from("deals")
+        .select("id, telephone, linkedin_url")
+        .eq("id", dealId)
+        .maybeSingle();
+
+      if (telephone && !dealAvant?.telephone) {
+        const { error: erreurUpdate } = await sb
           .from("deals")
-          .select("id, telephone")
-          .eq("id", dealId)
-          .maybeSingle();
+          .update({
+            telephone,
+            telephone_source: "fullenrich",
+            telephone_enrichi_le: new Date().toISOString(),
+          })
+          .eq("id", dealId);
 
-        if (!dealAvant?.telephone) {
-          const { error: erreurUpdate } = await sb
-            .from("deals")
-            .update({
-              telephone,
-              telephone_source: "fullenrich",
-              telephone_enrichi_le: new Date().toISOString(),
-            })
-            .eq("id", dealId);
-
-          if (!erreurUpdate) {
-            await sb.from("deal_events").insert({
-              deal_id: dealId,
-              type: "enrichissement",
-              resume: `Telephone trouve via FullEnrich : ${telephone}`,
-              payload: { enrichment_id: enrichmentId, request_id: requestId || null },
-              auteur_id: null,
-            });
-          }
+        if (!erreurUpdate) {
+          await sb.from("deal_events").insert({
+            deal_id: dealId,
+            type: "enrichissement",
+            resume: `Telephone trouve via FullEnrich : ${telephone}`,
+            payload: { enrichment_id: enrichmentId, request_id: requestId || null },
+            auteur_id: null,
+          });
         }
-      } else {
+      } else if (!telephone) {
         await sb.from("deal_events").insert({
           deal_id: dealId,
           type: "enrichissement",
@@ -129,6 +147,29 @@ Deno.serve(async (req) => {
           payload: { enrichment_id: enrichmentId, request_id: requestId || null },
           auteur_id: null,
         });
+      }
+
+      // LinkedIn renvoyé par FullEnrich : on l'enregistre gratuitement (même réponse,
+      // même crédit), sans jamais écraser un profil déjà validé.
+      const linkedin = lienLinkedin(ligne);
+      if (linkedin && !dealAvant?.linkedin_url) {
+        const { error: erreurLk } = await sb
+          .from("deals")
+          .update({
+            linkedin_url: linkedin,
+            linkedin_source: "fullenrich",
+            linkedin_valide_le: new Date().toISOString(),
+          })
+          .eq("id", dealId);
+        if (!erreurLk) {
+          await sb.from("deal_events").insert({
+            deal_id: dealId,
+            type: "enrichissement",
+            resume: "Profil LinkedIn trouve via FullEnrich",
+            payload: { linkedin_url: linkedin, enrichment_id: enrichmentId, request_id: requestId || null },
+            auteur_id: null,
+          });
+        }
       }
     }
 
