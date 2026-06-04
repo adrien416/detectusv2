@@ -409,7 +409,7 @@ Bouton **« Journal »** dans la topbar (admin only, comme « Emails »). Vue gl
 Detectus v2 et ses extensions sont **en production** (Netlify + Supabase EU, projet `qobmctcloqekfascyrqs`).
 
 ### Fonctionnalités live
-- **Auth** (login obligatoire, 3 admins, inscriptions désactivées) · **CRM partagé** (statuts, Board Kanban, notes, champs confidentiels, timeline) · **Realtime** entre membres.
+- **Auth** (login obligatoire, 3 admins, inscriptions désactivées) · **CRM partagé** (statuts, Board Kanban, notes, champs confidentiels, timeline) · **Realtime** entre membres · **responsive mobile/tablette**.
 - **Typeform** : import exhaustif (`typeform-sync`) + temps réel (`typeform-webhook`), `payload_brut` conservé (D14).
 - **Fathom** : `fathom-webhook` → matching strict + 3 scores Claude Haiku, transcript jamais stocké (D6).
 - **Journal d'activité** admin (qui a fait quoi/quand) · **Templates emails** éditables (admin) + URL `lina.capital`.
@@ -437,5 +437,10 @@ Codex et Claude codent indifféremment selon les sessions ; **chaque PR est relu
 - **RGPD FullEnrich** (D17) à formaliser.
 - **v2.1** (toujours en backlog) : page admin/invitations + **masquage des champs confidentiels par rôle** (obligatoire avant tout compte non-admin) + backfill Fathom.
 
-### Ménage repo (04/06/2026)
-Branches de travail mergées/obsolètes supprimées — seule `main` subsiste. Le document AMF (`docs/grille-scoring-lina-capital.docx`) est préservé sur `main`.
+### Mobile (04/06/2026)
+Le front est désormais **responsive** (mobile/tablette) : viewport adaptatif, topbar compacte (boutons en icônes, KPIs masqués, onglets sur une ligne), vue **liste OU détail** plein écran avec bouton **« ← Tous les dossiers »**, board en défilement horizontal, modales plein écran. Le desktop est inchangé (overrides bornés à `@media ≤768px`).
+
+### Ménage repo (04/06/2026) — ⚠️ à finir par Adrien
+Le doc AMF (`docs/grille-scoring-lina-capital.docx`) est **préservé sur `main`**. Les branches de travail mergées/obsolètes **n'ont PAS pu être supprimées** depuis l'environnement d'assistance (proxy git : 403 sur les suppressions). **À supprimer par Adrien** (toutes mergées dans `main`, aucun risque) :
+- via GitHub → `…/branches` → icône 🗑️, ou
+- `git push origin --delete claude/docs-grille-amf claude/fix-board-sante-label claude/fix-classif-sante claude/fix-race-sante claude/handoff-fullenrich claude/linkedin-search-amelioration claude/lot-final-amf claude/menage-handoff claude/relaxed-carson-GkaSS claude/revue-securite-ux`

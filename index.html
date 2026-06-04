@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=1440">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Detectus · Lina Capital</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23061D39'/%3E%3Ccircle cx='32' cy='32' r='18' fill='none' stroke='%236B7A8D' stroke-width='5' stroke-linecap='round' stroke-dasharray='95 18'/%3E%3Crect x='24' y='24' width='16' height='16' rx='3' transform='rotate(45 32 32)' fill='%2347d3b0'/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&display=swap" rel="stylesheet">
@@ -364,6 +364,44 @@ body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direc
 .ratt-btn-ignorer{padding:8px 14px;border-radius:8px;border:1.5px solid var(--card-border);background:transparent;color:var(--text-sub);font-weight:700;font-size:12.5px;cursor:pointer;font-family:var(--font)}
 .ratt-btn-ignorer:hover{color:var(--red);border-color:var(--red)}
 .ratt-vide{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 20px;color:var(--text-sub);gap:10px;font-size:15px}
+/* ── Bouton retour mobile (masqué sur desktop) ───────────────────────────── */
+#mobile-back{display:none;position:sticky;top:0;z-index:6;align-items:center;gap:6px;width:100%;background:var(--card-bg);border:1px solid var(--card-border);color:var(--text-main);font-family:var(--font);font-weight:700;font-size:14.5px;padding:10px 12px;border-radius:8px;margin-bottom:10px;cursor:pointer}
+#mobile-back:hover{border-color:var(--teal)}
+
+/* ════════════ MOBILE & TABLETTE (≤ 768px) ════════════ */
+@media (max-width:768px){
+  /* Topbar compacte : pas de KPIs, boutons en icônes, onglets sur une 2e ligne */
+  #topbar{height:auto;min-height:52px;padding:6px 8px;flex-wrap:wrap;gap:6px}
+  .tb-sub{display:none}
+  .tb-title{font-size:16px}
+  #tb-kpis{display:none}
+  .view-tabs{order:5;width:100%;margin:6px 0 0;justify-content:center}
+  .view-tab{flex:1;text-align:center;padding:6px 8px}
+  .tb-btn .tb-btn-label{display:none}
+  .tb-btn{padding:0 9px;margin-left:4px}
+  .theme-toggle{margin-left:4px}
+  /* Une seule colonne : liste OU détail (jamais les deux) */
+  #sidebar{width:100% !important}
+  #resize-handle{display:none}
+  #detail{display:none;padding:12px 14px}
+  body.detail-open #sidebar{display:none}
+  body.detail-open #detail{display:block}
+  #mobile-back{display:flex}
+  /* Board & À rattacher adaptés au petit écran */
+  .board-col{min-width:80vw}
+  #view-rattacher{padding:14px}
+  .ratt-grille{grid-template-columns:1fr}
+  .ratt-card{min-width:0}
+  /* Détail : tout en une colonne */
+  .pgrid{grid-template-columns:1fr}
+  .conf-grid{grid-template-columns:1fr}
+  .dbar{flex-direction:column;align-items:flex-start;gap:6px}
+  .db-right{text-align:left}
+  .reunion-scores{gap:6px}
+  /* Fenêtres modales en plein écran */
+  .modal-carte{width:100vw !important;max-width:100vw;min-height:100vh;border-radius:0;padding:18px 16px}
+  .login-card{width:92vw;padding:26px 20px}
+}
 </style>
 </head>
 <body>
@@ -421,18 +459,18 @@ body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direc
   <div style="display:flex;align-items:center">
     <button class="tb-btn" onclick="synchroniserTypeform()" title="Importer les nouvelles réponses Typeform" id="btn-sync">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
-      Synchroniser
+      <span class="tb-btn-label">Synchroniser</span>
     </button>
     <button class="tb-btn" onclick="ouvrirAdminEmails()" title="Modifier les modèles d'emails" id="btn-admin-emails" style="display:none">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
-      Emails
+      <span class="tb-btn-label">Emails</span>
     </button>
     <button class="tb-btn" onclick="ouvrirJournal()" title="Journal d'activité — qui a fait quoi" id="btn-journal" style="display:none">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>
-      Journal
+      <span class="tb-btn-label">Journal</span>
     </button>
     <button class="tb-btn credit-pill" onclick="chargerCreditsFullEnrich()" title="Rafraichir les credits FullEnrich" id="btn-fullenrich-credits" style="display:none">
-      Credits FE&nbsp;<strong id="fullenrich-credit-val">--</strong>
+      <span class="tb-btn-label">Credits FE&nbsp;</span><strong id="fullenrich-credit-val">--</strong>
     </button>
     <button class="theme-toggle" onclick="toggleTheme()" title="Mode sombre / clair" id="theme-btn">
       <svg id="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:none"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
@@ -516,6 +554,7 @@ body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direc
     <div id="sb-foot"></div>
   </div>
   <div id="detail">
+    <button id="mobile-back" onclick="retourListe()">← Tous les dossiers</button>
     <div class="empty" id="empty">
       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--grey)" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
       Sélectionnez un dossier
@@ -1840,6 +1879,9 @@ function render(){
   renderDetail();
 }
 
+function estMobile(){return window.matchMedia('(max-width:768px)').matches;}
+function retourListe(){document.body.classList.remove('detail-open');}
+
 function pick(id){
   const precedent=currentL?.id;
   currentL=LEADS.find(l=>l.id===id);
@@ -1848,6 +1890,8 @@ function pick(id){
     NOTES_DOSSIER=[];EVENTS_DOSSIER=[];FULLENRICH_DOSSIER=[];
     chargerDetailDossier(currentL.id);
   }
+  // Mobile : ouvrir le panneau détail en plein écran (vue liste → vue dossier)
+  if(currentL&&estMobile())document.body.classList.add('detail-open');
   render();
 }
 
@@ -2068,6 +2112,7 @@ function renderDetail(){
 let currentView='list';
 function switchView(v,btn){
   currentView=v;
+  document.body.classList.remove('detail-open'); // mobile : revenir à la vue pleine
   document.querySelectorAll('.view-tab').forEach(b=>b.classList.remove('on'));
   if(btn)btn.classList.add('on');
   document.getElementById('view-list').classList.toggle('hidden',v!=='list');
