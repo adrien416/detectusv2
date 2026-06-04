@@ -387,8 +387,9 @@ body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direc
   body.detail-open #sidebar{display:none}
   body.detail-open #detail{display:block}
   #mobile-back{display:flex}
-  /* Board & À rattacher adaptés au petit écran */
-  .board-col{min-width:80vw}
+  /* Board : colonnes larges + DÉFILEMENT HORIZONTAL (sinon colonnes de droite coupées) */
+  #view-board{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
+  .board-col{flex:0 0 84vw;min-width:84vw}
   #view-rattacher{padding:14px}
   .ratt-grille{grid-template-columns:1fr}
   .ratt-card{min-width:0}
