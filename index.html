@@ -65,6 +65,8 @@ body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direc
 .multi-bar .mb-btn.orange:hover{background:var(--orange);color:#fff}
 .multi-bar .mb-btn.purple{background:transparent;color:var(--purple);border-color:var(--purple)}
 .multi-bar .mb-btn.purple:hover{background:var(--purple);color:#fff}
+.multi-bar .mb-btn.teal{background:transparent;color:var(--teal);border-color:var(--teal)}
+.multi-bar .mb-btn.teal:hover{background:var(--teal);color:#061D39}
 .multi-bar .mb-btn.red{background:transparent;color:var(--red);border-color:var(--red)}
 .multi-bar .mb-btn.red:hover{background:var(--red);color:#fff}
 .multi-bar .mb-btn.grey{background:transparent;color:rgba(255,255,255,.4);border-color:rgba(255,255,255,.2)}
@@ -108,6 +110,7 @@ body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direc
 .action-bar-status .st-icon{width:10px;height:10px;border-radius:50%;flex-shrink:0}
 .act-btn{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:2px solid;font-family:var(--font);transition:all .15s;display:flex;align-items:center;gap:6px;white-space:nowrap}
 .act-btn:hover{transform:translateY(-1px);box-shadow:0 3px 8px rgba(0,0,0,.1)}
+.act-btn:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
 .act-btn.green{background:#e8f8f0;color:var(--green);border-color:var(--green)}
 .act-btn.green:hover{background:var(--green);color:#fff}
 .act-btn.red{background:#fdf0f0;color:var(--red);border-color:var(--red)}
@@ -149,6 +152,27 @@ body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direc
 .sbtn{width:100%;background:var(--teal);color:#061D39;border:none;border-radius:10px;padding:14px;font-weight:800;font-size:16.5px;cursor:pointer;letter-spacing:.04em;font-family:var(--font);transition:opacity .15s,transform .15s}
 .sbtn:hover{opacity:.88;transform:translateY(-1px)}
 .sconf{background:#e8f8f0;border:1px solid var(--green);border-radius:10px;padding:14px;text-align:center;color:var(--green);font-weight:700;font-size:16.5px}
+.credit-pill{min-width:132px}
+.credit-pill strong{color:var(--teal);font-size:14px}
+.contact-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:8px}
+.contact-item{background:var(--input-bg);border:1px solid var(--card-border);border-radius:8px;padding:10px 12px;min-width:0}
+.contact-item.full{grid-column:1/-1}
+.contact-label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--text-sub);margin-bottom:4px}
+.contact-value{font-size:15px;font-weight:700;color:var(--text-main);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.contact-value a{color:var(--text-main);text-decoration:none}
+.contact-value a:hover{color:var(--teal);text-decoration:underline}
+.contact-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+.mini-btn{border:1.5px solid var(--card-border);background:var(--card-bg);color:var(--text-main);border-radius:7px;padding:6px 9px;font-family:var(--font);font-size:12px;font-weight:800;cursor:pointer;text-decoration:none;line-height:1}
+.mini-btn:hover{border-color:var(--teal);color:var(--teal)}
+.mini-btn.teal{background:var(--teal);border-color:var(--teal);color:#061D39}
+.mini-btn:disabled{opacity:.45;cursor:not-allowed}
+.linkedin-candidates{display:flex;flex-direction:column;gap:8px;margin:10px 0 14px}
+.linkedin-candidate{border:1.5px solid var(--card-border);background:var(--input-bg);border-radius:8px;padding:10px 12px;text-align:left;cursor:pointer;font-family:var(--font);color:var(--text-main)}
+.linkedin-candidate:hover{border-color:var(--teal)}
+.linkedin-candidate strong{display:block;font-size:14px;margin-bottom:3px}
+.linkedin-candidate span{display:block;font-size:12.5px;color:var(--text-sub);line-height:1.35}
+.linkedin-search-link{display:inline-block;margin-top:2px;color:var(--teal);font-size:13px;font-weight:800;text-decoration:none}
+.linkedin-search-link:hover{text-decoration:underline}
 .view-tabs{display:flex;gap:2px;background:rgba(255,255,255,.08);border-radius:8px;padding:2px;margin:0 18px}
 .view-tab{padding:5px 16px;border-radius:6px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;border:none;background:transparent;color:rgba(255,255,255,.4);font-family:var(--font);transition:all .15s}
 .view-tab.on{background:var(--teal);color:var(--navy)}
@@ -399,6 +423,9 @@ body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direc
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>
       Journal
     </button>
+    <button class="tb-btn credit-pill" onclick="chargerCreditsFullEnrich()" title="Rafraichir les credits FullEnrich" id="btn-fullenrich-credits" style="display:none">
+      Credits FE&nbsp;<strong id="fullenrich-credit-val">--</strong>
+    </button>
     <button class="theme-toggle" onclick="toggleTheme()" title="Mode sombre / clair" id="theme-btn">
       <svg id="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:none"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
       <svg id="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
@@ -473,6 +500,7 @@ body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direc
       <span class="mb-label">sélectionnés</span>
       <button class="mb-btn orange" onclick="multiAction('info')">Info</button>
       <button class="mb-btn purple" onclick="multiAction('pitch')">Pitch</button>
+      <button class="mb-btn teal" onclick="enrichirSelectionTelephones()" id="mb-fullenrich" style="display:none">Tel FullEnrich</button>
       <button class="mb-btn red" onclick="multiAction('refuse')">Refuser</button>
       <button class="mb-btn grey" onclick="clearSelection()">Annuler</button>
     </div>
@@ -556,6 +584,21 @@ body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direc
     <div id="journal-liste" class="journal-liste"></div>
     <div class="modal-actions">
       <button type="button" class="modal-btn-annuler" onclick="fermerJournal()">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-linkedin" class="modal-fond" style="display:none" onclick="if(event.target===this)fermerModalLinkedin()">
+  <div class="modal-carte admin-email">
+    <div class="modal-titre">Profil LinkedIn</div>
+    <div id="linkedin-modal-body"></div>
+    <div class="modal-field">
+      <label>URL LinkedIn validee</label>
+      <input type="url" id="linkedin-url-manuel" placeholder="https://www.linkedin.com/in/...">
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="modal-btn-ok" onclick="sauvegarderLinkedinDepuisModal()">Valider ce profil</button>
+      <button type="button" class="modal-btn-annuler" onclick="fermerModalLinkedin()">Fermer</button>
     </div>
   </div>
 </div>
@@ -700,6 +743,10 @@ let filterIA="Tous",filterST="Tous",currentL=null,currentSort="score",selectedId
 let dataSource='chargement…';
 let templateCourant='info';
 let templatesEmailsDisponibles=false;
+let creditsFullEnrich=null;
+let fullenrichDisponible=false;
+let fullenrichEnCours=false;
+let linkedinDealEnCours=null;
 
 /* ── Toast générique ─────────────────────────────────────────────────────── */
 let minuteurToast=null;
@@ -810,6 +857,7 @@ function initialiserAuth(){
 
 async function demarrerApp(){
   await Promise.all([chargerProfils(),chargerTemplatesEmails(),chargerDeals(),chargerReunions()]);
+  if(estAdmin())await chargerCreditsFullEnrich(true);
   render();
   demarrerRealtime();
   // La synchro Typeform se lance en arrière-plan au chargement (comme la v1)
@@ -886,12 +934,16 @@ async function chargerProfils(){
     // Identité du compte connecté (outil partagé) : visible au survol du bouton Déconnexion
     const btnLogout=document.getElementById('btn-logout');
     if(btnLogout&&UTILISATEUR)btnLogout.title='Connecté : '+(PROFIL_COURANT?.nom_complet||UTILISATEUR.email||'')+' — cliquer pour se déconnecter';
+    const btnCredits=document.getElementById('btn-fullenrich-credits');
+    if(btnCredits)btnCredits.style.display=estAdmin()?'flex':'none';
   }catch(e){
     PROFIL_COURANT=null;
     const btnAdmin=document.getElementById('btn-admin-emails');
     if(btnAdmin)btnAdmin.style.display='none';
     const btnJournal=document.getElementById('btn-journal');
     if(btnJournal)btnJournal.style.display='none';
+    const btnCredits=document.getElementById('btn-fullenrich-credits');
+    if(btnCredits)btnCredits.style.display='none';
     // Non bloquant : les auteurs s'afficheront « — »
   }
 }
@@ -1060,6 +1112,11 @@ function dealVersLead(d){
     doc:!!d.document_url,
     docUrl:d.document_url||'',
     tel:d.telephone||'',
+    telephone_source:d.telephone_source||'',
+    telephone_enrichi_le:d.telephone_enrichi_le||null,
+    linkedin_url:d.linkedin_url||'',
+    linkedin_source:d.linkedin_source||'',
+    linkedin_valide_le:d.linkedin_valide_le||null,
     statut:d.statut||'nouveau',
     score:d.score??0,
     dec:d.decision||'À ÉTUDIER',
@@ -1123,6 +1180,174 @@ async function synchroniserTypeform(silencieux){
 }
 
 /* ═══ Timeline — insertion d'événements (deal_events, append-only) ════════ */
+
+/* FullEnrich + LinkedIn assiste */
+const DOMAINES_EMAIL_PERSO=new Set(['gmail.com','googlemail.com','outlook.com','hotmail.com','live.com','msn.com','yahoo.com','yahoo.fr','icloud.com','me.com','orange.fr','wanadoo.fr','free.fr','laposte.net','sfr.fr','neuf.fr','bbox.fr','proton.me','protonmail.com']);
+
+function domaineEmailPro(email){
+  const domaine=String(email||'').split('@')[1]?.toLowerCase()||'';
+  return domaine&&!DOMAINES_EMAIL_PERSO.has(domaine)?domaine:'';
+}
+
+function linkedinValide(url){
+  return /^https?:\/\/([a-z]{2,3}\.)?linkedin\.com\/in\/\S+/i.test(String(url||'').trim());
+}
+
+function entreeFullEnrichPossible(l){
+  if(!l||l.tel)return {ok:false,raison:'Telephone deja present'};
+  if(linkedinValide(l.linkedin_url))return {ok:true,raison:'LinkedIn valide'};
+  const societe=String(l.societe||'').trim();
+  const domaine=domaineEmailPro(l.email);
+  if(l.prenom&&l.nom&&(societe||domaine))return {ok:true,raison:societe?'Societe renseignee':'Domaine email pro'};
+  return {ok:false,raison:'Societe, domaine pro ou LinkedIn requis'};
+}
+
+function mettreAJourBadgeCredits(){
+  const val=document.getElementById('fullenrich-credit-val');
+  if(val)val.textContent=creditsFullEnrich===null?'--':String(creditsFullEnrich);
+}
+
+async function chargerCreditsFullEnrich(silencieux){
+  if(!sb||!UTILISATEUR||!estAdmin())return;
+  const bouton=document.getElementById('btn-fullenrich-credits');
+  if(bouton)bouton.disabled=true;
+  try{
+    const {data,error}=await sb.functions.invoke('fullenrich-credits',{body:{}});
+    if(error)throw error;
+    if(data&&data.erreur)throw new Error(data.erreur);
+    creditsFullEnrich=data.balance;
+    fullenrichDisponible=true;
+    mettreAJourBadgeCredits();
+    if(!silencieux)afficherToast(`Credits FullEnrich : ${data.balance}`,C.teal);
+  }catch(e){
+    creditsFullEnrich=null;
+    fullenrichDisponible=false;
+    mettreAJourBadgeCredits();
+    if(!silencieux)afficherToast('Credits FullEnrich indisponibles : '+(e.message||e),C.red);
+  }finally{
+    if(bouton)bouton.disabled=false;
+    renderMultiBar();
+  }
+}
+
+function formaterTelephone(t){return String(t||'').trim();}
+function telHref(t){const s=formaterTelephone(t).replace(/[^\d+]/g,'');return s?`tel:${s}`:'';}
+
+async function copierTelephone(id){
+  const l=LEADS.find(x=>x.id===id);
+  if(!l||!l.tel)return;
+  try{
+    await navigator.clipboard.writeText(l.tel);
+    afficherToast('Telephone copie',C.teal);
+  }catch(e){
+    afficherToast('Copie impossible',C.red);
+  }
+}
+
+async function chercherLinkedin(id){
+  if(!sb||!estAdmin())return afficherToast('Acces reserve aux admins',C.red);
+  const l=LEADS.find(x=>x.id===id);
+  if(!l)return;
+  linkedinDealEnCours=id;
+  document.getElementById('modal-linkedin').style.display='flex';
+  document.getElementById('linkedin-url-manuel').value=l.linkedin_url||'';
+  document.getElementById('linkedin-modal-body').innerHTML='<div class="pnone">Recherche en cours...</div>';
+  try{
+    const {data,error}=await sb.functions.invoke('linkedin-search',{body:{deal_id:id}});
+    if(error)throw error;
+    if(data&&data.erreur&&!data.search_url)throw new Error(data.erreur);
+    renderModalLinkedin(data||{});
+  }catch(e){
+    const q=encodeURIComponent(`${l.prenom} ${l.nom} ${l.societe||l.act||''} site:linkedin.com/in`);
+    renderModalLinkedin({candidats:[],search_url:`https://duckduckgo.com/?q=${q}`,erreur:e.message||String(e)});
+  }
+}
+
+function renderModalLinkedin(data){
+  const candidats=Array.isArray(data.candidats)?data.candidats:[];
+  const body=document.getElementById('linkedin-modal-body');
+  const lien=data.search_url?`<a class="linkedin-search-link" href="${h(data.search_url)}" target="_blank" rel="noopener">Ouvrir la recherche web</a>`:'';
+  body.innerHTML=`
+    ${data.erreur?`<div class="pnone">${h(data.erreur)}</div>`:''}
+    ${candidats.length?`<div class="clbl">Candidats trouves</div><div class="linkedin-candidates">${candidats.map(c=>`
+      <button type="button" class="linkedin-candidate" onclick="choisirLinkedinCandidat('${encodeURIComponent(c.url||'')}')">
+        <strong>${h(c.titre||c.url)}</strong>
+        <span>${h(c.extrait||c.raison||'Profil LinkedIn possible')}</span>
+        <span>${h(c.url)}</span>
+      </button>`).join('')}</div>`:'<div class="pnone">Aucun candidat fiable trouve automatiquement.</div>'}
+    ${lien}`;
+}
+
+function choisirLinkedinCandidat(url){
+  document.getElementById('linkedin-url-manuel').value=decodeURIComponent(url||'');
+}
+
+function fermerModalLinkedin(){
+  document.getElementById('modal-linkedin').style.display='none';
+  linkedinDealEnCours=null;
+}
+
+async function sauvegarderLinkedinDepuisModal(){
+  const url=document.getElementById('linkedin-url-manuel').value.trim();
+  if(!linkedinDealEnCours)return;
+  await sauvegarderLinkedin(linkedinDealEnCours,url);
+}
+
+async function sauvegarderLinkedin(id,url){
+  if(!sb||!estAdmin())return afficherToast('Acces reserve aux admins',C.red);
+  if(url&&!linkedinValide(url))return afficherToast('URL LinkedIn invalide',C.red);
+  try{
+    const {data,error}=await sb.rpc('admin_update_deal_linkedin',{p_deal_id:id,p_linkedin_url:url||null});
+    if(error)throw error;
+    if(data){
+      const idx=LEADS.findIndex(l=>l.id===id);
+      if(idx>=0)LEADS[idx]=dealVersLead(data);
+      if(currentL&&currentL.id===id&&idx>=0)currentL=LEADS[idx];
+    }
+    fermerModalLinkedin();
+    render();
+    afficherToast(url?'Profil LinkedIn valide':'Profil LinkedIn retire',C.teal);
+  }catch(e){
+    afficherToast('Validation LinkedIn impossible : '+(e.message||e),C.red);
+  }
+}
+
+async function enrichirTelephone(id){await enrichirTelephones([id]);}
+async function enrichirSelectionTelephones(){await enrichirTelephones([...selectedIds]);}
+
+async function enrichirTelephones(ids){
+  if(!sb||!UTILISATEUR||!estAdmin())return afficherToast('Acces reserve aux admins',C.red);
+  if(!fullenrichDisponible)return afficherToast('FullEnrich n’est pas encore configure',C.orange);
+  if(fullenrichEnCours)return;
+  const uniques=[...new Set(ids)].filter(Boolean);
+  const eligibles=uniques.map(id=>LEADS.find(l=>l.id===id)).filter(Boolean).filter(l=>entreeFullEnrichPossible(l).ok);
+  const ignores=uniques.length-eligibles.length;
+  if(!eligibles.length){
+    afficherToast('Aucun dossier eligible : ajoutez societe, domaine pro ou LinkedIn',C.orange);
+    return;
+  }
+  const coutMax=eligibles.length*10;
+  const ok=confirm(`${eligibles.length} dossier(s) pret(s) pour FullEnrich.\nCout maximum si telephone trouve : ${coutMax} credits.\n${ignores} dossier(s) ignore(s).\n\nLancer la recherche telephone ?`);
+  if(!ok)return;
+  fullenrichEnCours=true;
+  try{
+    const {data,error}=await sb.functions.invoke('fullenrich-phone',{body:{deal_ids:eligibles.map(l=>l.id)}});
+    if(error)throw error;
+    if(data&&data.erreur)throw new Error(data.erreur);
+    if(typeof data.credits_apres==='number')creditsFullEnrich=data.credits_apres;
+    else if(typeof data.credits_avant==='number')creditsFullEnrich=data.credits_avant;
+    mettreAJourBadgeCredits();
+    selectedIds.clear();
+    renderMultiBar();
+    render();
+    afficherToast(`${data.lances||0} enrichissement(s) FullEnrich lance(s)`,C.teal);
+    chargerCreditsFullEnrich(true);
+  }catch(e){
+    afficherToast('FullEnrich impossible : '+(e.message||e),C.red);
+  }finally{
+    fullenrichEnCours=false;
+  }
+}
 
 async function enregistrerEvenement(dealId,type,resume,payload){
   if(!sb||!UTILISATEUR)return;
@@ -1458,13 +1683,13 @@ function showPanel(id,tab){document.querySelectorAll('.ftab').forEach(t=>t.class
 function selectAll(){getVisibleLeads().forEach(l=>selectedIds.add(l.id));renderMultiBar();render();}
 function selectByScore(){const min=+document.getElementById('sel-score-min').value||0;const max=+document.getElementById('sel-score-max').value||100;selectedIds.clear();getVisibleLeads().filter(l=>l.score>=min&&l.score<=max).forEach(l=>selectedIds.add(l.id));renderMultiBar();render();}
 function selectByDate(){const from=document.getElementById('sel-date-from').value;const to=document.getElementById('sel-date-to').value;if(!from&&!to)return;const fd=from?new Date(from):new Date('2000-01-01');const td=to?new Date(to):new Date('2099-12-31');selectedIds.clear();getVisibleLeads().filter(l=>{const d=parseDate(l.date);return d>=fd&&d<=td}).forEach(l=>selectedIds.add(l.id));renderMultiBar();render();}
-function getVisibleLeads(){const q=document.getElementById('sb-search').value.toLowerCase();return LEADS.filter(l=>{const mia=filterIA==="Tous"||(filterIA==="Santé"?l.sante:l.dec===filterIA);const mst=filterST==="Tous"||l.statut===filterST;const ms=!q||`${l.prenom} ${l.nom} ${l.act} ${l.desc}`.toLowerCase().includes(q);return mia&&mst&&ms;});}
+function getVisibleLeads(){const q=document.getElementById('sb-search').value.toLowerCase();return LEADS.filter(l=>{const mia=filterIA==="Tous"||(filterIA==="Santé"?l.sante:l.dec===filterIA);const mst=filterST==="Tous"||l.statut===filterST;const ms=!q||`${l.prenom} ${l.nom} ${l.email} ${l.tel} ${l.societe||''} ${l.linkedin_url||''} ${l.act} ${l.desc}`.toLowerCase().includes(q);return mia&&mst&&ms;});}
 function setF(f,btn,group){if(group==='ia'){filterIA=f;document.querySelectorAll('#filters-ia .fb').forEach(b=>b.classList.remove('on'))}else{filterST=f;document.querySelectorAll('#filters-st .fb').forEach(b=>b.classList.remove('on'))}btn.classList.add('on');render();}
 function setSort(s,btn){currentSort=s;document.querySelectorAll('#filters-date .fb').forEach(b=>b.classList.remove('on'));btn.classList.add('on');render();}
 function parseDate(d){const[dd,mm,yy]=d.split('/');return new Date(yy,mm-1,dd)}
 function sortLeads(list){if(currentSort==='recent')return list.sort((a,b)=>parseDate(b.date)-parseDate(a.date));if(currentSort==='ancien')return list.sort((a,b)=>parseDate(a.date)-parseDate(b.date));return list.sort((a,b)=>b.score-a.score);}
 function toggleSelect(id,e){e.stopPropagation();if(selectedIds.has(id))selectedIds.delete(id);else selectedIds.add(id);renderMultiBar();render();}
-function renderMultiBar(){const bar=document.getElementById('multi-bar');if(selectedIds.size>0){bar.style.display='flex';document.getElementById('mb-count').textContent=selectedIds.size}else{bar.style.display='none'}}
+function renderMultiBar(){const bar=document.getElementById('multi-bar');const btnFe=document.getElementById('mb-fullenrich');if(btnFe)btnFe.style.display=estAdmin()&&fullenrichDisponible&&selectedIds.size>0?'inline-flex':'none';if(selectedIds.size>0){bar.style.display='flex';document.getElementById('mb-count').textContent=selectedIds.size}else{bar.style.display='none'}}
 function clearSelection(){selectedIds.clear();renderMultiBar();render()}
 
 function renderKpis(){
@@ -1494,8 +1719,7 @@ function render(){
   majBadgeRattacher();
   if(currentView==='board'){renderBoard();return}
   if(currentView==='rattacher'){renderRattacher();return}
-  const q=document.getElementById('sb-search').value.toLowerCase();
-  let list=LEADS.filter(l=>{const mia=filterIA==="Tous"||(filterIA==="Santé"?l.sante:l.dec===filterIA);const mst=filterST==="Tous"||l.statut===filterST;const ms=!q||`${l.prenom} ${l.nom} ${l.act} ${l.desc}`.toLowerCase().includes(q);return mia&&mst&&ms;});
+  let list=getVisibleLeads();
   list=sortLeads([...list]);
   if(!currentL&&list.length)currentL=list[0];
   if(currentL&&!list.find(l=>l.id===currentL.id)&&list.length)currentL=list[0];
@@ -1514,6 +1738,18 @@ function render(){
     return;
   }
   document.getElementById('sb-list').innerHTML=list.map(l=>{const s=ST[l.statut],sel=selectedIds.has(l.id);return `<div class="li${currentL?.id===l.id?' on':''}" onclick="pick('${l.id}')"><div class="li-top"><div class="li-left"><div class="li-check${sel?' checked':''}" onclick="toggleSelect('${l.id}',event)">${sel?'✓':''}</div><div class="li-st" style="background:${s.color}${l.statut==='nouveau'?'44':''};border-color:${s.color}" title="${h(s.label)}"></div><div class="li-name">${h(l.prenom)} ${h(l.nom)}</div></div><div class="li-sc" style="background:${dc(l.dec)}22;color:${dc(l.dec)};border:1px solid ${dc(l.dec)}">${h(l.score)}</div></div><div class="li-meta" style="padding-left:42px">${h(l.act)} · ${h(l.date)}</div><div class="li-tags" style="padding-left:42px">${l.statut!=='nouveau'?`<span class="tst" style="background:${s.color}18;color:${s.color};border-color:${s.color}">${h(s.label)}</span>`:''}${l.sante?'<span class="tag ts">Santé</span>':''}${l.doc?'<span class="tag td">Doc</span>':''}</div></div>`;}).join('');
+  document.getElementById('sb-list').innerHTML=list.map(l=>{
+    const s=ST[l.statut],sel=selectedIds.has(l.id);
+    const meta=[l.act,l.tel?`Tel : ${l.tel}`:'',l.date].filter(Boolean).join(' · ');
+    return `<div class="li${currentL?.id===l.id?' on':''}" onclick="pick('${l.id}')">
+      <div class="li-top">
+        <div class="li-left"><div class="li-check${sel?' checked':''}" onclick="toggleSelect('${l.id}',event)">${sel?'✓':''}</div><div class="li-st" style="background:${s.color}${l.statut==='nouveau'?'44':''};border-color:${s.color}" title="${h(s.label)}"></div><div class="li-name">${h(l.prenom)} ${h(l.nom)}</div></div>
+        <div class="li-sc" style="background:${dc(l.dec)}22;color:${dc(l.dec)};border:1px solid ${dc(l.dec)}">${h(l.score)}</div>
+      </div>
+      <div class="li-meta" style="padding-left:42px">${h(meta)}</div>
+      <div class="li-tags" style="padding-left:42px">${l.statut!=='nouveau'?`<span class="tst" style="background:${s.color}18;color:${s.color};border-color:${s.color}">${h(s.label)}</span>`:''}${l.sante?'<span class="tag ts">Santé</span>':''}${l.doc?'<span class="tag td">Doc</span>':''}${l.tel?'<span class="tag td">Tel</span>':''}${l.linkedin_url?'<span class="tag te">LinkedIn</span>':''}</div>
+    </div>`;
+  }).join('');
   document.getElementById('sb-foot').textContent=`${list.length} dossier${list.length>1?'s':''} · ${LEADS.length} total · ${dataSource}`;
   renderMultiBar();
   renderDetail();
@@ -1558,6 +1794,28 @@ function relance(id){
 function mailtoLink(l){const tpl=templateEmail(l.statut);if(!tpl)return null;const subj=encodeURIComponent(tpl.subject||'Lina Finance');const body=encodeURIComponent(appliquerVariablesTemplate(tpl.body,l));const email=encodeURIComponent(String(l.email||'').trim());return `mailto:${email}?subject=${subj}&body=${body}`;}
 
 function emailBlock(l){const st=l.statut;if(st==='nouveau')return '';const tpl=templateEmail(st);if(!tpl)return '';const href=mailtoLink(l);const corps=appliquerVariablesTemplate(tpl.body,l);return `<div class="ebox"><div class="ehead"><span class="elbl">${h(tpl.label||'Email')}</span><span class="eto">→ ${h(l.email)}</span></div><div class="ebody">${h(corps)}</div></div><a href="${h(href)}" target="_blank" rel="noopener" class="sbtn" style="display:block;text-align:center;text-decoration:none" onclick="tracerEmailEnvoye('${l.id}')">✉  Ouvrir dans ma messagerie</a>`;}
+
+function blocContact(l){
+  const tel=formaterTelephone(l.tel);
+  const hrefTel=telHref(tel);
+  const sourceTel=tel?(l.telephone_source==='fullenrich'?'Telephone FullEnrich':'Telephone Typeform'):'Telephone';
+  const elig=fullenrichDisponible?entreeFullEnrichPossible(l):{ok:false,raison:'FullEnrich non configure'};
+  const actionsTel=tel
+    ? `<div class="contact-actions"><button class="mini-btn" onclick="copierTelephone('${l.id}')">Copier</button>${hrefTel?`<a class="mini-btn teal" href="${h(hrefTel)}">Appeler</a>`:''}</div>`
+    : estAdmin()?`<div class="contact-actions"><button class="mini-btn teal" onclick="enrichirTelephone('${l.id}')" ${elig.ok?'':`disabled title="${h(elig.raison)}"`}>Enrichir telephone</button><button class="mini-btn" onclick="chercherLinkedin('${l.id}')">Chercher LinkedIn</button></div><div class="pnone" style="margin-top:6px">${h(elig.raison)}</div>`:'<div class="pnone">Aucun telephone</div>';
+  const linkedin=l.linkedin_url
+    ? `<a href="${h(l.linkedin_url)}" target="_blank" rel="noopener">${h(l.linkedin_url)}</a>`
+    : 'Non renseigne';
+  const actionsLinkedin=estAdmin()?`<div class="contact-actions"><button class="mini-btn" onclick="chercherLinkedin('${l.id}')">${l.linkedin_url?'Modifier LinkedIn':'Chercher LinkedIn'}</button>${l.linkedin_url?`<button class="mini-btn" onclick="sauvegarderLinkedin('${l.id}','')">Retirer</button>`:''}</div>`:'';
+  return `<div class="card"><div class="cb">
+    <div class="clbl">Contact</div>
+    <div class="contact-grid">
+      <div class="contact-item"><div class="contact-label">Email</div><div class="contact-value">${l.email?h(l.email):'Non renseigne'}</div></div>
+      <div class="contact-item"><div class="contact-label">${h(sourceTel)}</div><div class="contact-value">${tel?h(tel):'Aucun telephone'}</div>${actionsTel}</div>
+      <div class="contact-item full"><div class="contact-label">LinkedIn valide</div><div class="contact-value">${linkedin}</div>${actionsLinkedin}</div>
+    </div>
+  </div></div>`;
+}
 
 /* ── Bloc Confidentiel (F9) ───────────────────────────────────────────────── */
 function blocConfidentiel(l){
@@ -1654,7 +1912,7 @@ function blocReunions(l){
 }
 
 /* ── Timeline (F9) ────────────────────────────────────────────────────────── */
-const TL_ICONES={statut:{ic:'⇄',bg:'#e8f0ff',col:C.blue},note:{ic:'✎',bg:'#fef5e8',col:C.orange},reunion:{ic:'▦',bg:'#f3effe',col:C.purple},email:{ic:'✉',bg:'#e8f8f0',col:C.green},import:{ic:'↓',bg:'#eef1f5',col:C.grey},champ:{ic:'✏',bg:'#fdf0f0',col:C.red}};
+const TL_ICONES={statut:{ic:'⇄',bg:'#e8f0ff',col:C.blue},note:{ic:'✎',bg:'#fef5e8',col:C.orange},reunion:{ic:'▦',bg:'#f3effe',col:C.purple},email:{ic:'✉',bg:'#e8f8f0',col:C.green},import:{ic:'↓',bg:'#eef1f5',col:C.grey},champ:{ic:'✏',bg:'#fdf0f0',col:C.red},enrichissement:{ic:'☎',bg:'#e8fffa',col:C.teal}};
 function blocTimeline(){
   const items=EVENTS_DOSSIER.map(e=>{
     const ic=TL_ICONES[e.type]||TL_ICONES.import;
@@ -1694,6 +1952,7 @@ function renderDetail(){
       <div class="action-bar-status" style="background:${s.color}18;color:${s.color};border:2px solid ${s.color}"><span class="st-icon" style="background:${s.color}"></span>${h(s.label)}</div>
       ${actionButtons(l)}
     </div>
+    ${blocContact(l)}
     ${blocConfidentiel(l)}
     <div class="card"><div class="cb"><div class="clbl">Projet</div><div class="ctxt">${l.desc?h(l.desc):'<i>Aucune description</i>'}</div></div></div>
     <div class="card motif" style="border-left-color:${col}"><div class="cb"><div class="clbl">Analyse IA</div><div class="cmotif">${h(l.motif)}</div></div></div>
@@ -1796,7 +2055,7 @@ function renderBoard(){
   board.innerHTML=ST_ORDER.map(st=>{
     const s=ST[st];
     const items=LEADS.filter(l=>l.statut===st).sort((a,b)=>b.score-a.score);
-    return `<div class="board-col" data-col="${st}" ondragover="boardDragOver(event)" ondragleave="boardDragLeave(event)" ondrop="boardDrop(event,'${st}')"><div class="board-col-head"><div class="board-col-title"><div class="board-col-dot" style="background:${s.color}"></div>${h(s.label)}</div><div class="board-col-count">${items.length}</div></div><div class="board-col-body">${items.map(l=>{const col=dc(l.dec);return `<div class="bc" draggable="true" data-id="${l.id}" ondragstart="boardDragStart(event,'${l.id}')" ondragend="boardDragEnd(event)" onclick="boardClick('${l.id}')"><div class="bc-top"><div class="bc-name">${h(l.prenom)} ${h(l.nom)}</div><div class="bc-score" style="background:${col}22;color:${col};border:1px solid ${col}">${h(l.score)}</div></div><div class="bc-act">${h(l.act)} · ${h(l.date)}</div><div class="bc-tags">${l.sante?'<span class="tag ts">Santé</span>':''}${l.doc?'<span class="tag td">Doc</span>':''}</div><div class="bc-ia" style="background:${col}15;color:${col}">${h(l.dec)}</div></div>`;}).join('')}</div></div>`;
+    return `<div class="board-col" data-col="${st}" ondragover="boardDragOver(event)" ondragleave="boardDragLeave(event)" ondrop="boardDrop(event,'${st}')"><div class="board-col-head"><div class="board-col-title"><div class="board-col-dot" style="background:${s.color}"></div>${h(s.label)}</div><div class="board-col-count">${items.length}</div></div><div class="board-col-body">${items.map(l=>{const col=dc(l.dec);return `<div class="bc" draggable="true" data-id="${l.id}" ondragstart="boardDragStart(event,'${l.id}')" ondragend="boardDragEnd(event)" onclick="boardClick('${l.id}')"><div class="bc-top"><div class="bc-name">${h(l.prenom)} ${h(l.nom)}</div><div class="bc-score" style="background:${col}22;color:${col};border:1px solid ${col}">${h(l.score)}</div></div><div class="bc-act">${h(l.act)} · ${h(l.date)}</div><div class="bc-tags">${l.sante?'<span class="tag ts">Santé</span>':''}${l.doc?'<span class="tag td">Doc</span>':''}${l.tel?'<span class="tag td">Tel</span>':''}${l.linkedin_url?'<span class="tag te">LinkedIn</span>':''}</div><div class="bc-ia" style="background:${col}15;color:${col}">${h(l.dec)}</div></div>`;}).join('')}</div></div>`;
   }).join('');
 }
 

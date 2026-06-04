@@ -16,3 +16,19 @@ verify_jwt = false
 # fathom-webhook : appelée par Fathom (pas de JWT) → sécurité par signature svix.
 [functions.fathom-webhook]
 verify_jwt = false
+
+# fullenrich-credits : appelee depuis le navigateur par les admins connectes.
+[functions.fullenrich-credits]
+verify_jwt = true
+
+# fullenrich-phone : lance les enrichissements telephone, admin uniquement.
+[functions.fullenrich-phone]
+verify_jwt = true
+
+# fullenrich-webhook : appelee par FullEnrich, securisee par secret dans l'URL.
+[functions.fullenrich-webhook]
+verify_jwt = false
+
+# linkedin-search : recherche web de profils LinkedIn candidats, admin uniquement.
+[functions.linkedin-search]
+verify_jwt = true

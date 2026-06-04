@@ -45,6 +45,8 @@ export interface LigneDeal {
   nom: string;
   email: string | null;
   telephone: string | null;
+  telephone_source: string | null;
+  telephone_enrichi_le: string | null;
   activite: string;
   entreprise_creee: boolean;
   ca_tranche: string;
@@ -242,6 +244,8 @@ export function reponseVersDeal(reponse: ReponseTypeform): LigneDeal {
     nom,
     email,
     telephone,
+    telephone_source: telephone ? "typeform" : null,
+    telephone_enrichi_le: null,
     activite,
     entreprise_creee: entrepriseCreee,
     ca_tranche: caPlus50K ? "+ 50K" : "< 50K",
