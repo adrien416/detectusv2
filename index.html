@@ -1273,7 +1273,7 @@ async function chercherLinkedin(id){
   linkedinDealEnCours=id;
   document.getElementById('modal-linkedin').style.display='flex';
   document.getElementById('linkedin-url-manuel').value=l.linkedin_url||'';
-  document.getElementById('linkedin-modal-body').innerHTML='<div class="pnone">Recherche en cours...</div>';
+  document.getElementById('linkedin-modal-body').innerHTML='<div class="pnone">🔎 Recherche automatique en cours…</div>';
   try{
     const {data,error}=await sb.functions.invoke('linkedin-search',{body:{deal_id:id}});
     if(error)throw error;
@@ -1309,7 +1309,7 @@ function renderModalLinkedin(data){
       <button type="button" class="linkedin-candidate" onclick="choisirLinkedinCandidat('${encodeURIComponent(c.url||'')}')">
         <strong>${h(c.titre||c.url)}</strong>
         <span>${h(c.extrait||c.raison||'Profil LinkedIn possible')}</span>
-        <span>${h(c.raison||'Profil LinkedIn possible')} · score ${h(c.score||0)}</span>
+        <span>Confiance ${h(c.confiance||'—')}${c.methode&&c.methode!=='liens_manuels'?' · '+h(c.methode):''} · ${h(c.raison||'Profil possible')}</span>
         <span>${h(c.url)}</span>
       </button>`).join('')}</div>`:'<div class="pnone">Aucun candidat fiable trouve automatiquement.</div>'}
     <div class="pnone" style="margin-top:8px">Si aucun candidat n'est bon, ouvrez une recherche ci-dessous puis collez l'URL LinkedIn validée.</div>
