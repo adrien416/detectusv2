@@ -263,6 +263,16 @@ body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direc
 .modal-btn-annuler{padding:12px 20px;border-radius:8px;border:1.5px solid var(--card-border);background:transparent;color:var(--text-sub);font-weight:700;font-size:14.5px;cursor:pointer;font-family:var(--font)}
 .modal-btn-annuler:hover{color:var(--text-main);border-color:var(--text-sub)}
 .modal-carte.admin-email{width:780px}
+.modal-carte.journal{width:820px}
+.journal-controls{display:flex;gap:10px;align-items:center;margin-bottom:12px}
+.journal-controls select{padding:8px 12px;border-radius:8px;border:1.5px solid var(--card-border);background:var(--input-bg);color:var(--text-main);font-size:14px;font-family:var(--font);outline:none}
+.journal-controls select:focus{border-color:var(--teal)}
+.journal-count{margin-left:auto;font-size:12.5px;color:var(--text-sub)}
+.journal-liste{max-height:60vh;overflow-y:auto;padding-right:6px}
+.journal-liste::-webkit-scrollbar{width:5px}
+.journal-liste::-webkit-scrollbar-thumb{background:var(--pale);border-radius:99px}
+.journal-liste .tl-item{cursor:pointer;padding:9px 8px;border-radius:8px}
+.journal-liste .tl-item:hover{background:var(--li-hover)}
 .template-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 14px}
 .template-tab{border:1.5px solid var(--card-border);background:var(--input-bg);color:var(--text-sub);border-radius:8px;padding:7px 11px;font-family:var(--font);font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.04em;cursor:pointer}
 .template-tab.on{background:var(--teal);border-color:var(--teal);color:#061D39}
@@ -379,6 +389,10 @@ body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direc
     <button class="tb-btn" onclick="ouvrirAdminEmails()" title="Modifier les modèles d'emails" id="btn-admin-emails" style="display:none">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
       Emails
+    </button>
+    <button class="tb-btn" onclick="ouvrirJournal()" title="Journal d'activité — qui a fait quoi" id="btn-journal" style="display:none">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>
+      Journal
     </button>
     <button class="theme-toggle" onclick="toggleTheme()" title="Mode sombre / clair" id="theme-btn">
       <svg id="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:none"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
@@ -524,6 +538,20 @@ body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direc
         <button type="button" class="modal-btn-annuler" onclick="fermerAdminEmails()">Fermer</button>
       </div>
     </form>
+  </div>
+</div>
+
+<div id="modal-journal" class="modal-fond" style="display:none" onclick="if(event.target===this)fermerJournal()">
+  <div class="modal-carte journal">
+    <div class="modal-titre">Journal d'activité</div>
+    <div class="journal-controls">
+      <select id="journal-filtre-membre" onchange="renderJournal()"></select>
+      <span class="journal-count" id="journal-count"></span>
+    </div>
+    <div id="journal-liste" class="journal-liste"></div>
+    <div class="modal-actions">
+      <button type="button" class="modal-btn-annuler" onclick="fermerJournal()">Fermer</button>
+    </div>
   </div>
 </div>
 
@@ -848,6 +876,8 @@ async function chargerProfils(){
     PROFIL_COURANT=UTILISATEUR?PROFILS[UTILISATEUR.id]||null:null;
     const btnAdmin=document.getElementById('btn-admin-emails');
     if(btnAdmin)btnAdmin.style.display=estAdmin()?'flex':'none';
+    const btnJournal=document.getElementById('btn-journal');
+    if(btnJournal)btnJournal.style.display=estAdmin()?'flex':'none';
     // Identité du compte connecté (outil partagé) : visible au survol du bouton Déconnexion
     const btnLogout=document.getElementById('btn-logout');
     if(btnLogout&&UTILISATEUR)btnLogout.title='Connecté : '+(PROFIL_COURANT?.nom_complet||UTILISATEUR.email||'')+' — cliquer pour se déconnecter';
@@ -855,6 +885,8 @@ async function chargerProfils(){
     PROFIL_COURANT=null;
     const btnAdmin=document.getElementById('btn-admin-emails');
     if(btnAdmin)btnAdmin.style.display='none';
+    const btnJournal=document.getElementById('btn-journal');
+    if(btnJournal)btnJournal.style.display='none';
     // Non bloquant : les auteurs s'afficheront « — »
   }
 }
@@ -1302,6 +1334,72 @@ function ouvrirAdminEmails(){
 
 function fermerAdminEmails(){
   document.getElementById('modal-admin-emails').style.display='none';
+}
+
+/* ═══ Journal d'activité (admin) — qui a modifié quel dossier et quand ═════ */
+/* Source : table deal_events (append-only), déjà alimentée par toutes les actions
+   (statut, note, confidentiel, email, réunion, import). Vue globale, admin only. */
+let JOURNAL=[];
+async function ouvrirJournal(){
+  if(!estAdmin()){afficherToast('Accès réservé aux admins',C.red);return;}
+  document.getElementById('modal-journal').style.display='flex';
+  await chargerJournal();
+}
+function fermerJournal(){document.getElementById('modal-journal').style.display='none';}
+
+async function chargerJournal(){
+  if(!sb)return;
+  const liste=document.getElementById('journal-liste');
+  liste.innerHTML='<div style="padding:24px;text-align:center;color:var(--text-sub)">Chargement…</div>';
+  try{
+    const {data,error}=await sb.from('deal_events')
+      .select('id,type,resume,cree_le,auteur_id,deal_id,deals(prenom,nom)')
+      .order('cree_le',{ascending:false}).limit(400);
+    if(error)throw error;
+    JOURNAL=data||[];
+    remplirFiltreMembresJournal();
+    renderJournal();
+  }catch(e){
+    console.error('journal',e);
+    liste.innerHTML='<div style="padding:24px;text-align:center;color:var(--red)">Chargement du journal impossible.</div>';
+  }
+}
+
+function remplirFiltreMembresJournal(){
+  const sel=document.getElementById('journal-filtre-membre');
+  const prec=sel.value;
+  const ids=[...new Set(JOURNAL.map(e=>e.auteur_id).filter(Boolean))];
+  sel.innerHTML='<option value="">Tous les membres</option>'
+    +ids.map(id=>`<option value="${h(id)}">${h(nomAuteur(id))}</option>`).join('')
+    +'<option value="__systeme">Système (imports, webhooks)</option>';
+  sel.value=prec||'';
+}
+
+function renderJournal(){
+  const liste=document.getElementById('journal-liste');
+  const sel=document.getElementById('journal-filtre-membre');
+  const filtre=sel?sel.value:'';
+  let events=JOURNAL;
+  if(filtre==='__systeme')events=events.filter(e=>!e.auteur_id);
+  else if(filtre)events=events.filter(e=>e.auteur_id===filtre);
+  document.getElementById('journal-count').textContent=`${events.length} action${events.length>1?'s':''}`;
+  if(!events.length){liste.innerHTML='<div style="padding:24px;text-align:center;color:var(--text-sub)">Aucune activité.</div>';return;}
+  liste.innerHTML=events.map(e=>{
+    const ic=TL_ICONES[e.type]||TL_ICONES.import;
+    const d=new Date(e.cree_le);
+    const dateStr=`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    const dossier=e.deals?`${e.deals.prenom||''} ${e.deals.nom||''}`.trim():'Dossier supprimé';
+    const clic=e.deal_id&&e.deals?`onclick="ouvrirDossierDepuisJournal('${e.deal_id}')"`:'';
+    return `<div class="tl-item" ${clic}><div class="tl-icone" style="background:${ic.bg};color:${ic.col}">${ic.ic}</div><div class="tl-corps"><div class="tl-resume">${h(e.resume)}</div><div class="tl-meta"><b>${h(nomAuteur(e.auteur_id))}</b> · ${h(dossier)} · ${dateStr}</div></div></div>`;
+  }).join('');
+}
+
+function ouvrirDossierDepuisJournal(dealId){
+  const lead=LEADS.find(l=>l.id===dealId);
+  if(!lead)return;
+  fermerJournal();
+  if(currentView!=='list')switchView('list',document.querySelectorAll('.view-tab')[0]);
+  pick(dealId);
 }
 
 function choisirTemplateEmail(statut){

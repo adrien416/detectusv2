@@ -376,3 +376,7 @@ Branche **hors prod**, créée depuis `main`. Elle regroupe deux blocs distincts
    `npx supabase functions deploy typeform-sync` · `typeform-webhook --no-verify-jwt` · `fathom-webhook --no-verify-jwt`.
 
 > Les étapes 2 et 3 (Supabase) ne consomment **aucun** crédit Netlify.
+
+### Ajout 04/06/2026 — Journal d'activité (admin)
+
+Bouton **« Journal »** dans la topbar (admin only, comme « Emails »). Vue globale de qui a fait quoi et quand, alimentée par la table `deal_events` existante (aucune migration nécessaire) : statut, note, confidentiel, email, réunion, import — avec auteur + horodatage. Filtre par membre (+ « Système » pour les imports/webhooks), clic sur une ligne → ouvre le dossier concerné. Lecture seule. *(Front uniquement → couvert par le build Netlify, pas de déploiement Supabase requis pour cette partie.)*
