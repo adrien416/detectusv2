@@ -2198,7 +2198,7 @@ function boardDragEnd(e){e.target.classList.remove('dragging');dragId=null;docum
 function boardDragOver(e){e.preventDefault();e.dataTransfer.dropEffect='move';e.currentTarget.classList.add('drag-over')}
 function boardDragLeave(e){e.currentTarget.classList.remove('drag-over')}
 function boardDrop(e,st){e.preventDefault();e.currentTarget.classList.remove('drag-over');if(dragId!==null){setStatus(dragId,st);renderBoard()}}
-function boardClick(id){currentL=LEADS.find(l=>l.id===id);switchView('list',document.querySelectorAll('.view-tab')[0]);render();}
+function boardClick(id){switchView('list',document.querySelectorAll('.view-tab')[0]);pick(id);}
 
 /* ── Navigation clavier j/k (v1) ─────────────────────────────────────────── */
 document.addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;const vis=getVisibleLeads();if(!vis.length)return;const idx=currentL?vis.findIndex(l=>l.id===currentL.id):-1;if(e.key==='ArrowDown'||e.key==='j'){e.preventDefault();pick(vis[Math.min(idx+1,vis.length-1)].id)}if(e.key==='ArrowUp'||e.key==='k'){e.preventDefault();pick(vis[Math.max(idx-1,0)].id)}});
