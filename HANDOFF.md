@@ -37,7 +37,9 @@
 
 **Demande d'Adrien** : transformer detectus (outil de qualification deal-flow créé par Djamel) en vrai CRM pour Lina Capital — login obligatoire, suivi des dossiers, infos confidentielles, et récupération automatique des réunions Fathom — tout en gardant la base et l'esprit de l'app v1.
 
-**Ce repo contient actuellement** (aucun code v2 n'a été écrit) :
+> ⚠️ **Section historique (phase de planification).** L'état réel et à jour du projet est dans la section **« État actuel »** en fin de document.
+
+**Au démarrage, ce repo contenait** (avant l'écriture du code v2) :
 
 | Commit | Contenu |
 |---|---|
@@ -399,3 +401,41 @@ Bouton **« Journal »** dans la topbar (admin only, comme « Emails »). Vue gl
 
 **Déploiement** : 1 build Netlify (front) + `npx supabase db push` (migration 007) +
 `npx supabase functions deploy fullenrich-webhook`.
+
+---
+
+## État actuel (04/06/2026) — TOUT EN PRODUCTION ✅
+
+Detectus v2 et ses extensions sont **en production** (Netlify + Supabase EU, projet `qobmctcloqekfascyrqs`).
+
+### Fonctionnalités live
+- **Auth** (login obligatoire, 3 admins, inscriptions désactivées) · **CRM partagé** (statuts, Board Kanban, notes, champs confidentiels, timeline) · **Realtime** entre membres.
+- **Typeform** : import exhaustif (`typeform-sync`) + temps réel (`typeform-webhook`), `payload_brut` conservé (D14).
+- **Fathom** : `fathom-webhook` → matching strict + 3 scores Claude Haiku, transcript jamais stocké (D6).
+- **Journal d'activité** admin (qui a fait quoi/quand) · **Templates emails** éditables (admin) + URL `lina.capital`.
+- **Santé** (D15) : statut **« Santé ⏳ »**, classification par IA à l'import (hors chemin critique), email dédié, régularisation de l'historique (migration 007).
+- **Téléphones** : affichés (Typeform) + **FullEnrich** (`fullenrich-credits` / `-phone` / `-webhook`) — admin-only, pas d'écrasement, idempotent, crédits dans le webhook, **capture aussi le LinkedIn** au passage.
+- **Recherche LinkedIn** (`linkedin-search`) : multi-sources best-effort (DuckDuckGo/Bing), admin-only, gratuit. Clé `SERPER_API_KEY` **optionnelle** pour fiabiliser (non utilisée — scraping gratuit retenu).
+
+### Edge Functions déployées
+`typeform-sync` · `typeform-webhook` · `fathom-webhook` · `fullenrich-credits` · `fullenrich-phone` · `fullenrich-webhook` · `linkedin-search`
+
+### Migrations
+`001` → `007`. ⚠️ Historique de migration désynchronisé sur la prod : appliquer avec **`npx supabase db push --include-all`** (003/004 non enregistrées mais idempotentes).
+
+### Décisions ajoutées après la v2 initiale
+- **D15** — Professions de santé conservées mais non financées (« Santé ⏳ »).
+- **D16/D17** (FullEnrich) — tranchées *de fait* par la mise en prod : enrichissement téléphone via société/domaine **ou** LinkedIn (pas de reverse-email pur) ; envoi de données porteurs à FullEnrich (sous-traitant tiers) → **à acter formellement côté conformité (DPA + registre RGPD)**, comme D11/Anthropic.
+- **Serper abandonné** : recherche LinkedIn gratuite par scraping retenue (pas de service tiers payant).
+
+### Répartition des rôles
+Codex et Claude codent indifféremment selon les sessions ; **chaque PR est relue par l'autre** avant/après mise en prod (XSS, RLS, idempotence, non-écrasement, chemin critique). Plusieurs allers-retours déjà appliqués (classif santé hors chemin critique, garde anti-écrasement, anti-bot LinkedIn).
+
+### Points ouverts / à surveiller
+- **1ᵉʳ vrai run FullEnrich** : vérifier le format de réponse (le brut est dans `fullenrich_requests.resultats`) ; ajuster le parsing tel/LinkedIn si besoin.
+- **Webhook Typeform temps réel** : à confirmer en place (token Djamel avec scope webhooks) ; sinon le bouton « Synchroniser » couvre.
+- **RGPD FullEnrich** (D17) à formaliser.
+- **v2.1** (toujours en backlog) : page admin/invitations + **masquage des champs confidentiels par rôle** (obligatoire avant tout compte non-admin) + backfill Fathom.
+
+### Ménage repo (04/06/2026)
+Branches de travail mergées/obsolètes supprimées — seule `main` subsiste. Le document AMF (`docs/grille-scoring-lina-capital.docx`) est préservé sur `main`.
