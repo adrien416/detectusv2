@@ -385,3 +385,17 @@ Bouton **« Journal »** dans la topbar (admin only, comme « Emails »). Vue gl
 
 1. **Fiabilité (suite revue Codex)** — la classification santé par IA ne bloque plus l'enregistrement : les dossiers Typeform sont **insérés d'abord**, l'IA tourne **en arrière-plan** (`enArrierePlan` via `EdgeRuntime.waitUntil`) et repasse en « Santé plus tard » après coup. Appel IA borné par un **délai d'abandon de 7 s, sans retry** (`sante.ts`). Concerne `typeform-sync` et `typeform-webhook`.
 2. **UI / lisibilité (mode sombre)** — les boîtes « accent » navy (Action recommandée, en-tête email, badge structure) gardaient un fond clair en thème sombre → texte blanc illisible. Fond sombre forcé en thème sombre (même correctif que le bloc Confidentiel).
+
+### Lot 04/06/2026 (soir) — finitions UI + LinkedIn gratuit + régularisation santé
+
+- **UI** : libellé colonne « Santé ⏳ » (1 ligne) + en-têtes de Board compacts (ex-PR #6).
+- **#1 FullEnrich → LinkedIn gratuit** : `fullenrich-webhook` enregistre aussi le profil
+  LinkedIn renvoyé par FullEnrich (même crédit), sans écraser un profil déjà validé.
+- **#3 Parsing durci** : extraction téléphone + LinkedIn défensive (plusieurs formats de
+  réponse FullEnrich gérés). Le brut reste dans `fullenrich_requests.resultats` (audit /
+  ajustement au 1ᵉʳ vrai run).
+- **#2 Régularisation santé** : migration `007_sante_historique.sql` bascule les dossiers
+  santé historiques (scorés avant D15) en « Santé plus tard », hors `accepte`/`sante`.
+
+**Déploiement** : 1 build Netlify (front) + `npx supabase db push` (migration 007) +
+`npx supabase functions deploy fullenrich-webhook`.
