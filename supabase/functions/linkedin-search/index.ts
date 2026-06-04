@@ -62,6 +62,12 @@ function domainePro(domaine: string): boolean {
 function normaliser(v: string): string {
   return v.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
 }
+function tokensNom(v: string): string[] {
+  return normaliser(v)
+    .replace(/[^a-z0-9]+/g, " ")
+    .split(/\s+/)
+    .filter((x) => x.length >= 2);
+}
 
 // Normalise une URL LinkedIn /in/ : https, host www, sans query/hash ni slash final.
 function normaliserUrlLinkedin(brut: string): string | null {
@@ -133,11 +139,15 @@ function evaluer(c: CandidatLinkedIn, mots: string[]): CandidatLinkedIn {
   let score = 0;
   for (const mot of mots) if (mot && texte.includes(normaliser(mot))) score += 18;
   const [prenom, nom] = mots;
+  const morceauxNom = tokensNom(nom || "");
+  const morceauxPrenom = tokensNom(prenom || "");
   if (prenom && nom && texte.includes(normaliser(`${prenom} ${nom}`))) score += 35;
   if (nom && texte.includes(normaliser(nom))) score += 25;
   if (prenom && texte.includes(normaliser(prenom))) score += 12;
+  for (const morceau of morceauxNom) if (texte.includes(morceau)) score += 12;
+  for (const morceau of morceauxPrenom) if (texte.includes(morceau)) score += 6;
   if (/linkedin\.com\/in\//i.test(c.url)) score += 30;
-  if (nom && !texte.includes(normaliser(nom))) score -= 40; // nom absent = doute fort
+  if (nom && !texte.includes(normaliser(nom)) && !morceauxNom.some((m) => texte.includes(m))) score -= 40; // nom absent = doute fort
   score = Math.max(0, Math.min(140, score));
   const confiance = score >= 95 ? "élevée" : score >= 65 ? "moyenne" : "faible";
   const raison = score >= 95
@@ -248,9 +258,12 @@ Deno.serve(async (req) => {
     const requetes = [
       [`"${prenom} ${nom}"`, "site:linkedin.com/in"].filter(Boolean).join(" "),
       [prenom, nom, "site:linkedin.com/in"].filter(Boolean).join(" "),
+      [`"${prenom} ${nom}"`, "site:fr.linkedin.com/in"].filter(Boolean).join(" "),
       contexte ? [`"${prenom} ${nom}"`, contexte, "site:linkedin.com/in"].join(" ") : "",
+      contexte ? [prenom, nom, contexte, "site:linkedin.com/in"].join(" ") : "",
       contexte ? [prenom, nom, contexte, "linkedin"].join(" ") : "",
       activite ? [prenom, nom, activite, "linkedin"].join(" ") : "",
+      [prenom, nom, "linkedin"].filter(Boolean).join(" "),
     ].filter((q, i, a) => q && a.indexOf(q) === i);
 
     const mots = [prenom, nom, societe, racine, activite].filter(Boolean) as string[];

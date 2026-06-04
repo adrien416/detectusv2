@@ -708,6 +708,17 @@ body.mobile-detail-open #detail{display:block}
   </div>
 </div>
 
+<div id="modal-fullenrich-confirm" class="modal-fond" style="display:none" onclick="if(event.target===this)repondreConfirmationFullEnrich(false)">
+  <div class="modal-carte">
+    <div class="modal-titre">Lancer FullEnrich</div>
+    <div id="fullenrich-confirm-body"></div>
+    <div class="modal-actions">
+      <button type="button" class="modal-btn-ok" onclick="repondreConfirmationFullEnrich(true)">Lancer la recherche</button>
+      <button type="button" class="modal-btn-annuler" onclick="repondreConfirmationFullEnrich(false)">Annuler</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"><span class="t-dot"></span><span class="t-msg"></span></div>
 
 <script>
@@ -853,6 +864,7 @@ let creditsFullEnrich=null;
 let fullenrichDisponible=false;
 let fullenrichEnCours=false;
 let linkedinDealEnCours=null;
+let confirmationFullEnrichResolve=null;
 
 function isMobileLayout(){
   return window.matchMedia('(max-width: 767px)').matches;
@@ -990,7 +1002,8 @@ function initialiserAuth(){
 }
 
 async function demarrerApp(){
-  await Promise.all([chargerProfils(),chargerTemplatesEmails(),chargerDeals(),chargerReunions()]);
+  await chargerProfils();
+  await Promise.all([chargerTemplatesEmails(),chargerDeals(),chargerReunions()]);
   if(estAdmin())await chargerCreditsFullEnrich(true);
   render();
   demarrerRealtime();
@@ -1289,7 +1302,9 @@ async function chargerDeals(){
   if(!sb||!UTILISATEUR)return;
   try{
     dataSource='chargement…';
-    const {data,error}=await sb.from('deals').select('*').order('date_soumission',{ascending:false});
+    const colonnesPubliques='id,date_soumission,cree_le,prenom,nom,email,activite,entreprise_creee,ca_tranche,description,document_url,telephone,telephone_source,telephone_enrichi_le,linkedin_url,linkedin_source,linkedin_valide_le,statut,score,decision,motif,points_forts,points_faibles,action_reco,sante,source';
+    const colonnes=estAdmin()?'*':colonnesPubliques;
+    const {data,error}=await sb.from('deals').select(colonnes).order('date_soumission',{ascending:false});
     if(error)throw error;
     LEADS=(data||[]).map(dealVersLead);
     dataSource=`Supabase · ${LEADS.length} dossiers`;
@@ -1518,6 +1533,36 @@ function blocStatutFullEnrich(l){
 async function enrichirTelephone(id){await enrichirTelephones([id]);}
 async function enrichirSelectionTelephones(){await enrichirTelephones([...selectedIds]);}
 
+function confirmerLancementFullEnrich(params){
+  const nb=params.nb;
+  const coutMax=params.coutMax;
+  const ignores=params.ignores;
+  return new Promise(resolve=>{
+    confirmationFullEnrichResolve=resolve;
+    const body=document.getElementById('fullenrich-confirm-body');
+    body.innerHTML=`
+      <div class="fe-status wait" style="margin-top:0">
+        <strong>${h(nb)} dossier${nb>1?'s':''} pret${nb>1?'s':''} pour FullEnrich</strong>
+        <span>Le resultat n'est pas immediat. Detectus affichera d'abord "Recherche en cours", puis "Telephone trouve" ou "Aucun resultat" quand FullEnrich repondra par webhook.</span>
+      </div>
+      <div class="contact-grid" style="margin-top:12px">
+        <div class="contact-item"><div class="contact-label">Cout maximum</div><div class="contact-value">${h(coutMax)} credits</div></div>
+        <div class="contact-item"><div class="contact-label">Dossiers ignores</div><div class="contact-value">${h(ignores)}</div></div>
+      </div>
+      <div class="pnone" style="margin-top:10px">Un credit n'est consomme que si FullEnrich trouve une donnee facturable.</div>`;
+    document.getElementById('modal-fullenrich-confirm').style.display='flex';
+  });
+}
+
+function repondreConfirmationFullEnrich(ok){
+  document.getElementById('modal-fullenrich-confirm').style.display='none';
+  if(confirmationFullEnrichResolve){
+    const resolve=confirmationFullEnrichResolve;
+    confirmationFullEnrichResolve=null;
+    resolve(!!ok);
+  }
+}
+
 async function enrichirTelephones(ids){
   if(!sb||!UTILISATEUR||!estAdmin())return afficherToast('Acces reserve aux admins',C.red);
   if(!fullenrichDisponible)return afficherToast('FullEnrich n’est pas encore configure',C.orange);
@@ -1530,8 +1575,8 @@ async function enrichirTelephones(ids){
     return;
   }
   const coutMax=eligibles.length*10;
-  const ok=confirm(`Lancer une recherche FullEnrich sur ${eligibles.length} dossier(s) ?\n\nCe n'est pas immédiat : Detectus affichera d'abord "Recherche en cours", puis "Téléphone trouvé" ou "Aucun résultat" au retour du webhook FullEnrich.\n\nCoût maximum si téléphone trouvé : ${coutMax} crédits.\n${ignores} dossier(s) ignoré(s).`);
-  if(!ok)return;
+  const confirmation=await confirmerLancementFullEnrich({nb:eligibles.length,coutMax,ignores});
+  if(!confirmation)return;
   fullenrichEnCours=true;
   try{
     const {data,error}=await sb.functions.invoke('fullenrich-phone',{body:{deal_ids:eligibles.map(l=>l.id)}});
@@ -1649,6 +1694,7 @@ async function chargerDetailDossier(dealId){
 /* Sauvegarde des champs confidentiels (à la perte de focus) */
 async function sauvegarderConfidentiel(id){
   if(!sb)return;
+  if(!estAdmin())return afficherToast('Acces reserve aux admins',C.red);
   const lead=LEADS.find(x=>x.id===id);
   if(!lead)return;
   const valeurNum=el=>{const v=document.getElementById(el)?.value;return v===''||v===undefined?null:Number(v);};
@@ -2040,6 +2086,7 @@ function blocContact(l){
 
 /* ── Bloc Confidentiel (F9) ───────────────────────────────────────────────── */
 function blocConfidentiel(l){
+  if(!estAdmin())return '';
   const val=v=>v===null||v===undefined?'':v;
   return `
     <div class="conf-box">

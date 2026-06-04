@@ -444,3 +444,20 @@ Le front est désormais **responsive** (mobile/tablette) : viewport adaptatif, t
 Le doc AMF (`docs/grille-scoring-lina-capital.docx`) est **préservé sur `main`**. Les branches de travail mergées/obsolètes **n'ont PAS pu être supprimées** depuis l'environnement d'assistance (proxy git : 403 sur les suppressions). **À supprimer par Adrien** (toutes mergées dans `main`, aucun risque) :
 - via GitHub → `…/branches` → icône 🗑️, ou
 - `git push origin --delete claude/docs-grille-amf claude/fix-board-sante-label claude/fix-classif-sante claude/fix-race-sante claude/handoff-fullenrich claude/linkedin-search-amelioration claude/lot-final-amf claude/menage-handoff claude/relaxed-carson-GkaSS claude/revue-securite-ux`
+
+---
+
+## Ajout 04/06/2026 soir - reprise Codex avant nouveau push
+
+### Deja fait et verifie
+- **Mobile prod** : commit `470cfdc` pousse sur `main`, Netlify verifie. Le HTML prod contient `mobile-detail-open`, le board mobile horizontal et le message login ameliore.
+- **Compte Djamel** : `djamel@lina.finance` existait en `admin`, mais n'etait pas confirme cote Supabase Auth. Correction appliquee en prod : `email_confirme=true`, `confirme=true`, `role=admin`.
+- **Login** : le front distingue maintenant mieux les erreurs de connexion : mauvais identifiants/compte absent, email non confirme, limite de tentatives, erreur temporaire.
+
+### Lot demande ensuite par Adrien : "passer toutes les modifs indiquees"
+Applique dans le tour suivant :
+- **FullEnrich UX** : remplacement du `confirm()` natif par une vraie modale Detectus, avec cout maximum, dossiers ignores et rappel que le retour est asynchrone par webhook.
+- **LinkedIn search** : requetes plus tolerantes (`fr.linkedin.com`, contexte sans guillemets) et scoring renforce pour accents/noms composes. Fonction `linkedin-search` redeployee.
+- **Champs confidentiels** : garde front admin-only + migration `008_confidential_admin_guard.sql` appliquee en prod. Un non-admin ne peut plus modifier les champs de due diligence meme en appelant Supabase directement.
+- **Deploiement Supabase effectue** : `npx supabase db push --include-all --yes` puis `npx supabase functions deploy linkedin-search`.
+- Reste a faire dans ce tour : push front/HANDOFF sur `main`, puis verification Netlify.
