@@ -380,3 +380,8 @@ Branche **hors prod**, créée depuis `main`. Elle regroupe deux blocs distincts
 ### Ajout 04/06/2026 — Journal d'activité (admin)
 
 Bouton **« Journal »** dans la topbar (admin only, comme « Emails »). Vue globale de qui a fait quoi et quand, alimentée par la table `deal_events` existante (aucune migration nécessaire) : statut, note, confidentiel, email, réunion, import — avec auteur + horodatage. Filtre par membre (+ « Système » pour les imports/webhooks), clic sur une ligne → ouvre le dossier concerné. Lecture seule. *(Front uniquement → couvert par le build Netlify, pas de déploiement Supabase requis pour cette partie.)*
+
+### Correctifs 04/06/2026 — branche `claude/fix-classif-sante`
+
+1. **Fiabilité (suite revue Codex)** — la classification santé par IA ne bloque plus l'enregistrement : les dossiers Typeform sont **insérés d'abord**, l'IA tourne **en arrière-plan** (`enArrierePlan` via `EdgeRuntime.waitUntil`) et repasse en « Santé plus tard » après coup. Appel IA borné par un **délai d'abandon de 7 s, sans retry** (`sante.ts`). Concerne `typeform-sync` et `typeform-webhook`.
+2. **UI / lisibilité (mode sombre)** — les boîtes « accent » navy (Action recommandée, en-tête email, badge structure) gardaient un fond clair en thème sombre → texte blanc illisible. Fond sombre forcé en thème sombre (même correctif que le bloc Confidentiel).

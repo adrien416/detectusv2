@@ -222,6 +222,11 @@ body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direc
 .conf-field input:focus,.conf-field textarea:focus{border-color:var(--teal)}
 .conf-field textarea{resize:vertical;min-height:64px;line-height:1.5}
 [data-theme="dark"] .conf-box{background:#0a1322;border:1px solid rgba(71,211,176,.2)}
+/* Boîtes « accent » navy : garder un fond sombre en thème sombre (sinon le texte
+   blanc devient illisible car --navy s'éclaircit). */
+[data-theme="dark"] .abox{background:#0a1322;border:1px solid rgba(71,211,176,.2)}
+[data-theme="dark"] .ehead{background:#0a1322;border-bottom:1px solid rgba(71,211,176,.15)}
+[data-theme="dark"] .reunion-structure{background:#0a1322;border:1px solid rgba(71,211,176,.25)}
 
 /* ── v2 : notes internes (F9) ─────────────────────────────────────────────── */
 .note-form{display:flex;gap:8px;margin-bottom:12px;align-items:flex-start}

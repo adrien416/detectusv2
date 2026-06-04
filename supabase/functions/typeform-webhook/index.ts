@@ -15,7 +15,8 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { reponseJson } from "../_shared/cors.ts";
-import { marquerSante, reponseVersDeal } from "../_shared/typeform.ts";
+import { enArrierePlan } from "../_shared/retry.ts";
+import { reponseVersDeal, scoringSante } from "../_shared/typeform.ts";
 import { classifierSanteIA } from "../_shared/sante.ts";
 
 function comparaisonConstante(a: string, b: string): boolean {
@@ -81,16 +82,10 @@ Deno.serve(async (req) => {
     }
 
     // Conversion : parsing des refs + autoScore + payload_brut (module partagé)
-    let ligne = reponseVersDeal(formResponse);
-
-    // Classification santé par IA si les mots-clés n'ont rien détecté (temps réel,
-    // un seul dossier → pas de risque de délai). Conservateur : n'ajoute qu'au
-    // segment « Santé plus tard », ne retire jamais.
+    // Santé détectée par mots-clés ici ; l'affinage par IA se fait APRÈS l'insertion
+    // (hors chemin critique) pour ne jamais retarder l'enregistrement (revue Codex).
+    const ligne = reponseVersDeal(formResponse);
     const cleAnthropic = Deno.env.get("ANTHROPIC_API_KEY");
-    if (!ligne.sante && cleAnthropic) {
-      const estSante = await classifierSanteIA(ligne.activite, ligne.description, cleAnthropic);
-      if (estSante === true) ligne = marquerSante(ligne);
-    }
 
     const sb = createClient(supabaseUrl, serviceRoleKey);
 
@@ -112,10 +107,11 @@ Deno.serve(async (req) => {
     if (!insere) {
       return reponseJson({ statut: "deja_present", typeform_id: ligne.typeform_id });
     }
+    const idDossier = insere.id;
 
     // ── Timeline : événement import ─────────────────────────────────────────────
     const { error: erreurEvent } = await sb.from("deal_events").insert({
-      deal_id: insere.id,
+      deal_id: idDossier,
       type: "import",
       resume: "Dossier reçu en temps réel depuis Typeform (webhook)",
       payload: { source: "typeform-webhook" },
@@ -124,6 +120,24 @@ Deno.serve(async (req) => {
     if (erreurEvent) {
       // Non bloquant : le deal est inséré, seule la timeline a échoué
       console.error("deal_events import :", erreurEvent.message);
+    }
+
+    // ── Classification santé par IA EN ARRIÈRE-PLAN (hors chemin critique) ──────
+    // Le dossier est déjà enregistré. Si l'IA confirme une profession de santé que
+    // les mots-clés ont ratée, on le repasse en « Santé plus tard » après coup.
+    if (!ligne.sante && cleAnthropic) {
+      enArrierePlan((async () => {
+        const estSante = await classifierSanteIA(ligne.activite, ligne.description, cleAnthropic);
+        if (estSante === true) {
+          await sb.from("deals").update({ ...scoringSante(), statut: "sante" }).eq("id", idDossier);
+          await sb.from("deal_events").insert({
+            deal_id: idDossier,
+            type: "champ",
+            resume: "Classé « Santé plus tard » par l'IA à l'import",
+            auteur_id: null,
+          });
+        }
+      })());
     }
 
     return reponseJson({
