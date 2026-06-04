@@ -15,7 +15,8 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { reponseJson } from "../_shared/cors.ts";
-import { reponseVersDeal } from "../_shared/typeform.ts";
+import { marquerSante, reponseVersDeal } from "../_shared/typeform.ts";
+import { classifierSanteIA } from "../_shared/sante.ts";
 
 function comparaisonConstante(a: string, b: string): boolean {
   const aa = new TextEncoder().encode(a);
@@ -80,7 +81,16 @@ Deno.serve(async (req) => {
     }
 
     // Conversion : parsing des refs + autoScore + payload_brut (module partagé)
-    const ligne = reponseVersDeal(formResponse);
+    let ligne = reponseVersDeal(formResponse);
+
+    // Classification santé par IA si les mots-clés n'ont rien détecté (temps réel,
+    // un seul dossier → pas de risque de délai). Conservateur : n'ajoute qu'au
+    // segment « Santé plus tard », ne retire jamais.
+    const cleAnthropic = Deno.env.get("ANTHROPIC_API_KEY");
+    if (!ligne.sante && cleAnthropic) {
+      const estSante = await classifierSanteIA(ligne.activite, ligne.description, cleAnthropic);
+      if (estSante === true) ligne = marquerSante(ligne);
+    }
 
     const sb = createClient(supabaseUrl, serviceRoleKey);
 
@@ -94,7 +104,8 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (erreurInsert) {
-      return reponseJson({ erreur: `Insertion impossible : ${erreurInsert.message}` }, 500);
+      console.error("typeform-webhook insertion:", erreurInsert.message);
+      return reponseJson({ erreur: "insertion_deal", message: "Erreur interne" }, 500);
     }
 
     // Rejeu d'un webhook déjà traité → rien inséré, c'est un succès idempotent
@@ -123,6 +134,6 @@ Deno.serve(async (req) => {
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     console.error("typeform-webhook :", message);
-    return reponseJson({ erreur: `Traitement échoué : ${message}` }, 500);
+    return reponseJson({ erreur: "interne", message: "Traitement impossible" }, 500);
   }
 });

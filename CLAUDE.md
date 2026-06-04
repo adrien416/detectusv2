@@ -218,3 +218,18 @@ git push -u origin <branche>
 ```
 
 Netlify déploie automatiquement depuis la branche main après merge.
+
+---
+
+## 13. Communication avec l'équipe (RÈGLE PERMANENTE)
+
+**Adrien et l'équipe Lina Capital ne sont PAS développeurs.** À chaque fois qu'une action de leur côté est nécessaire (déploiement, configuration Supabase/Netlify, webhooks, secrets, migrations, CLI…), **TOUJOURS fournir le pas-à-pas détaillé**, sans le demander :
+
+- Étapes numérotées, une action par étape, dans l'ordre exact.
+- Préciser **où** cliquer (nom exact du bouton/menu) et **quoi** coller.
+- Donner les commandes **prêtes à copier-coller**, adaptées à l'environnement réel d'Adrien (**Windows / PowerShell**, `npx supabase …`).
+- Distinguer ce qui se fait dans le **navigateur** (Dashboard) de ce qui se fait dans le **terminal**.
+- Rappeler ce qui consomme des **crédits Netlify** (un build par push sur `main`) afin de **grouper les déploiements**.
+- Jamais de jargon non expliqué ; pas de « tu sais faire », on déroule.
+
+Cette règle prime : même si la demande est courte, la réponse inclut le pas-à-pas.

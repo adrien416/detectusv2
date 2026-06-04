@@ -133,6 +133,26 @@ interface ResultatScore {
   sante: boolean;
 }
 
+// Résultat de scoring « Santé plus tard » — partagé entre la détection par
+// mots-clés (autoScore) et la classification par IA (Edge Functions).
+export function scoringSante(): ResultatScore {
+  return {
+    score: 15,
+    decision: "REFUSÉ",
+    motif: "Santé — segment conservé en base, non financé pour l'instant",
+    points_forts: ["Dossier conservé pour réouverture future"],
+    points_faibles: ["Professions de santé non financées pour l'instant"],
+    action_reco: "Refuser santé — garder le dossier en suivi",
+    sante: true,
+  };
+}
+
+// Applique le traitement « Santé plus tard » à une ligne déjà construite
+// (utilisé quand l'IA détecte une profession de santé que les mots-clés ont ratée).
+export function marquerSante(ligne: LigneDeal): LigneDeal {
+  return { ...ligne, ...scoringSante(), statut: "sante" };
+}
+
 export function autoScore(l: EntreeScore): ResultatScore {
   // Secteur exclu → refus direct, score 5
   if (SECTEURS_REFUSES.some((x) => l.activite.toLowerCase().includes(x.toLowerCase()))) {
@@ -151,15 +171,7 @@ export function autoScore(l: EntreeScore): ResultatScore {
     (l.activite + " " + l.description).toLowerCase().includes(x.toLowerCase())
   );
   if (sante) {
-    return {
-      score: 15,
-      decision: "REFUSÉ",
-      motif: "Santé — segment conservé en base, non financé pour l'instant",
-      points_forts: ["Dossier conservé pour réouverture future"],
-      points_faibles: ["Professions de santé non financées pour l'instant"],
-      action_reco: "Refuser santé — garder le dossier en suivi",
-      sante: true,
-    };
+    return scoringSante();
   }
 
   let s = 30;
