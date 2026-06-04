@@ -439,3 +439,9 @@ tournerait à vide. **À vérifier sur l'API FullEnrich avant de coder le Lot B.
 
 > Cette section est documentaire (branche `claude/handoff-fullenrich`, non mergée) : à
 > grouper avec un prochain déploiement pour ne pas consommer de build Netlify inutile.
+
+### Rôles pour le lot FullEnrich (04/06/2026)
+- **Implémentation : Codex.**
+- **Revue : Claude**, une fois la fonctionnalité **terminée et en production** (revue
+  sécurité + fiabilité, vérification des décisions D16/D17 et des 6 points techniques
+  ci-dessus, et contrôle de la couverture réelle sur les données Typeform).
