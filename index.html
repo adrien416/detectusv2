@@ -1016,7 +1016,7 @@ async function demarrerApp(){
 async function chargerReunions(){
   if(!sb)return;
   try{
-    const {data,error}=await sb.from('meetings').select('*').order('debut',{ascending:false,nullsFirst:false});
+    const {data,error}=await sb.from('meetings').select('*').order('debut',{ascending:false,nullsFirst:false}).abortSignal(AbortSignal.timeout(25000));
     if(error)throw error;
     MEETINGS=data||[];
   }catch(e){
@@ -1303,8 +1303,11 @@ async function chargerDeals(){
   try{
     dataSource='chargement…';
     const colonnesPubliques='id,date_soumission,cree_le,prenom,nom,email,activite,entreprise_creee,ca_tranche,description,document_url,telephone,telephone_source,telephone_enrichi_le,linkedin_url,linkedin_source,linkedin_valide_le,statut,score,decision,motif,points_forts,points_faibles,action_reco,sante,source';
-    const colonnes=estAdmin()?'*':colonnesPubliques;
-    const {data,error}=await sb.from('deals').select(colonnes).order('date_soumission',{ascending:false});
+    // JAMAIS payload_brut : la réponse Typeform brute (plusieurs Mo cumulés sur 300+ dossiers)
+    // est inutile pour la liste et bloque le chargement sur connexion lente (cas Djamel).
+    const colonnesAdmin=colonnesPubliques+',societe,montant_demande,valorisation,montant_investi,notes_dd,prochaine_etape,date_prochaine_etape';
+    const colonnes=estAdmin()?colonnesAdmin:colonnesPubliques;
+    const {data,error}=await sb.from('deals').select(colonnes).order('date_soumission',{ascending:false}).abortSignal(AbortSignal.timeout(25000));
     if(error)throw error;
     LEADS=(data||[]).map(dealVersLead);
     dataSource=`Supabase · ${LEADS.length} dossiers`;
