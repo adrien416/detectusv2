@@ -348,3 +348,31 @@ Reprise recommandée :
 2. Mettre à jour `$TYPEFORM_TOKEN` dans PowerShell.
 3. Mettre à jour le secret Supabase `TYPEFORM_TOKEN`.
 4. Relancer uniquement la commande de création du webhook Typeform.
+
+---
+
+## 11. Branche `claude/revue-securite-ux` (04/06/2026) — revue + ajustements
+
+Branche **hors prod**, créée depuis `main`. Elle regroupe deux blocs distincts. **Un seul déploiement** (un push Netlify pour le front + les commandes Supabase pour la base et les fonctions) pour ne pas consommer de crédits inutilement.
+
+### Bloc A — Revue sécurité / UX → **à revoir par Codex**
+
+- **Sécurité — messages d'erreur** : plus aucun détail technique brut (Postgres/Supabase/API) n'est affiché à l'utilisateur ni renvoyé dans les réponses HTTP des webhooks. Helper `toastErreur()` côté front (détail en `console.error` uniquement) ; côté Edge Functions, réponses génériques `{erreur:"code", message:"…"}` + `console.error` (visible dans les logs Supabase).
+- **UX — états explicites de la liste** : « Chargement des dossiers… », « Aucun dossier pour l'instant → cliquez sur Synchroniser », « Aucun dossier ne correspond à ce filtre ». Évite l'écran vide qui ressemble à un bug.
+- **UX — identité du compte connecté** : visible au survol du bouton Déconnexion (outil partagé entre 3 personnes).
+
+> Reste de la revue (constats, non bloquants, **pas** codés ici) : le temps réel diffuse les champs confidentiels à tous les comptes connectés — sans objet en v2 (3 admins), **à traiter en v2.1** avant toute invitation ; messages d'erreur des webhooks à surveiller dans les logs ; vérifs « terrain » Fathom/Typeform au premier test réel.
+
+### Bloc B — Ajustements produit → **déjà décidés, PAS à revoir par Codex**
+
+- **Classification santé par IA** : à l'import (Edge Functions `typeform-sync` et `typeform-webhook`), un appel Claude Haiku (modèle épinglé) complète la détection par mots-clés et envoie les professions de santé manquées vers le statut **« Santé plus tard »**. Conservateur (n'ajoute jamais qu'au segment santé, ne retire rien) ; non bloquant en cas d'erreur (on garde le résultat mots-clés) ; plafonné à 80 appels par synchronisation (sécurité temps/coût — les syncs courantes ne ramènent que quelques dossiers). Nouveau fichier `supabase/functions/_shared/sante.ts`.
+- **Site lina.capital** ajouté à la fin des 6 templates emails : dans les valeurs par défaut du front (`index.html`) **et** en base via la migration `005_lina_capital_url.sql` (idempotente, préserve les modifications admin).
+
+### Déploiement de cette branche (après validation, un seul passage)
+
+1. **Front (Netlify)** : merge de la branche dans `main` → un seul build Netlify (index.html).
+2. **Base (Supabase)** : `npx supabase db push` → applique la migration `005` (URL templates).
+3. **Fonctions (Supabase)** : redéployer les 3 fonctions (santé IA + messages d'erreur) :
+   `npx supabase functions deploy typeform-sync` · `typeform-webhook --no-verify-jwt` · `fathom-webhook --no-verify-jwt`.
+
+> Les étapes 2 et 3 (Supabase) ne consomment **aucun** crédit Netlify.

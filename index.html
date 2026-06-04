@@ -568,7 +568,9 @@ Afin de compléter notre analyse, nous aurions besoin des documents suivants :
 Nous revenons vers vous rapidement après réception.
 
 Cordialement,
-L'Équipe Lina Finance`},
+L'Équipe Lina Finance
+
+https://lina.capital`},
   pitch:{label:'Invitation pitch',subject:'Lina Capital — Invitation à un appel de présentation',body:`Bonjour {{prenom}},
 
 Merci grandement d'avoir rempli le typeform pour votre demande de financement auprès de Lina Capital.
@@ -581,7 +583,9 @@ Voici nos disponibilités :
 prouesse.vc/cal/30min
 
 Cordialement,
-L'Équipe Lina Finance`},
+L'Équipe Lina Finance
+
+https://lina.capital`},
   attente:{label:"Mise en liste d'attente",subject:'Lina Finance — Votre dossier est en suivi',body:`Bonjour {{prenom}},
 
 Nous vous remercions pour la qualité de votre présentation concernant {{societe}}.
@@ -591,7 +595,9 @@ Votre dossier est intéressant et nous souhaitons le garder en suivi actif. Nous
 N'hésitez pas à nous tenir informés de l'évolution de votre projet.
 
 Cordialement,
-L'Équipe Lina Finance`},
+L'Équipe Lina Finance
+
+https://lina.capital`},
   accepte:{label:"Confirmation d'acceptation",subject:"Lina Finance — Votre dossier est accepté",body:`Bonjour {{prenom}},
 
 Nous sommes heureux de vous informer que votre dossier pour {{societe}} a été retenu par notre comité.
@@ -601,7 +607,9 @@ Nous allons vous adresser sous 48h les documents relatifs aux conditions de fina
 Félicitations et bienvenue chez Lina Finance.
 
 Cordialement,
-L'Équipe Lina Finance`},
+L'Équipe Lina Finance
+
+https://lina.capital`},
   refuse:{label:'Notification de refus',subject:'Lina Finance — Suite à votre demande de financement',body:`Bonjour {{prenom}},
 
 Nous vous remercions pour l'intérêt que vous portez à Lina Finance et pour le temps consacré à votre demande concernant {{societe}}.
@@ -611,7 +619,9 @@ Après étude attentive de votre dossier, nous ne sommes malheureusement pas en 
 Nous vous souhaitons plein succès dans votre projet.
 
 Cordialement,
-L'Équipe Lina Finance`},
+L'Équipe Lina Finance
+
+https://lina.capital`},
   sante:{label:'Refus santé temporaire',subject:'Lina Capital — Suite à votre demande de financement',body:`Bonjour {{prenom}},
 
 Merci grandement d'avoir rempli le typeform pour votre demande de financement auprès de Lina Capital.
@@ -625,7 +635,9 @@ Nous conservons donc votre dossier dans notre base de suivi afin de pouvoir vous
 Nous vous souhaitons sincèrement le meilleur pour votre recherche de financement.
 
 Cordialement,
-L'Équipe Lina Finance`},
+L'Équipe Lina Finance
+
+https://lina.capital`},
 };
 let EMAIL_TEMPLATES=JSON.parse(JSON.stringify(EMAIL_DEFAULTS));
 
@@ -666,6 +678,9 @@ function afficherToast(message,couleur){
   clearTimeout(minuteurToast);
   minuteurToast=setTimeout(()=>t.classList.remove('show'),2600);
 }
+/* Erreur : message clair en français pour l'utilisateur ; le détail technique
+   ne part que dans la console (jamais affiché à l'écran). */
+function toastErreur(message,e){ if(e!==undefined)console.error(message,e); afficherToast(message,C.red); }
 
 /* ═══ F1 — Authentification ═══════════════════════════════════════════════ */
 
@@ -690,9 +705,10 @@ async function connexion(event){
     const motDePasse=document.getElementById('login-password').value;
     const {error}=await sb.auth.signInWithPassword({email,password:motDePasse});
     if(error){
+      console.error('connexion',error);
       erreur.textContent=error.message==='Invalid login credentials'
         ?'Email ou mot de passe incorrect.'
-        :'Connexion impossible : '+error.message;
+        :'Connexion impossible pour le moment. Réessayez dans un instant.';
       erreur.classList.add('visible');
     }
     // En cas de succès, onAuthStateChange déclenche demarrerApp()
@@ -721,7 +737,8 @@ async function motDePasseOublie(){
     info.textContent='Email de réinitialisation envoyé à '+email+'.';
     info.classList.add('visible');
   }catch(e){
-    erreur.textContent='Envoi impossible : '+(e.message||e);
+    console.error('resetPassword',e);
+    erreur.textContent='Envoi impossible pour le moment. Réessayez dans un instant.';
     erreur.classList.add('visible');
   }
 }
@@ -732,7 +749,7 @@ async function deconnexion(){
     await sb.auth.signOut();
     // onAuthStateChange purge l'état et réaffiche le login
   }catch(e){
-    afficherToast('Déconnexion impossible : '+(e.message||e),C.red);
+    toastErreur('Déconnexion impossible.',e);
   }
 }
 
@@ -800,7 +817,7 @@ async function rattacherReunion(meetingId,dealId){
     afficherToast(`Réunion rattachée à ${lead.prenom} ${lead.nom}`,C.green);
     render();
   }catch(e){
-    afficherToast('Rattachement impossible : '+(e.message||e),C.red);
+    toastErreur('Rattachement impossible.',e);
   }
 }
 
@@ -816,7 +833,7 @@ async function ignorerReunion(meetingId){
     afficherToast('Réunion ignorée',C.grey);
     render();
   }catch(e){
-    afficherToast('Action impossible : '+(e.message||e),C.red);
+    toastErreur('Action impossible.',e);
   }
 }
 
@@ -831,6 +848,9 @@ async function chargerProfils(){
     PROFIL_COURANT=UTILISATEUR?PROFILS[UTILISATEUR.id]||null:null;
     const btnAdmin=document.getElementById('btn-admin-emails');
     if(btnAdmin)btnAdmin.style.display=estAdmin()?'flex':'none';
+    // Identité du compte connecté (outil partagé) : visible au survol du bouton Déconnexion
+    const btnLogout=document.getElementById('btn-logout');
+    if(btnLogout&&UTILISATEUR)btnLogout.title='Connecté : '+(PROFIL_COURANT?.nom_complet||UTILISATEUR.email||'')+' — cliquer pour se déconnecter';
   }catch(e){
     PROFIL_COURANT=null;
     const btnAdmin=document.getElementById('btn-admin-emails');
@@ -1034,7 +1054,7 @@ async function chargerDeals(){
     dataSource=`Supabase · ${LEADS.length} dossiers`;
   }catch(e){
     dataSource='Erreur de chargement';
-    afficherToast('Chargement des dossiers impossible : '+(e.message||e),C.red);
+    toastErreur('Chargement des dossiers impossible.',e);
   }
   render();
 }
@@ -1058,7 +1078,7 @@ async function synchroniserTypeform(silencieux){
       afficherToast('Aucun nouveau dossier — tout est à jour',C.teal);
     }
   }catch(e){
-    if(!silencieux)afficherToast('Synchronisation Typeform impossible : '+(e.message||e),C.red);
+    if(!silencieux)toastErreur('Synchronisation Typeform impossible.',e);
   }finally{
     syncEnCours=false;
     bouton.disabled=false;bouton.classList.remove('sync-en-cours');
@@ -1098,7 +1118,7 @@ async function changerStatut(id,nouveauStatut){
   }catch(e){
     lead.statut=ancienStatut;
     render();
-    afficherToast('Changement de statut impossible : '+(e.message||e),C.red);
+    toastErreur('Changement de statut impossible.',e);
   }
 }
 
@@ -1126,7 +1146,7 @@ async function multiAction(nouveauStatut){
   }catch(e){
     ids.forEach(id=>{const l=LEADS.find(x=>x.id===id);if(l&&anciens[id])l.statut=anciens[id];});
     render();
-    afficherToast('Mise à jour groupée impossible : '+(e.message||e),C.red);
+    toastErreur('Mise à jour groupée impossible.',e);
   }
 }
 
@@ -1150,7 +1170,7 @@ async function chargerDetailDossier(dealId){
     EVENTS_DOSSIER=resEvents.data||[];
     renderDetail();
   }catch(e){
-    afficherToast('Chargement du détail impossible : '+(e.message||e),C.red);
+    toastErreur('Chargement du détail impossible.',e);
   }
 }
 
@@ -1184,7 +1204,7 @@ async function sauvegarderConfidentiel(id){
     afficherToast('Informations confidentielles enregistrées',C.teal);
     enregistrerEvenement(id,'champ','Informations confidentielles mises à jour');
   }catch(e){
-    afficherToast('Enregistrement impossible : '+(e.message||e),C.red);
+    toastErreur('Enregistrement impossible.',e);
   }
 }
 
@@ -1202,7 +1222,7 @@ async function ajouterNote(dealId){
     await chargerDetailDossier(dealId);
     afficherToast('Note ajoutée',C.teal);
   }catch(e){
-    afficherToast('Ajout de note impossible : '+(e.message||e),C.red);
+    toastErreur('Ajout de note impossible.',e);
   }
 }
 
@@ -1264,7 +1284,7 @@ async function creerDossierManuel(event){
     render();
     afficherToast(`Dossier ${ligne.prenom} ${ligne.nom} créé`,C.green);
   }catch(e){
-    afficherToast('Création impossible : '+(e.message||e),C.red);
+    toastErreur('Création impossible.',e);
   }finally{
     bouton.disabled=false;
   }
@@ -1323,7 +1343,7 @@ async function sauvegarderTemplateEmail(event){
     renderDetail();
     afficherToast('Template email enregistré',C.green);
   }catch(e){
-    afficherToast('Enregistrement impossible : '+(e.message||e),C.red);
+    toastErreur('Enregistrement impossible.',e);
   }finally{
     bouton.disabled=false;
   }
@@ -1376,6 +1396,20 @@ function render(){
   list=sortLeads([...list]);
   if(!currentL&&list.length)currentL=list[0];
   if(currentL&&!list.find(l=>l.id===currentL.id)&&list.length)currentL=list[0];
+  // État vide explicite (facilité d'usage) : chargement, base vide, ou filtre trop restrictif
+  if(list.length===0){
+    const enChargement=!/^Supabase|^Erreur/.test(dataSource);
+    const msg=enChargement
+      ?'Chargement des dossiers…'
+      :LEADS.length===0
+        ?'Aucun dossier pour l\'instant.<br>Cliquez sur « ⟳ Synchroniser » en haut à droite pour importer les réponses Typeform.'
+        :'Aucun dossier ne correspond à ce filtre ou à cette recherche.';
+    document.getElementById('sb-list').innerHTML=`<div style="padding:34px 20px;text-align:center;color:var(--text-sub);font-size:14px;line-height:1.65">${msg}</div>`;
+    document.getElementById('sb-foot').textContent=`0 dossier · ${LEADS.length} total · ${dataSource}`;
+    renderMultiBar();
+    renderDetail();
+    return;
+  }
   document.getElementById('sb-list').innerHTML=list.map(l=>{const s=ST[l.statut],sel=selectedIds.has(l.id);return `<div class="li${currentL?.id===l.id?' on':''}" onclick="pick('${l.id}')"><div class="li-top"><div class="li-left"><div class="li-check${sel?' checked':''}" onclick="toggleSelect('${l.id}',event)">${sel?'✓':''}</div><div class="li-st" style="background:${s.color}${l.statut==='nouveau'?'44':''};border-color:${s.color}" title="${h(s.label)}"></div><div class="li-name">${h(l.prenom)} ${h(l.nom)}</div></div><div class="li-sc" style="background:${dc(l.dec)}22;color:${dc(l.dec)};border:1px solid ${dc(l.dec)}">${h(l.score)}</div></div><div class="li-meta" style="padding-left:42px">${h(l.act)} · ${h(l.date)}</div><div class="li-tags" style="padding-left:42px">${l.statut!=='nouveau'?`<span class="tst" style="background:${s.color}18;color:${s.color};border-color:${s.color}">${h(s.label)}</span>`:''}${l.sante?'<span class="tag ts">Santé</span>':''}${l.doc?'<span class="tag td">Doc</span>':''}</div></div>`;}).join('');
   document.getElementById('sb-foot').textContent=`${list.length} dossier${list.length>1?'s':''} · ${LEADS.length} total · ${dataSource}`;
   renderMultiBar();

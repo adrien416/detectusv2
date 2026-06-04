@@ -341,7 +341,8 @@ Deno.serve(async (req) => {
       .not("email", "is", null);
 
     if (erreurDeals) {
-      return reponseJson({ erreur: `Lecture des deals impossible : ${erreurDeals.message}` }, 500);
+      console.error("fathom-webhook lecture deals:", erreurDeals.message);
+      return reponseJson({ erreur: "lecture_deals", message: "Erreur interne" }, 500);
     }
 
     const correspondances = (tousDeals ?? []).filter((d) =>
@@ -449,7 +450,8 @@ Deno.serve(async (req) => {
       .single();
 
     if (erreurInsert) {
-      return reponseJson({ erreur: `Insertion meeting impossible : ${erreurInsert.message}` }, 500);
+      console.error("fathom-webhook insertion meeting:", erreurInsert.message);
+      return reponseJson({ erreur: "insertion_meeting", message: "Erreur interne" }, 500);
     }
 
     // Timeline du dossier si rattachement automatique
@@ -476,6 +478,6 @@ Deno.serve(async (req) => {
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     console.error("fathom-webhook :", message);
-    return reponseJson({ erreur: `Traitement échoué : ${message}` }, 500);
+    return reponseJson({ erreur: "interne", message: "Traitement impossible" }, 500);
   }
 });
