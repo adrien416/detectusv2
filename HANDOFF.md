@@ -385,3 +385,57 @@ Bouton **« Journal »** dans la topbar (admin only, comme « Emails »). Vue gl
 
 1. **Fiabilité (suite revue Codex)** — la classification santé par IA ne bloque plus l'enregistrement : les dossiers Typeform sont **insérés d'abord**, l'IA tourne **en arrière-plan** (`enArrierePlan` via `EdgeRuntime.waitUntil`) et repasse en « Santé plus tard » après coup. Appel IA borné par un **délai d'abandon de 7 s, sans retry** (`sante.ts`). Concerne `typeform-sync` et `typeform-webhook`.
 2. **UI / lisibilité (mode sombre)** — les boîtes « accent » navy (Action recommandée, en-tête email, badge structure) gardaient un fond clair en thème sombre → texte blanc illisible. Fond sombre forcé en thème sombre (même correctif que le bloc Confidentiel).
+
+---
+
+## 12. FullEnrich — téléphones Typeform + enrichissement (PLAN, à arbitrer)
+
+**Demande d'Adrien (04/06/2026) :** afficher dans Detectus les numéros de téléphone déjà
+fournis via Typeform ; quand le numéro manque, une option « enrichir avec FullEnrich » ;
+afficher les crédits FullEnrich restants à chaque fois. Clé API FullEnrich fournie par Adrien.
+
+Codex a proposé un plan ; revue Claude ci-dessous. **Statut : plan non implémenté, 2 décisions à trancher avant le Lot B.**
+
+### Verdict de la revue
+Plan Codex globalement **solide et bien architecturé** (clé côté serveur, table de suivi
+`fullenrich_requests`, webhook asynchrone, garde anti-écrasement, badge crédits, éligibilité
+anti-dépense). À garder comme base. Mais 1 angle mort majeur + corrections.
+
+### ⚠️ Point bloquant — couverture réelle
+FullEnrich a besoin de **prénom + nom + société/domaine pro** (ou LinkedIn) pour trouver un
+téléphone. Or les leads Typeform ont surtout : prénom, nom, **email perso**, un **secteur**
+(pas un nom d'entreprise), et `societe` **vide**. → Avec la règle d'éligibilité de Codex,
+la quasi-totalité des dossiers seraient inéligibles (« Société requise ») et la fonction
+tournerait à vide. **À vérifier sur l'API FullEnrich avant de coder le Lot B.**
+
+### 🔓 Décisions à trancher (non verrouillées — Codex les avait présumées)
+- **D16 — Reverse email → téléphone ?** Codex avait écrit « pas de reverse email » sans
+  validation d'Adrien. Or on a TOUJOURS l'email (même perso) : autoriser le reverse-email
+  sauverait la couverture. **À confirmer** que FullEnrich le propose, puis décision d'Adrien.
+- **D17 — RGPD / FullEnrich.** Envoyer nom + société + email des porteurs à FullEnrich
+  (sous-traitant tiers) = traitement de données perso à acter explicitement (comme D11
+  Anthropic) : DPA FullEnrich + inscription au registre des traitements. **À confirmer.**
+
+### Corrections techniques à appliquer (Lot B)
+1. Crédits : l'enrichissement est **asynchrone** → `crédits_avant` au lancement,
+   `crédits_après` + coût renseignés **dans le webhook** (pas à l'appel).
+2. Envoyer `deal_id` comme **identifiant personnalisé** à FullEnrich pour corréler le
+   webhook au bon dossier (indispensable en mode groupé).
+3. **Vérifier le mécanisme de signature** du webhook FullEnrich (header / token) avant impl.
+4. Actions « Enrichir » **réservées aux admins** (ça dépense de l'argent).
+5. Garde = simplement « `telephone` vide » (retirer la restriction `source='typeform'`,
+   inutile) ; migration : **rétro-remplir** `telephone_source='typeform'` sur l'existant.
+6. Nouvelles colonnes `telephone_source` / `telephone_enrichi_le` écrites **service_role
+   uniquement** (cohérent avec les grants par colonne).
+
+### Découpage recommandé
+- **Lot A — Affichage des téléphones (prêt à coder, zéro risque, zéro API)** : le champ
+  `telephone` est **déjà en base** (importé du Typeform). L'afficher dans la liste + la fiche
+  (bouton copier + lien d'appel `tel:`). Front uniquement → un seul build Netlify.
+- **Lot B — Enrichissement FullEnrich** : seulement **après** D16 + D17 tranchées et
+  vérification des entrées requises par l'API. Table `fullenrich_requests` + colonnes deals
+  + 3 Edge Functions (`fullenrich-credits`, `fullenrich-phone`, `fullenrich-webhook`) +
+  secret `FULLENRICH_API_KEY` (+ secret webhook). Badge crédits dans la topbar.
+
+> Cette section est documentaire (branche `claude/handoff-fullenrich`, non mergée) : à
+> grouper avec un prochain déploiement pour ne pas consommer de build Netlify inutile.
