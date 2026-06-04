@@ -129,13 +129,23 @@ Deno.serve(async (req) => {
       enArrierePlan((async () => {
         const estSante = await classifierSanteIA(ligne.activite, ligne.description, cleAnthropic);
         if (estSante === true) {
-          await sb.from("deals").update({ ...scoringSante(), statut: "sante" }).eq("id", idDossier);
-          await sb.from("deal_events").insert({
-            deal_id: idDossier,
-            type: "champ",
-            resume: "Classé « Santé plus tard » par l'IA à l'import",
-            auteur_id: null,
-          });
+          // Garde anti-écrasement : on ne reclasse que si personne n'a touché au
+          // dossier entre-temps (statut encore 'nouveau'). Sinon on respecte
+          // l'action de l'utilisateur. La condition rend l'update sans effet et
+          // on n'écrit l'événement que si une ligne a réellement changé.
+          const { data: maj } = await sb.from("deals")
+            .update({ ...scoringSante(), statut: "sante" })
+            .eq("id", idDossier)
+            .eq("statut", "nouveau")
+            .select("id");
+          if (maj && maj.length > 0) {
+            await sb.from("deal_events").insert({
+              deal_id: idDossier,
+              type: "champ",
+              resume: "Classé « Santé plus tard » par l'IA à l'import",
+              auteur_id: null,
+            });
+          }
         }
       })());
     }

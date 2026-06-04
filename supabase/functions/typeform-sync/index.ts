@@ -163,13 +163,22 @@ Deno.serve(async (req) => {
         for (const d of lot) {
           const estSante = await classifierSanteIA(d.activite, d.description, cleAnthropic);
           if (estSante === true) {
-            await sb.from("deals").update({ ...scoringSante(), statut: "sante" }).eq("id", d.id);
-            await sb.from("deal_events").insert({
-              deal_id: d.id,
-              type: "champ",
-              resume: "Classé « Santé plus tard » par l'IA à l'import",
-              auteur_id: null,
-            });
+            // Garde anti-écrasement : ne reclasse que si le dossier n'a pas été
+            // déplacé entre-temps (statut encore 'nouveau'). La fenêtre peut être
+            // longue sur un gros lot, donc le garde-fou est indispensable ici.
+            const { data: maj } = await sb.from("deals")
+              .update({ ...scoringSante(), statut: "sante" })
+              .eq("id", d.id)
+              .eq("statut", "nouveau")
+              .select("id");
+            if (maj && maj.length > 0) {
+              await sb.from("deal_events").insert({
+                deal_id: d.id,
+                type: "champ",
+                resume: "Classé « Santé plus tard » par l'IA à l'import",
+                auteur_id: null,
+              });
+            }
           }
         }
       })());
