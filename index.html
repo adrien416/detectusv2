@@ -165,7 +165,14 @@ body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direc
 .mini-btn{border:1.5px solid var(--card-border);background:var(--card-bg);color:var(--text-main);border-radius:7px;padding:6px 9px;font-family:var(--font);font-size:12px;font-weight:800;cursor:pointer;text-decoration:none;line-height:1}
 .mini-btn:hover{border-color:var(--teal);color:var(--teal)}
 .mini-btn.teal{background:var(--teal);border-color:var(--teal);color:#061D39}
+.mini-btn.orange{border-color:var(--orange);color:var(--orange)}
 .mini-btn:disabled{opacity:.45;cursor:not-allowed}
+.fe-status{margin-top:9px;border:1.5px solid var(--card-border);border-radius:8px;padding:9px 10px;background:var(--card-bg)}
+.fe-status strong{display:block;font-size:13px;color:var(--text-main);margin-bottom:3px}
+.fe-status span{display:block;font-size:12.5px;color:var(--text-sub);line-height:1.4}
+.fe-status.wait{border-color:var(--orange);background:#fef5e8}
+.fe-status.done{border-color:var(--teal);background:#e8fffa}
+.fe-status.err{border-color:var(--red);background:#fdf0f0}
 .linkedin-candidates{display:flex;flex-direction:column;gap:8px;margin:10px 0 14px}
 .linkedin-candidate{border:1.5px solid var(--card-border);background:var(--input-bg);border-radius:8px;padding:10px 12px;text-align:left;cursor:pointer;font-family:var(--font);color:var(--text-main)}
 .linkedin-candidate:hover{border-color:var(--teal)}
@@ -173,6 +180,7 @@ body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direc
 .linkedin-candidate span{display:block;font-size:12.5px;color:var(--text-sub);line-height:1.35}
 .linkedin-search-link{display:inline-block;margin-top:2px;color:var(--teal);font-size:13px;font-weight:800;text-decoration:none}
 .linkedin-search-link:hover{text-decoration:underline}
+.linkedin-searches{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
 .view-tabs{display:flex;gap:2px;background:rgba(255,255,255,.08);border-radius:8px;padding:2px;margin:0 18px}
 .view-tab{padding:5px 16px;border-radius:6px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;border:none;background:transparent;color:rgba(255,255,255,.4);font-family:var(--font);transition:all .15s}
 .view-tab.on{background:var(--teal);color:var(--navy)}
@@ -500,7 +508,7 @@ body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direc
       <span class="mb-label">sélectionnés</span>
       <button class="mb-btn orange" onclick="multiAction('info')">Info</button>
       <button class="mb-btn purple" onclick="multiAction('pitch')">Pitch</button>
-      <button class="mb-btn teal" onclick="enrichirSelectionTelephones()" id="mb-fullenrich" style="display:none">Tel FullEnrich</button>
+      <button class="mb-btn teal" onclick="enrichirSelectionTelephones()" id="mb-fullenrich" style="display:none">Lancer FullEnrich</button>
       <button class="mb-btn red" onclick="multiAction('refuse')">Refuser</button>
       <button class="mb-btn grey" onclick="clearSelection()">Annuler</button>
     </div>
@@ -738,6 +746,7 @@ let PROFILS={};                // id profil → {email, nom_complet, role}
 let PROFIL_COURANT=null;       // profil connecté, pour afficher les outils admin
 let NOTES_DOSSIER=[];          // notes du dossier affiché
 let EVENTS_DOSSIER=[];         // timeline du dossier affiché
+let FULLENRICH_DOSSIER=[];     // demandes FullEnrich du dossier affiché
 let appDemarree=false;
 let filterIA="Tous",filterST="Tous",currentL=null,currentSort="score",selectedIds=new Set();
 let dataSource='chargement…';
@@ -1003,7 +1012,8 @@ function demarrerRealtime(){
     .on('postgres_changes',{event:'*',schema:'public',table:'deals'},gererChangementDeal)
     .on('postgres_changes',{event:'*',schema:'public',table:'meetings'},gererChangementReunion)
     .on('postgres_changes',{event:'*',schema:'public',table:'notes'},gererChangementAnnexe)
-    .on('postgres_changes',{event:'*',schema:'public',table:'deal_events'},gererChangementAnnexe);
+    .on('postgres_changes',{event:'*',schema:'public',table:'deal_events'},gererChangementAnnexe)
+    .on('postgres_changes',{event:'*',schema:'public',table:'fullenrich_requests'},gererChangementFullEnrich);
   if(templatesEmailsDisponibles){
     canal.on('postgres_changes',{event:'*',schema:'public',table:'email_templates'},gererChangementTemplateEmail);
   }
@@ -1087,6 +1097,18 @@ function gererChangementDeal(payload){
 function gererChangementAnnexe(payload){
   const ligne=payload.new&&payload.new.deal_id?payload.new:payload.old;
   if(currentL&&ligne&&ligne.deal_id===currentL.id)chargerDetailDossier(currentL.id);
+}
+
+function gererChangementFullEnrich(payload){
+  const ligne=payload.new&&payload.new.deal_id?payload.new:payload.old;
+  if(!currentL||!ligne||ligne.deal_id!==currentL.id)return;
+  chargerDetailDossier(currentL.id);
+  if(payload.eventType==='UPDATE'&&payload.new){
+    const st=payload.new.statut;
+    if(st==='termine')afficherToast('FullEnrich a trouvé un téléphone',C.teal);
+    else if(st==='aucun_resultat')afficherToast('FullEnrich terminé : aucun téléphone trouvé',C.orange);
+    else if(st==='erreur'||st==='credits_insuffisants')afficherToast('FullEnrich terminé avec une erreur',C.red);
+  }
 }
 
 /* ═══ F3/F4 — Données : chargement depuis Postgres ════════════════════════ */
@@ -1258,24 +1280,40 @@ async function chercherLinkedin(id){
     if(data&&data.erreur&&!data.search_url)throw new Error(data.erreur);
     renderModalLinkedin(data||{});
   }catch(e){
-    const q=encodeURIComponent(`${l.prenom} ${l.nom} ${l.societe||l.act||''} site:linkedin.com/in`);
-    renderModalLinkedin({candidats:[],search_url:`https://duckduckgo.com/?q=${q}`,erreur:e.message||String(e)});
+    const strict=`"${l.prenom} ${l.nom}" site:linkedin.com/in`;
+    const large=`${l.prenom} ${l.nom} ${l.societe||domaineEmailPro(l.email)||l.act||''} linkedin`;
+    renderModalLinkedin({
+      candidats:[],
+      search_links:[
+        {label:'DuckDuckGo LinkedIn strict',requete:strict,url:`https://duckduckgo.com/?q=${encodeURIComponent(strict)}`},
+        {label:'Google LinkedIn strict',requete:strict,url:`https://www.google.com/search?q=${encodeURIComponent(strict)}`},
+        {label:'DuckDuckGo recherche large',requete:large,url:`https://duckduckgo.com/?q=${encodeURIComponent(large)}`},
+        {label:'Google recherche large',requete:large,url:`https://www.google.com/search?q=${encodeURIComponent(large)}`},
+      ],
+      erreur:e.message||String(e),
+    });
   }
 }
 
 function renderModalLinkedin(data){
   const candidats=Array.isArray(data.candidats)?data.candidats:[];
   const body=document.getElementById('linkedin-modal-body');
-  const lien=data.search_url?`<a class="linkedin-search-link" href="${h(data.search_url)}" target="_blank" rel="noopener">Ouvrir la recherche web</a>`:'';
+  const liens=Array.isArray(data.search_links)&&data.search_links.length
+    ? data.search_links
+    : data.search_url?[{label:'Recherche web',url:data.search_url,requete:data.requete||''}]:[];
+  const liensHtml=liens.length?`<div class="linkedin-searches">${liens.slice(0,5).map((l,i)=>`
+      <a class="mini-btn${i===0?' teal':''}" href="${h(l.url)}" target="_blank" rel="noopener">${h(l.label||'Recherche web')}</a>`).join('')}</div>`:'';
   body.innerHTML=`
     ${data.erreur?`<div class="pnone">${h(data.erreur)}</div>`:''}
     ${candidats.length?`<div class="clbl">Candidats trouves</div><div class="linkedin-candidates">${candidats.map(c=>`
       <button type="button" class="linkedin-candidate" onclick="choisirLinkedinCandidat('${encodeURIComponent(c.url||'')}')">
         <strong>${h(c.titre||c.url)}</strong>
         <span>${h(c.extrait||c.raison||'Profil LinkedIn possible')}</span>
+        <span>${h(c.raison||'Profil LinkedIn possible')} · score ${h(c.score||0)}</span>
         <span>${h(c.url)}</span>
       </button>`).join('')}</div>`:'<div class="pnone">Aucun candidat fiable trouve automatiquement.</div>'}
-    ${lien}`;
+    <div class="pnone" style="margin-top:8px">Si aucun candidat n'est bon, ouvrez une recherche ci-dessous puis collez l'URL LinkedIn validée.</div>
+    ${liensHtml}`;
 }
 
 function choisirLinkedinCandidat(url){
@@ -1312,6 +1350,46 @@ async function sauvegarderLinkedin(id,url){
   }
 }
 
+function dernierFullEnrich(dealId){
+  return (FULLENRICH_DOSSIER||[]).find(r=>r&&r.deal_id===dealId)||null;
+}
+
+function fullenrichEnCoursPour(dealId){
+  const r=dernierFullEnrich(dealId);
+  return !!(r&&['prepare','lance'].includes(r.statut));
+}
+
+function dateCourte(v){
+  if(!v)return '';
+  const d=new Date(v);
+  if(Number.isNaN(d.getTime()))return '';
+  return d.toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+}
+
+function blocStatutFullEnrich(l){
+  const r=dernierFullEnrich(l.id);
+  if(!r)return '';
+  const quand=dateCourte(r.modifie_le||r.cree_le);
+  const cout=r.cout_credits!==null&&r.cout_credits!==undefined?` · coût ${r.cout_credits} crédit(s)`:'';
+  const credits=r.credits_apres!==null&&r.credits_apres!==undefined?` · crédits restants ${r.credits_apres}`:'';
+  if(r.statut==='prepare'||r.statut==='lance'){
+    return `<div class="fe-status wait"><strong>Recherche FullEnrich en cours</strong><span>Le téléphone n'arrive pas immédiatement. Detectus attend le retour FullEnrich par webhook.${quand?` Lancée le ${h(quand)}.`:''}</span><div class="contact-actions"><button class="mini-btn orange" onclick="chargerDetailDossier('${l.id}')">Rafraîchir le statut</button></div></div>`;
+  }
+  if(r.statut==='termine'){
+    return `<div class="fe-status done"><strong>FullEnrich terminé : téléphone trouvé</strong><span>${quand?`Retour le ${h(quand)}`:'Retour reçu'}${cout}${credits}</span></div>`;
+  }
+  if(r.statut==='aucun_resultat'){
+    return `<div class="fe-status done"><strong>FullEnrich terminé : aucun téléphone trouvé</strong><span>${quand?`Retour le ${h(quand)}`:'Retour reçu'}${cout}${credits}. Ajoutez un LinkedIn validé ou une société plus précise avant de relancer.</span></div>`;
+  }
+  if(r.statut==='credits_insuffisants'){
+    return `<div class="fe-status err"><strong>FullEnrich bloqué : crédits insuffisants</strong><span>${quand?`Contrôle le ${h(quand)}`:'Contrôle effectué'}${credits}</span></div>`;
+  }
+  if(r.statut==='erreur'){
+    return `<div class="fe-status err"><strong>FullEnrich en erreur</strong><span>${quand?`Erreur le ${h(quand)}`:'Erreur reçue'}. Vous pouvez rafraîchir ou relancer après vérification.</span></div>`;
+  }
+  return `<div class="fe-status"><strong>Dernière demande FullEnrich : ${h(r.statut||'inconnue')}</strong><span>${quand?`Mise à jour le ${h(quand)}`:''}${cout}${credits}</span></div>`;
+}
+
 async function enrichirTelephone(id){await enrichirTelephones([id]);}
 async function enrichirSelectionTelephones(){await enrichirTelephones([...selectedIds]);}
 
@@ -1320,14 +1398,14 @@ async function enrichirTelephones(ids){
   if(!fullenrichDisponible)return afficherToast('FullEnrich n’est pas encore configure',C.orange);
   if(fullenrichEnCours)return;
   const uniques=[...new Set(ids)].filter(Boolean);
-  const eligibles=uniques.map(id=>LEADS.find(l=>l.id===id)).filter(Boolean).filter(l=>entreeFullEnrichPossible(l).ok);
+  const eligibles=uniques.map(id=>LEADS.find(l=>l.id===id)).filter(Boolean).filter(l=>entreeFullEnrichPossible(l).ok&&!fullenrichEnCoursPour(l.id));
   const ignores=uniques.length-eligibles.length;
   if(!eligibles.length){
-    afficherToast('Aucun dossier eligible : ajoutez societe, domaine pro ou LinkedIn',C.orange);
+    afficherToast('Aucun dossier eligible : ajoutez société, domaine pro ou LinkedIn, ou attendez le retour en cours',C.orange);
     return;
   }
   const coutMax=eligibles.length*10;
-  const ok=confirm(`${eligibles.length} dossier(s) pret(s) pour FullEnrich.\nCout maximum si telephone trouve : ${coutMax} credits.\n${ignores} dossier(s) ignore(s).\n\nLancer la recherche telephone ?`);
+  const ok=confirm(`Lancer une recherche FullEnrich sur ${eligibles.length} dossier(s) ?\n\nCe n'est pas immédiat : Detectus affichera d'abord "Recherche en cours", puis "Téléphone trouvé" ou "Aucun résultat" au retour du webhook FullEnrich.\n\nCoût maximum si téléphone trouvé : ${coutMax} crédits.\n${ignores} dossier(s) ignoré(s).`);
   if(!ok)return;
   fullenrichEnCours=true;
   try{
@@ -1340,7 +1418,8 @@ async function enrichirTelephones(ids){
     selectedIds.clear();
     renderMultiBar();
     render();
-    afficherToast(`${data.lances||0} enrichissement(s) FullEnrich lance(s)`,C.teal);
+    if(currentL&&eligibles.some(l=>l.id===currentL.id))chargerDetailDossier(currentL.id);
+    afficherToast(`${data.lances||0} recherche(s) FullEnrich lancée(s) : résultat en attente`,C.teal);
     chargerCreditsFullEnrich(true);
   }catch(e){
     afficherToast('FullEnrich impossible : '+(e.message||e),C.red);
@@ -1420,16 +1499,22 @@ async function chargerDetailDossier(dealId){
   if(!sb)return;
   chargementDetailEnCours=dealId;
   try{
-    const [resNotes,resEvents]=await Promise.all([
+    const reqFullEnrich=estAdmin()
+      ? sb.from('fullenrich_requests').select('*').eq('deal_id',dealId).order('cree_le',{ascending:false}).limit(5)
+      : Promise.resolve({data:[],error:null});
+    const [resNotes,resEvents,resFullEnrich]=await Promise.all([
       sb.from('notes').select('*').eq('deal_id',dealId).order('cree_le',{ascending:false}),
       sb.from('deal_events').select('*').eq('deal_id',dealId).order('cree_le',{ascending:false}).limit(50),
+      reqFullEnrich,
     ]);
     // Ignorer la réponse si l'utilisateur a changé de dossier entre-temps
     if(chargementDetailEnCours!==dealId)return;
     if(resNotes.error)throw resNotes.error;
     if(resEvents.error)throw resEvents.error;
+    if(resFullEnrich.error)throw resFullEnrich.error;
     NOTES_DOSSIER=resNotes.data||[];
     EVENTS_DOSSIER=resEvents.data||[];
+    FULLENRICH_DOSSIER=resFullEnrich.data||[];
     renderDetail();
   }catch(e){
     toastErreur('Chargement du détail impossible.',e);
@@ -1760,7 +1845,7 @@ function pick(id){
   currentL=LEADS.find(l=>l.id===id);
   // Nouveau dossier sélectionné → recharger ses notes + timeline
   if(currentL&&currentL.id!==precedent){
-    NOTES_DOSSIER=[];EVENTS_DOSSIER=[];
+    NOTES_DOSSIER=[];EVENTS_DOSSIER=[];FULLENRICH_DOSSIER=[];
     chargerDetailDossier(currentL.id);
   }
   render();
@@ -1800,9 +1885,11 @@ function blocContact(l){
   const hrefTel=telHref(tel);
   const sourceTel=tel?(l.telephone_source==='fullenrich'?'Telephone FullEnrich':'Telephone Typeform'):'Telephone';
   const elig=fullenrichDisponible?entreeFullEnrichPossible(l):{ok:false,raison:'FullEnrich non configure'};
+  const feEnCours=fullenrichEnCoursPour(l.id);
+  const statutFe=blocStatutFullEnrich(l);
   const actionsTel=tel
     ? `<div class="contact-actions"><button class="mini-btn" onclick="copierTelephone('${l.id}')">Copier</button>${hrefTel?`<a class="mini-btn teal" href="${h(hrefTel)}">Appeler</a>`:''}</div>`
-    : estAdmin()?`<div class="contact-actions"><button class="mini-btn teal" onclick="enrichirTelephone('${l.id}')" ${elig.ok?'':`disabled title="${h(elig.raison)}"`}>Enrichir telephone</button><button class="mini-btn" onclick="chercherLinkedin('${l.id}')">Chercher LinkedIn</button></div><div class="pnone" style="margin-top:6px">${h(elig.raison)}</div>`:'<div class="pnone">Aucun telephone</div>';
+    : estAdmin()?`<div class="contact-actions"><button class="mini-btn teal" onclick="enrichirTelephone('${l.id}')" ${elig.ok&&!feEnCours?'':`disabled title="${h(feEnCours?'Recherche FullEnrich déjà en cours':elig.raison)}"`}>Lancer recherche FullEnrich</button><button class="mini-btn" onclick="chercherLinkedin('${l.id}')">Chercher LinkedIn</button></div><div class="pnone" style="margin-top:6px">${h(feEnCours?'Recherche déjà lancée : le retour FullEnrich arrive via webhook.':elig.raison)}</div>${statutFe}`:'<div class="pnone">Aucun telephone</div>';
   const linkedin=l.linkedin_url
     ? `<a href="${h(l.linkedin_url)}" target="_blank" rel="noopener">${h(l.linkedin_url)}</a>`
     : 'Non renseigne';
