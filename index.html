@@ -1858,7 +1858,10 @@ async function chargerJournal(){
 function remplirFiltreMembresJournal(){
   const sel=document.getElementById('journal-filtre-membre');
   const prec=sel.value;
-  const ids=[...new Set(JOURNAL.map(e=>e.auteur_id).filter(Boolean))];
+  // Toute l'équipe (profils connus) + tout auteur déjà présent dans le journal,
+  // pour que chaque membre apparaisse même s'il n'a encore rien fait.
+  const ids=[...new Set([...Object.keys(PROFILS),...JOURNAL.map(e=>e.auteur_id).filter(Boolean)])]
+    .sort((a,b)=>nomAuteur(a).localeCompare(nomAuteur(b)));
   sel.innerHTML='<option value="">Tous les membres</option>'
     +ids.map(id=>`<option value="${h(id)}">${h(nomAuteur(id))}</option>`).join('')
     +'<option value="__systeme">Système (imports, webhooks)</option>';
