@@ -17,7 +17,7 @@
 | Implémentation (4 lots) | ✅ Lot 1 `c42c464` · Lot 2 `5a65d9b` · Lot 3 `d95b405` · Lot 4 `5ed979f` |
 | Revue Codex du code (PR #1) | ✅ 2 commentaires P2 + correctif `18f960e` (XSS, grants SQL, publication Netlify restreinte, signatures à temps constant) |
 | Merge de la PR #1 vers `main` | ✅ commit `8968038` — 02/06/2026, autorisé par Adrien |
-| **Mise en production** (guide README.md + HANDOFF §10) | ⏳ **EN COURS** — étape actuelle : création du projet Supabase |
+| **Mise en production** (guide README.md + HANDOFF §10) | ✅ **EN PRODUCTION** — site Netlify + Supabase branchés ; mise à jour templates/santé à appliquer |
 
 ### Corrections Codex appliquées
 
@@ -37,7 +37,9 @@
 
 **Demande d'Adrien** : transformer detectus (outil de qualification deal-flow créé par Djamel) en vrai CRM pour Lina Capital — login obligatoire, suivi des dossiers, infos confidentielles, et récupération automatique des réunions Fathom — tout en gardant la base et l'esprit de l'app v1.
 
-**Ce repo contient actuellement** (aucun code v2 n'a été écrit) :
+> ⚠️ **Section historique (phase de planification).** L'état réel et à jour du projet est dans la section **« État actuel »** en fin de document.
+
+**Au démarrage, ce repo contenait** (avant l'écriture du code v2) :
 
 | Commit | Contenu |
 |---|---|
@@ -86,6 +88,7 @@ La v2 reprend les statuts et le scoring **du code**, et règle le problème de p
 | D12 | **Périmètre v2 réduit** : page admin, invitations in-app et backfill Fathom → v2.1 | Revue Codex : mieux vaut une v2 courte et stable qu'une grosse version où chaque intégration peut bloquer les autres. |
 | D13 | **Périmètre Fathom = `my_recordings` uniquement** | Revue Codex Q2 : les réunions partagées ajoutent du bruit ; à élargir en v2.1 après test. |
 | D14 | **Sanctuarisation des réponses Typeform** (ajoutée le 02/06/2026 suite à la question d'Adrien) | La donnée des porteurs de projet est l'actif principal : import **exhaustif** (suppression de la limite v1 de 1 000 réponses), réponse brute conservée dans `deals.payload_brut`, historique propriété de Lina Capital dans son Postgres (Typeform n'est plus un point de défaillance unique). |
+| D15 | **Professions de santé conservées mais non traitées pour l'instant** (03/06/2026) | Les dossiers santé ne sont plus qualifiés comme priorité immédiate. Ils restent en base avec le statut `sante` / « Santé plus tard » et un email poli dédié explique que Lina ne finance pas encore ce segment mais garde le dossier pour réouverture future. |
 
 ---
 
@@ -235,31 +238,65 @@ Le cycle complet plan → revue → implémentation → revue du code → merge 
 > Guide détaillé : **README.md** (chaque étape avec les commandes exactes).
 > Réalisée par Adrien (non-développeur) avec assistance Claude — terminal nécessaire uniquement pour les Edge Functions et les webhooks.
 
+### Mise à jour Codex du 03/06/2026 — templates emails + santé
+
+Objectif : améliorer le CRM sans perdre les données déjà en production.
+
+Inclus dans la mise à jour :
+- Mode admin « Emails » : les admins peuvent modifier les templates depuis l'app.
+- Variables disponibles dans les emails : `{{prenom}}`, `{{nom}}`, `{{email}}`, `{{activite}}`, `{{societe}}`, `{{entreprise}}`.
+- Le bouton « Ouvrir dans ma messagerie » ouvre un nouvel onglet pour ne pas perdre Detectus.
+- Les compteurs du haut deviennent cliquables et filtrent les dossiers.
+- Le template pitch reprend le format validé : remerciement Typeform + lien `prouesse.vc/cal/30min`.
+- Nouveau statut `sante` / « Santé plus tard ».
+- Nouveau bouton « Refuser santé » avec email poli : Lina ne finance pas encore les professions de santé, mais conserve le dossier pour réouverture future.
+- Le bouton « Relancer » ouvre maintenant la messagerie avec l'email prêt à envoyer ; il n'envoie pas automatiquement l'email.
+- Les dossiers déjà marqués santé seront déplacés vers « Santé plus tard » lors de la migration Supabase.
+
+Commandes manuelles à lancer après le push sur `main` :
+
+```powershell
+cd C:\Users\PC\Documents\detectusv2
+git pull
+npx supabase db push
+npx supabase functions deploy typeform-sync
+npx supabase functions deploy typeform-webhook --no-verify-jwt
+```
+
+Après ces commandes :
+- vérifier que Netlify a terminé son deploy ;
+- ouvrir `https://detectus2.netlify.app` ;
+- se connecter en admin ;
+- vérifier que le bouton « Emails » apparaît ;
+- vérifier qu'un dossier santé affiche « Santé plus tard » et le bouton « Refuser santé ».
+
 ### Checklist de déploiement
 
 **A. Supabase — via le Dashboard (sans terminal)**
-- [ ] A1. Projet `detectus` créé (orga Lina Capital, région EU Frankfurt ou Paris) — ⏳ en cours
+- [x] A1. Projet Supabase créé : ref `qobmctcloqekfascyrqs` (PC Windows, PowerShell)
 - [ ] A2. URL du projet + anon key + mot de passe BDD notés en lieu sûr
-- [ ] A3. Schéma de base appliqué (SQL Editor → contenu de `supabase/migrations/001_schema.sql` → Run)
+- [x] A3. Schéma de base appliqué via `npx supabase db push` — succès confirmé par Adrien le 03/06/2026
 - [ ] A4. Seed appliqué (SQL Editor → contenu de `supabase/seed.sql` → Run)
 - [ ] A5. Les 3 comptes admin créés (Authentication → Users) : adrien@prouesse.vc, djamel@lina.finance, mahefa@prouesse.vc
 - [ ] A6. ⚠️ Inscriptions publiques désactivées (Authentication → Sign In / Up → « Allow new users to sign up » : OFF)
-- [ ] A7. Secrets configurés (Edge Functions → Secrets) : TYPEFORM_TOKEN, TYPEFORM_FORM_ID, TYPEFORM_WEBHOOK_SECRET, ANTHROPIC_API_KEY
+- [x] A7. Secrets configurés via `npx supabase secrets set` — succès confirmé le 03/06/2026
 
-**B. Edge Functions — via le terminal (10 copier-coller)**
-- [ ] B1. Homebrew + CLI Supabase installés
-- [ ] B2. Code du repo téléchargé (ZIP depuis GitHub, branche main)
-- [ ] B3. `supabase login` + `supabase link` effectués
-- [ ] B4. Les 3 fonctions déployées : typeform-sync, typeform-webhook (--no-verify-jwt), fathom-webhook (--no-verify-jwt)
+**B. Edge Functions — via le terminal**
+- [x] B1. Environnement PC Windows utilisé : PowerShell + `npx supabase`
+- [x] B2. Code du repo cloné dans `C:\Users\PC\Documents\detectusv2`, branche `main`
+- [x] B3. `npx supabase login` + `npx supabase link --project-ref qobmctcloqekfascyrqs` effectués
+- [x] B3bis. Secrets Edge Functions relancés après token CLI Supabase
+- [x] B4. Les 3 fonctions déployées : typeform-sync, typeform-webhook (--no-verify-jwt), fathom-webhook (--no-verify-jwt)
+- [ ] B5. Après push Codex templates/santé : redéployer `typeform-sync` + `typeform-webhook` pour appliquer la nouvelle règle santé
 
-**C. Webhooks externes — via le terminal (2 copier-coller)**
-- [ ] C1. Webhook Typeform créé (curl PUT, form pUE5Jgae → typeform-webhook)
-- [ ] C2. Webhook Fathom créé (curl POST → fathom-webhook) + secret whsec_ reçu mis dans les secrets Supabase + fonction redéployée
+**C. Webhooks externes — via le terminal**
+- [x] C1. Webhook Typeform créé (curl PUT, form pUE5Jgae → typeform-webhook) — résolu après régénération du token Typeform avec les droits suffisants
+- [x] C2. Webhook Fathom créé (curl POST → fathom-webhook) + secret reçu mis dans les secrets Supabase + fonction redéployée
 
 **D. Front — via le Dashboard Netlify (sans terminal)**
-- [ ] D1. Site Netlify créé depuis le repo `adrien416/detectusv2`, branche `main`
-- [ ] D2. Variables d'environnement SUPABASE_URL + SUPABASE_ANON_KEY renseignées AVANT le premier déploiement
-- [ ] D3. Site déployé et accessible
+- [x] D1. Site Netlify créé depuis le repo `adrien416/detectusv2`, branche `main`
+- [x] D2. Variables d'environnement SUPABASE_URL + SUPABASE_ANON_KEY renseignées
+- [x] D3. Site déployé et accessible : `https://detectus2.netlify.app`
 
 **E. Vérifications finales (critères d'acceptation SPECS.md)**
 - [ ] E1. Login obligatoire (navigation privée → rien sans connexion)
@@ -267,7 +304,160 @@ Le cycle complet plan → revue → implémentation → revue du code → merge 
 - [ ] E3. Soumission Typeform de test → apparaît en < 30 s sans recharger
 - [ ] E4. Drag & drop visible chez un autre membre en < 2 s
 - [ ] E5. Réunion Fathom de test → rattachée (1 match) ou dans « À rattacher »
+- [ ] E6. Après push Codex templates/santé : bouton admin « Emails » visible pour Adrien
+- [ ] E7. Après push Codex templates/santé : dossiers santé dans « Santé plus tard » + email dédié ouvrable dans la messagerie
 
 **F. Après quelques jours de v2 stable**
 - [ ] F1. Couper la page GitHub Pages v1 (`djamel-lab/detectus`) — action Djamel
 - [ ] F2. Supprimer le Worker Cloudflare `typeform-proxy.djamel-753.workers.dev` — action Djamel
+
+### Incident de déploiement du 03/06/2026
+
+Adrien a tenté de lancer `npx supabase secrets set ...` depuis PowerShell avec les variables locales déjà renseignées (`TYPEFORM_TOKEN`, `ANTHROPIC_KEY`, `TYPEFORM_SECRET`). La commande a échoué avec :
+
+```text
+Access token not provided. Supply an access token by running `supabase login`
+or setting the SUPABASE_ACCESS_TOKEN environment variable.
+```
+
+Cause probable : le login Supabase CLI n'est plus disponible pour la commande `npx supabase secrets set`, même si `login` avait fonctionné auparavant.
+
+Reprise recommandée :
+1. Relancer `npx supabase login` dans PowerShell.
+2. Si l'erreur persiste, créer un token personnel Supabase dans le Dashboard Supabase, puis le mettre dans PowerShell avec `$env:SUPABASE_ACCESS_TOKEN="..."`.
+3. Relancer uniquement la commande `npx supabase secrets set ...`, puis continuer avec le déploiement des 3 fonctions.
+
+Résolu : un token personnel Supabase a permis de reprendre. Les secrets ont été posés et les 3 fonctions ont été déployées.
+
+### Incident Typeform du 03/06/2026
+
+Adrien a tenté de créer le webhook Typeform avec le token fourni, via :
+
+```powershell
+Invoke-RestMethod -Method Put -Uri "https://api.typeform.com/forms/pUE5Jgae/webhooks/detectus-v2" ...
+```
+
+Erreur reçue :
+
+```text
+INSUFFICIENT_PERMISSIONS — not enough permissions to complete the action
+```
+
+Cause probable : le token Typeform n'a pas le scope `webhooks:write` ou son propriétaire n'a pas les droits suffisants sur le formulaire `pUE5Jgae`.
+
+Reprise recommandée :
+1. Régénérer un token Typeform depuis le compte propriétaire/admin du formulaire `pUE5Jgae`, avec au minimum les droits réponses + webhooks.
+2. Mettre à jour `$TYPEFORM_TOKEN` dans PowerShell.
+3. Mettre à jour le secret Supabase `TYPEFORM_TOKEN`.
+4. Relancer uniquement la commande de création du webhook Typeform.
+
+---
+
+## 11. Branche `claude/revue-securite-ux` (04/06/2026) — revue + ajustements
+
+Branche **hors prod**, créée depuis `main`. Elle regroupe deux blocs distincts. **Un seul déploiement** (un push Netlify pour le front + les commandes Supabase pour la base et les fonctions) pour ne pas consommer de crédits inutilement.
+
+### Bloc A — Revue sécurité / UX → **à revoir par Codex**
+
+- **Sécurité — messages d'erreur** : plus aucun détail technique brut (Postgres/Supabase/API) n'est affiché à l'utilisateur ni renvoyé dans les réponses HTTP des webhooks. Helper `toastErreur()` côté front (détail en `console.error` uniquement) ; côté Edge Functions, réponses génériques `{erreur:"code", message:"…"}` + `console.error` (visible dans les logs Supabase).
+- **UX — états explicites de la liste** : « Chargement des dossiers… », « Aucun dossier pour l'instant → cliquez sur Synchroniser », « Aucun dossier ne correspond à ce filtre ». Évite l'écran vide qui ressemble à un bug.
+- **UX — identité du compte connecté** : visible au survol du bouton Déconnexion (outil partagé entre 3 personnes).
+
+> Reste de la revue (constats, non bloquants, **pas** codés ici) : le temps réel diffuse les champs confidentiels à tous les comptes connectés — sans objet en v2 (3 admins), **à traiter en v2.1** avant toute invitation ; messages d'erreur des webhooks à surveiller dans les logs ; vérifs « terrain » Fathom/Typeform au premier test réel.
+
+### Bloc B — Ajustements produit → **déjà décidés, PAS à revoir par Codex**
+
+- **Classification santé par IA** : à l'import (Edge Functions `typeform-sync` et `typeform-webhook`), un appel Claude Haiku (modèle épinglé) complète la détection par mots-clés et envoie les professions de santé manquées vers le statut **« Santé plus tard »**. Conservateur (n'ajoute jamais qu'au segment santé, ne retire rien) ; non bloquant en cas d'erreur (on garde le résultat mots-clés) ; plafonné à 80 appels par synchronisation (sécurité temps/coût — les syncs courantes ne ramènent que quelques dossiers). Nouveau fichier `supabase/functions/_shared/sante.ts`.
+- **Site lina.capital** ajouté à la fin des 6 templates emails : dans les valeurs par défaut du front (`index.html`) **et** en base via la migration `005_lina_capital_url.sql` (idempotente, préserve les modifications admin).
+
+### Déploiement de cette branche (après validation, un seul passage)
+
+1. **Front (Netlify)** : merge de la branche dans `main` → un seul build Netlify (index.html).
+2. **Base (Supabase)** : `npx supabase db push` → applique la migration `005` (URL templates).
+3. **Fonctions (Supabase)** : redéployer les 3 fonctions (santé IA + messages d'erreur) :
+   `npx supabase functions deploy typeform-sync` · `typeform-webhook --no-verify-jwt` · `fathom-webhook --no-verify-jwt`.
+
+> Les étapes 2 et 3 (Supabase) ne consomment **aucun** crédit Netlify.
+
+### Ajout 04/06/2026 — Journal d'activité (admin)
+
+Bouton **« Journal »** dans la topbar (admin only, comme « Emails »). Vue globale de qui a fait quoi et quand, alimentée par la table `deal_events` existante (aucune migration nécessaire) : statut, note, confidentiel, email, réunion, import — avec auteur + horodatage. Filtre par membre (+ « Système » pour les imports/webhooks), clic sur une ligne → ouvre le dossier concerné. Lecture seule. *(Front uniquement → couvert par le build Netlify, pas de déploiement Supabase requis pour cette partie.)*
+
+### Correctifs 04/06/2026 — branche `claude/fix-classif-sante`
+
+1. **Fiabilité (suite revue Codex)** — la classification santé par IA ne bloque plus l'enregistrement : les dossiers Typeform sont **insérés d'abord**, l'IA tourne **en arrière-plan** (`enArrierePlan` via `EdgeRuntime.waitUntil`) et repasse en « Santé plus tard » après coup. Appel IA borné par un **délai d'abandon de 7 s, sans retry** (`sante.ts`). Concerne `typeform-sync` et `typeform-webhook`.
+2. **UI / lisibilité (mode sombre)** — les boîtes « accent » navy (Action recommandée, en-tête email, badge structure) gardaient un fond clair en thème sombre → texte blanc illisible. Fond sombre forcé en thème sombre (même correctif que le bloc Confidentiel).
+
+### Lot 04/06/2026 (soir) — finitions UI + LinkedIn gratuit + régularisation santé
+
+- **UI** : libellé colonne « Santé ⏳ » (1 ligne) + en-têtes de Board compacts (ex-PR #6).
+- **#1 FullEnrich → LinkedIn gratuit** : `fullenrich-webhook` enregistre aussi le profil
+  LinkedIn renvoyé par FullEnrich (même crédit), sans écraser un profil déjà validé.
+- **#3 Parsing durci** : extraction téléphone + LinkedIn défensive (plusieurs formats de
+  réponse FullEnrich gérés). Le brut reste dans `fullenrich_requests.resultats` (audit /
+  ajustement au 1ᵉʳ vrai run).
+- **#2 Régularisation santé** : migration `007_sante_historique.sql` bascule les dossiers
+  santé historiques (scorés avant D15) en « Santé plus tard », hors `accepte`/`sante`.
+
+**Déploiement** : 1 build Netlify (front) + `npx supabase db push` (migration 007) +
+`npx supabase functions deploy fullenrich-webhook`.
+
+---
+
+## État actuel (04/06/2026) — TOUT EN PRODUCTION ✅
+
+Detectus v2 et ses extensions sont **en production** (Netlify + Supabase EU, projet `qobmctcloqekfascyrqs`).
+
+### Fonctionnalités live
+- **Auth** (login obligatoire, 3 admins, inscriptions désactivées) · **CRM partagé** (statuts, Board Kanban, notes, champs confidentiels, timeline) · **Realtime** entre membres · **responsive mobile/tablette**.
+- **Typeform** : import exhaustif (`typeform-sync`) + temps réel (`typeform-webhook`), `payload_brut` conservé (D14).
+- **Fathom** : `fathom-webhook` → matching strict + 3 scores Claude Haiku, transcript jamais stocké (D6).
+- **Journal d'activité** admin (qui a fait quoi/quand) · **Templates emails** éditables (admin) + URL `lina.capital`.
+- **Santé** (D15) : statut **« Santé ⏳ »**, classification par IA à l'import (hors chemin critique), email dédié, régularisation de l'historique (migration 007).
+- **Téléphones** : affichés (Typeform) + **FullEnrich** (`fullenrich-credits` / `-phone` / `-webhook`) — admin-only, pas d'écrasement, idempotent, crédits dans le webhook, **capture aussi le LinkedIn** au passage.
+- **Recherche LinkedIn** (`linkedin-search`) : multi-sources best-effort (DuckDuckGo/Bing), admin-only, gratuit. Clé `SERPER_API_KEY` **optionnelle** pour fiabiliser (non utilisée — scraping gratuit retenu).
+
+### Edge Functions déployées
+`typeform-sync` · `typeform-webhook` · `fathom-webhook` · `fullenrich-credits` · `fullenrich-phone` · `fullenrich-webhook` · `linkedin-search`
+
+### Migrations
+`001` → `007`. ⚠️ Historique de migration désynchronisé sur la prod : appliquer avec **`npx supabase db push --include-all`** (003/004 non enregistrées mais idempotentes).
+
+### Décisions ajoutées après la v2 initiale
+- **D15** — Professions de santé conservées mais non financées (« Santé ⏳ »).
+- **D16/D17** (FullEnrich) — tranchées *de fait* par la mise en prod : enrichissement téléphone via société/domaine **ou** LinkedIn (pas de reverse-email pur) ; envoi de données porteurs à FullEnrich (sous-traitant tiers) → **à acter formellement côté conformité (DPA + registre RGPD)**, comme D11/Anthropic.
+- **Serper abandonné** : recherche LinkedIn gratuite par scraping retenue (pas de service tiers payant).
+
+### Répartition des rôles
+Codex et Claude codent indifféremment selon les sessions ; **chaque PR est relue par l'autre** avant/après mise en prod (XSS, RLS, idempotence, non-écrasement, chemin critique). Plusieurs allers-retours déjà appliqués (classif santé hors chemin critique, garde anti-écrasement, anti-bot LinkedIn).
+
+### Points ouverts / à surveiller
+- **1ᵉʳ vrai run FullEnrich** : vérifier le format de réponse (le brut est dans `fullenrich_requests.resultats`) ; ajuster le parsing tel/LinkedIn si besoin.
+- **Webhook Typeform temps réel** : à confirmer en place (token Djamel avec scope webhooks) ; sinon le bouton « Synchroniser » couvre.
+- **RGPD FullEnrich** (D17) à formaliser.
+- **v2.1** (toujours en backlog) : page admin/invitations + **masquage des champs confidentiels par rôle** (obligatoire avant tout compte non-admin) + backfill Fathom.
+
+### Mobile (04/06/2026)
+Le front est désormais **responsive** (mobile/tablette) : viewport adaptatif, topbar compacte (boutons en icônes, KPIs masqués, onglets sur une ligne), vue **liste OU détail** plein écran avec bouton **« ← Tous les dossiers »**, board en défilement horizontal, modales plein écran. Le desktop est inchangé (overrides bornés à `@media ≤768px`).
+
+### Ménage repo (04/06/2026) — ⚠️ à finir par Adrien
+Le doc AMF (`docs/grille-scoring-lina-capital.docx`) est **préservé sur `main`**. Les branches de travail mergées/obsolètes **n'ont PAS pu être supprimées** depuis l'environnement d'assistance (proxy git : 403 sur les suppressions). **À supprimer par Adrien** (toutes mergées dans `main`, aucun risque) :
+- via GitHub → `…/branches` → icône 🗑️, ou
+- `git push origin --delete claude/docs-grille-amf claude/fix-board-sante-label claude/fix-classif-sante claude/fix-race-sante claude/handoff-fullenrich claude/linkedin-search-amelioration claude/lot-final-amf claude/menage-handoff claude/relaxed-carson-GkaSS claude/revue-securite-ux`
+
+---
+
+## Ajout 04/06/2026 soir - reprise Codex avant nouveau push
+
+### Deja fait et verifie
+- **Mobile prod** : commit `470cfdc` pousse sur `main`, Netlify verifie. Le HTML prod contient `mobile-detail-open`, le board mobile horizontal et le message login ameliore.
+- **Compte Djamel** : `djamel@lina.finance` existait en `admin`, mais n'etait pas confirme cote Supabase Auth. Correction appliquee en prod : `email_confirme=true`, `confirme=true`, `role=admin`.
+- **Login** : le front distingue maintenant mieux les erreurs de connexion : mauvais identifiants/compte absent, email non confirme, limite de tentatives, erreur temporaire.
+
+### Lot demande ensuite par Adrien : "passer toutes les modifs indiquees"
+Applique dans le tour suivant :
+- **FullEnrich UX** : remplacement du `confirm()` natif par une vraie modale Detectus, avec cout maximum, dossiers ignores et rappel que le retour est asynchrone par webhook.
+- **LinkedIn search** : requetes plus tolerantes (`fr.linkedin.com`, contexte sans guillemets) et scoring renforce pour accents/noms composes. Fonction `linkedin-search` redeployee.
+- **Champs confidentiels** : garde front admin-only + migration `008_confidential_admin_guard.sql` appliquee en prod. Un non-admin ne peut plus modifier les champs de due diligence meme en appelant Supabase directement.
+- **Deploiement Supabase effectue** : `npx supabase db push --include-all --yes` puis `npx supabase functions deploy linkedin-search`.
+- Reste a faire dans ce tour : push front/HANDOFF sur `main`, puis verification Netlify.

@@ -15,7 +15,9 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { reponseJson } from "../_shared/cors.ts";
-import { reponseVersDeal } from "../_shared/typeform.ts";
+import { enArrierePlan } from "../_shared/retry.ts";
+import { reponseVersDeal, scoringSante } from "../_shared/typeform.ts";
+import { classifierSanteIA } from "../_shared/sante.ts";
 
 function comparaisonConstante(a: string, b: string): boolean {
   const aa = new TextEncoder().encode(a);
@@ -80,7 +82,10 @@ Deno.serve(async (req) => {
     }
 
     // Conversion : parsing des refs + autoScore + payload_brut (module partagé)
+    // Santé détectée par mots-clés ici ; l'affinage par IA se fait APRÈS l'insertion
+    // (hors chemin critique) pour ne jamais retarder l'enregistrement (revue Codex).
     const ligne = reponseVersDeal(formResponse);
+    const cleAnthropic = Deno.env.get("ANTHROPIC_API_KEY");
 
     const sb = createClient(supabaseUrl, serviceRoleKey);
 
@@ -94,17 +99,19 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (erreurInsert) {
-      return reponseJson({ erreur: `Insertion impossible : ${erreurInsert.message}` }, 500);
+      console.error("typeform-webhook insertion:", erreurInsert.message);
+      return reponseJson({ erreur: "insertion_deal", message: "Erreur interne" }, 500);
     }
 
     // Rejeu d'un webhook déjà traité → rien inséré, c'est un succès idempotent
     if (!insere) {
       return reponseJson({ statut: "deja_present", typeform_id: ligne.typeform_id });
     }
+    const idDossier = insere.id;
 
     // ── Timeline : événement import ─────────────────────────────────────────────
     const { error: erreurEvent } = await sb.from("deal_events").insert({
-      deal_id: insere.id,
+      deal_id: idDossier,
       type: "import",
       resume: "Dossier reçu en temps réel depuis Typeform (webhook)",
       payload: { source: "typeform-webhook" },
@@ -115,6 +122,34 @@ Deno.serve(async (req) => {
       console.error("deal_events import :", erreurEvent.message);
     }
 
+    // ── Classification santé par IA EN ARRIÈRE-PLAN (hors chemin critique) ──────
+    // Le dossier est déjà enregistré. Si l'IA confirme une profession de santé que
+    // les mots-clés ont ratée, on le repasse en « Santé plus tard » après coup.
+    if (!ligne.sante && cleAnthropic) {
+      enArrierePlan((async () => {
+        const estSante = await classifierSanteIA(ligne.activite, ligne.description, cleAnthropic);
+        if (estSante === true) {
+          // Garde anti-écrasement : on ne reclasse que si personne n'a touché au
+          // dossier entre-temps (statut encore 'nouveau'). Sinon on respecte
+          // l'action de l'utilisateur. La condition rend l'update sans effet et
+          // on n'écrit l'événement que si une ligne a réellement changé.
+          const { data: maj } = await sb.from("deals")
+            .update({ ...scoringSante(), statut: "sante" })
+            .eq("id", idDossier)
+            .eq("statut", "nouveau")
+            .select("id");
+          if (maj && maj.length > 0) {
+            await sb.from("deal_events").insert({
+              deal_id: idDossier,
+              type: "champ",
+              resume: "Classé « Santé plus tard » par l'IA à l'import",
+              auteur_id: null,
+            });
+          }
+        }
+      })());
+    }
+
     return reponseJson({
       statut: "insere",
       deal_id: insere.id,
@@ -123,6 +158,6 @@ Deno.serve(async (req) => {
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     console.error("typeform-webhook :", message);
-    return reponseJson({ erreur: `Traitement échoué : ${message}` }, 500);
+    return reponseJson({ erreur: "interne", message: "Traitement impossible" }, 500);
   }
 });

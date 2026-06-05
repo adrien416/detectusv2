@@ -45,6 +45,8 @@ export interface LigneDeal {
   nom: string;
   email: string | null;
   telephone: string | null;
+  telephone_source: string | null;
+  telephone_enrichi_le: string | null;
   activite: string;
   entreprise_creee: boolean;
   ca_tranche: string;
@@ -59,6 +61,7 @@ export interface LigneDeal {
   points_faibles: string[];
   action_reco: string;
   sante: boolean;
+  statut: string;
   source: string;
 }
 
@@ -132,6 +135,26 @@ interface ResultatScore {
   sante: boolean;
 }
 
+// Résultat de scoring « Santé plus tard » — partagé entre la détection par
+// mots-clés (autoScore) et la classification par IA (Edge Functions).
+export function scoringSante(): ResultatScore {
+  return {
+    score: 15,
+    decision: "REFUSÉ",
+    motif: "Santé — segment conservé en base, non financé pour l'instant",
+    points_forts: ["Dossier conservé pour réouverture future"],
+    points_faibles: ["Professions de santé non financées pour l'instant"],
+    action_reco: "Refuser santé — garder le dossier en suivi",
+    sante: true,
+  };
+}
+
+// Applique le traitement « Santé plus tard » à une ligne déjà construite
+// (utilisé quand l'IA détecte une profession de santé que les mots-clés ont ratée).
+export function marquerSante(ligne: LigneDeal): LigneDeal {
+  return { ...ligne, ...scoringSante(), statut: "sante" };
+}
+
 export function autoScore(l: EntreeScore): ResultatScore {
   // Secteur exclu → refus direct, score 5
   if (SECTEURS_REFUSES.some((x) => l.activite.toLowerCase().includes(x.toLowerCase()))) {
@@ -146,11 +169,14 @@ export function autoScore(l: EntreeScore): ResultatScore {
     };
   }
 
-  let s = 30;
   const sante = SECTEURS_SANTE.some((x) =>
     (l.activite + " " + l.description).toLowerCase().includes(x.toLowerCase())
   );
-  if (sante) s += 25;
+  if (sante) {
+    return scoringSante();
+  }
+
+  let s = 30;
   if (l.entrepriseCreee) s += 15;
   if (l.caPlus50K) s += 15;
   if (l.documentFourni) s += 10;
@@ -161,7 +187,6 @@ export function autoScore(l: EntreeScore): ResultatScore {
 
   const points_forts: string[] = [];
   const points_faibles: string[] = [];
-  if (sante) points_forts.push("Secteur santé (priorité Lina)");
   if (l.entrepriseCreee) points_forts.push("Entreprise existante");
   else points_faibles.push("Entreprise non créée");
   if (l.caPlus50K) points_forts.push("CA positif");
@@ -219,6 +244,8 @@ export function reponseVersDeal(reponse: ReponseTypeform): LigneDeal {
     nom,
     email,
     telephone,
+    telephone_source: telephone ? "typeform" : null,
+    telephone_enrichi_le: null,
     activite,
     entreprise_creee: entrepriseCreee,
     ca_tranche: caPlus50K ? "+ 50K" : "< 50K",
@@ -227,6 +254,7 @@ export function reponseVersDeal(reponse: ReponseTypeform): LigneDeal {
     date_soumission: reponse.submitted_at,
     payload_brut: reponse,   // réponse brute complète (D14 — sanctuarisation)
     ...scoring,
+    statut: scoring.sante ? "sante" : "nouveau",
     source: "typeform",
   };
 }

@@ -14,10 +14,16 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders, reponseJson } from "../_shared/cors.ts";
-import { fetchAvecRetry } from "../_shared/retry.ts";
-import { reponseVersDeal, type LigneDeal } from "../_shared/typeform.ts";
+import { enArrierePlan, fetchAvecRetry } from "../_shared/retry.ts";
+import { reponseVersDeal, scoringSante, type LigneDeal } from "../_shared/typeform.ts";
+import { classifierSanteIA } from "../_shared/sante.ts";
 
 const TYPEFORM_API = "https://api.typeform.com";
+
+// Plafond d'appels IA de classification santé par synchronisation (sécurité :
+// évite de dépasser le temps d'exécution / le coût sur un très gros import).
+// Les syncs courantes ne ramènent que quelques nouveaux dossiers.
+const MAX_CLASSIFICATION_IA = 80;
 
 Deno.serve(async (req) => {
   // Pré-vol CORS (appel depuis le navigateur)
@@ -71,10 +77,8 @@ Deno.serve(async (req) => {
 
       if (!res.ok) {
         const corps = await res.text();
-        return reponseJson(
-          { erreur: `Typeform a répondu ${res.status}`, detail: corps.slice(0, 500) },
-          502,
-        );
+        console.error(`typeform-sync API Typeform ${res.status}:`, corps.slice(0, 500));
+        return reponseJson({ erreur: "typeform_api", message: "Connexion à Typeform impossible." }, 502);
       }
 
       const page = await res.json();
@@ -103,26 +107,29 @@ Deno.serve(async (req) => {
       .not("typeform_id", "is", null);
 
     if (erreurLecture) {
-      return reponseJson({ erreur: `Lecture des deals existants impossible : ${erreurLecture.message}` }, 500);
+      console.error("typeform-sync lecture deals:", erreurLecture.message);
+      return reponseJson({ erreur: "lecture_deals", message: "Erreur interne — réessayez." }, 500);
     }
 
     const idsExistants = new Set((existants ?? []).map((d) => d.typeform_id));
     const nouvelles = lignes.filter((l) => !idsExistants.has(l.typeform_id));
+    const cleAnthropic = Deno.env.get("ANTHROPIC_API_KEY");
 
     // ── 4. Insertion des nouveaux deals (par lots de 100) ─────────────────────
+    // La santé est posée par mots-clés ici ; l'affinage IA se fait APRÈS, en
+    // arrière-plan (les dossiers sont enregistrés sans attendre l'IA — revue Codex).
     let inseres = 0;
+    const aClasser: Array<{ id: string; activite: string; description: string }> = [];
     for (let i = 0; i < nouvelles.length; i += 100) {
       const lot = nouvelles.slice(i, i + 100);
       const { data: insertes, error: erreurInsert } = await sb
         .from("deals")
         .upsert(lot, { onConflict: "typeform_id", ignoreDuplicates: true })
-        .select("id, prenom, nom");
+        .select("id, prenom, nom, activite, description, sante");
 
       if (erreurInsert) {
-        return reponseJson(
-          { erreur: `Insertion échouée : ${erreurInsert.message}`, inseres },
-          500,
-        );
+        console.error("typeform-sync insertion:", erreurInsert.message);
+        return reponseJson({ erreur: "insertion_deal", message: "Erreur interne — réessayez.", inseres }, 500);
       }
 
       // ── 5. Timeline : un événement 'import' par nouveau deal ────────────────
@@ -140,7 +147,41 @@ Deno.serve(async (req) => {
           console.error("deal_events import :", erreurEvents.message);
         }
         inseres += insertes.length;
+        // On ne classe par IA que ceux non déjà détectés santé par mots-clés.
+        for (const d of insertes) {
+          if (!d.sante) aClasser.push({ id: d.id, activite: d.activite ?? "", description: d.description ?? "" });
+        }
       }
+    }
+
+    // ── 5bis. Classification santé par IA EN ARRIÈRE-PLAN (hors chemin critique)
+    // Les dossiers sont déjà en base ; on repasse en « Santé plus tard » ceux que
+    // l'IA confirme. Plafonné (temps/coût) ; un échec ne bloque jamais l'import. ──
+    if (cleAnthropic && aClasser.length > 0) {
+      enArrierePlan((async () => {
+        const lot = aClasser.slice(0, MAX_CLASSIFICATION_IA);
+        for (const d of lot) {
+          const estSante = await classifierSanteIA(d.activite, d.description, cleAnthropic);
+          if (estSante === true) {
+            // Garde anti-écrasement : ne reclasse que si le dossier n'a pas été
+            // déplacé entre-temps (statut encore 'nouveau'). La fenêtre peut être
+            // longue sur un gros lot, donc le garde-fou est indispensable ici.
+            const { data: maj } = await sb.from("deals")
+              .update({ ...scoringSante(), statut: "sante" })
+              .eq("id", d.id)
+              .eq("statut", "nouveau")
+              .select("id");
+            if (maj && maj.length > 0) {
+              await sb.from("deal_events").insert({
+                deal_id: d.id,
+                type: "champ",
+                resume: "Classé « Santé plus tard » par l'IA à l'import",
+                auteur_id: null,
+              });
+            }
+          }
+        }
+      })());
     }
 
     // ── 6. Résultat ────────────────────────────────────────────────────────────
@@ -152,6 +193,6 @@ Deno.serve(async (req) => {
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     console.error("typeform-sync :", message);
-    return reponseJson({ erreur: `Synchronisation échouée : ${message}` }, 500);
+    return reponseJson({ erreur: "interne", message: "Synchronisation impossible — réessayez." }, 500);
   }
 });
