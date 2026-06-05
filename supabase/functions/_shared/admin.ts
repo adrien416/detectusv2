@@ -4,7 +4,10 @@ import { reponseJson } from "./cors.ts";
 export interface AdminContext {
   user: { id: string; email?: string };
   profile: { id: string; email: string; nom_complet: string | null; role: string };
-  sb: ReturnType<typeof createClient>;
+  // Supabase infere mal les generiques entre le client anon et le client service_role.
+  // On garde le helper simple : les fonctions consommatrices typent leurs resultats si besoin.
+  // deno-lint-ignore no-explicit-any
+  sb: any;
 }
 
 export async function contexteAdmin(req: Request): Promise<AdminContext | Response> {

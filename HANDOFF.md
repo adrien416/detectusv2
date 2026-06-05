@@ -503,3 +503,34 @@ Tests locaux :
 - Captures topbar 1440 px et 1280 px : plus de coupe a droite, actions visibles.
 - Test navigateur mobile force en 390 px et 360 px : `docWidth == innerWidth`, onglets visibles, pas de debordement horizontal.
 - Changement front uniquement : aucune migration Supabase et aucun redeploiement Edge Function requis.
+
+---
+
+## Ajout 05/06/2026 - formulaire maison Lina Capital
+
+Objectif : garder le Typeform de Djamel en parallele, sans le modifier, et ajouter un formulaire public controle par Lina Capital.
+
+Ajouts prevus/appliques :
+- Page publique `formulaire.html` : UX une question a la fois, style Lina Capital, telephone obligatoire, consentement RGPD obligatoire.
+- Upload optionnel dans le formulaire : fichier PDF/PowerPoint/Word/image, 15 Mo max, ou lien Drive/Notion/deck.
+- Edge Function publique `formulaire-maison-submit` (`verify_jwt=false`) : validation serveur, honeypot, delai minimum, upload prive Supabase Storage, insertion via service_role.
+- Edge Function admin `formulaire-maison-document` (`verify_jwt=true`) : ouvre les documents uploades via lien temporaire, sans rendre le bucket public.
+- Migration `009_formulaire_maison.sql` : `submission_source_id`, `ethique_financement`, consentement RGPD et horodatage + bucket prive `formulaire-maison-documents`.
+- Netlify copie maintenant aussi `formulaire.html` et expose `/formulaire`.
+- Detectus : bouton admin `Formulaire`, filtre `Source`, libelle source dans la fiche dossier, bouton `Ouvrir document` dans la fiche Projet.
+
+Mapping :
+- `source='formulaire_maison'`
+- `societe` = "societe ou nom du projet"
+- `telephone` obligatoire, `telephone_source='formulaire_maison'`
+- `linkedin_url` + `linkedin_source='formulaire_maison'` si fourni
+- `montant_demande` si fourni
+- `document_url` = lien saisi ou chemin prive `storage://formulaire-maison-documents/...` si upload
+- preference finance ethique/islamique stockee dans `ethique_financement` et `payload_brut`
+- `payload_brut` conserve toute la soumission + texte de consentement
+
+Attention deploiement :
+- Appliquer `npx supabase db push --include-all --yes`
+- Deployer `npx supabase functions deploy formulaire-maison-submit --no-verify-jwt`
+- Deployer `npx supabase functions deploy formulaire-maison-document`
+- Pousser le front Netlify seulement apres migration 009, sinon `index.html` selectionnera une colonne encore absente.

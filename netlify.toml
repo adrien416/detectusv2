@@ -10,7 +10,12 @@
 
 [build]
   publish = "dist"
-  command = "node -e \"const fs=require('fs');fs.rmSync('dist',{recursive:true,force:true});fs.mkdirSync('dist',{recursive:true});fs.copyFileSync('index.html','dist/index.html');fs.writeFileSync('dist/config.js','const CONFIG = '+JSON.stringify({SUPABASE_URL:process.env.SUPABASE_URL,SUPABASE_ANON_KEY:process.env.SUPABASE_ANON_KEY})+';')\""
+  command = "node -e \"const fs=require('fs');fs.rmSync('dist',{recursive:true,force:true});fs.mkdirSync('dist',{recursive:true});fs.copyFileSync('index.html','dist/index.html');fs.copyFileSync('formulaire.html','dist/formulaire.html');fs.writeFileSync('dist/config.js','const CONFIG = '+JSON.stringify({SUPABASE_URL:process.env.SUPABASE_URL,SUPABASE_ANON_KEY:process.env.SUPABASE_ANON_KEY})+';')\""
+
+[[redirects]]
+  from = "/formulaire"
+  to = "/formulaire.html"
+  status = 200
 
 # Ne jamais déployer les sources backend ni la documentation interne
 [build.processing]

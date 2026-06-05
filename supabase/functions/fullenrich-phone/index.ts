@@ -113,7 +113,7 @@ Deno.serve(async (req) => {
       return reponseJson({ erreur: `Suivi FullEnrich impossible : ${erreurRequests.message}` }, 500);
     }
 
-    const requestByDeal = new Map((requests ?? []).map((r) => [r.deal_id, r.id]));
+    const requestByDeal = new Map((requests ?? []).map((r: { deal_id: string; id: string }) => [r.deal_id, r.id]));
     const webhookUrl = `${supabaseUrl}/functions/v1/fullenrich-webhook?secret=${encodeURIComponent(secretWebhook)}`;
     const data = eligibles.map((e) => ({
       ...e.entree,

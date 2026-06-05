@@ -557,6 +557,10 @@ body.mobile-detail-open #detail{display:block}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>
       Journal
     </button>
+    <button class="tb-btn" onclick="ouvrirFormulaireMaison()" title="Ouvrir et copier le lien du formulaire maison" id="btn-formulaire-maison" style="display:none">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h5"/></svg>
+      Formulaire
+    </button>
     <button class="tb-btn credit-pill" onclick="chargerCreditsFullEnrich()" title="Rafraichir les credits FullEnrich" id="btn-fullenrich-credits" style="display:none">
       Credits FE&nbsp;<strong id="fullenrich-credit-val">--</strong>
     </button>
@@ -583,6 +587,7 @@ body.mobile-detail-open #detail{display:block}
         <div class="ftab on" onclick="showPanel('ia',this)">Detectus</div>
         <div class="ftab" onclick="showPanel('st',this)">Backlog</div>
         <div class="ftab" onclick="showPanel('tri',this)">Tri</div>
+        <div class="ftab" onclick="showPanel('source',this)">Source</div>
         <div class="ftab" onclick="showPanel('sel',this)">Selection</div>
       </div>
       <div class="fpanel on" id="panel-ia">
@@ -611,6 +616,14 @@ body.mobile-detail-open #detail{display:block}
           <button class="fb on" onclick="setSort('score',this)">Score</button>
           <button class="fb" onclick="setSort('recent',this)">Plus récent</button>
           <button class="fb" onclick="setSort('ancien',this)">Plus ancien</button>
+        </div>
+      </div>
+      <div class="fpanel" id="panel-source">
+        <div class="sb-filters" id="filters-source">
+          <button class="fb on" onclick="setSource('Tous',this)">Tous</button>
+          <button class="fb" onclick="setSource('typeform',this)">Typeform Djamel</button>
+          <button class="fb" onclick="setSource('formulaire_maison',this)">Maison</button>
+          <button class="fb" onclick="setSource('manuel',this)">Manuel</button>
         </div>
       </div>
       <div class="fpanel" id="panel-sel">
@@ -765,6 +778,7 @@ const C={green:'#2ecc71',orange:'#e08c3a',red:'#e05252',teal:'#47d3b0',blue:'#3c
 const h=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const urlHttp=v=>{const s=String(v||'').trim();return /^https?:\/\//i.test(s)?s:''};
 const dc=d=>d==="QUALIFIÉ"?C.green:d==="REFUSÉ"?C.red:C.orange;
+function sourceLabel(source){return source==='formulaire_maison'?'Formulaire maison':source==='manuel'?'Manuel':'Typeform Djamel'}
 
 const ST={
   nouveau:{label:'Nouveau',color:'#aab4c2'},
@@ -885,7 +899,7 @@ let NOTES_DOSSIER=[];          // notes du dossier affiché
 let EVENTS_DOSSIER=[];         // timeline du dossier affiché
 let FULLENRICH_DOSSIER=[];     // demandes FullEnrich du dossier affiché
 let appDemarree=false;
-let filterIA="Tous",filterST="Tous",currentL=null,currentSort="score",selectedIds=new Set();
+let filterIA="Tous",filterST="Tous",filterSource="Tous",currentL=null,currentSort="score",selectedIds=new Set();
 let dataSource='chargement…';
 let templateCourant='info';
 let templatesEmailsDisponibles=false;
@@ -1107,6 +1121,8 @@ async function chargerProfils(){
     if(btnAdmin)btnAdmin.style.display=estAdmin()?'flex':'none';
     const btnJournal=document.getElementById('btn-journal');
     if(btnJournal)btnJournal.style.display=estAdmin()?'flex':'none';
+    const btnFormulaire=document.getElementById('btn-formulaire-maison');
+    if(btnFormulaire)btnFormulaire.style.display=estAdmin()?'flex':'none';
     // Identité du compte connecté (outil partagé) : visible au survol du bouton Déconnexion
     const btnLogout=document.getElementById('btn-logout');
     if(btnLogout&&UTILISATEUR)btnLogout.title='Connecté : '+(PROFIL_COURANT?.nom_complet||UTILISATEUR.email||'')+' — cliquer pour se déconnecter';
@@ -1118,12 +1134,25 @@ async function chargerProfils(){
     if(btnAdmin)btnAdmin.style.display='none';
     const btnJournal=document.getElementById('btn-journal');
     if(btnJournal)btnJournal.style.display='none';
+    const btnFormulaire=document.getElementById('btn-formulaire-maison');
+    if(btnFormulaire)btnFormulaire.style.display='none';
     const btnCredits=document.getElementById('btn-fullenrich-credits');
     if(btnCredits)btnCredits.style.display='none';
     // Non bloquant : les auteurs s'afficheront « — »
   }
 }
 function estAdmin(){return !!(PROFIL_COURANT&&PROFIL_COURANT.role==='admin');}
+async function ouvrirFormulaireMaison(){
+  if(!estAdmin()){afficherToast('Acces reserve aux admins',C.red);return;}
+  const url=new URL('formulaire.html',window.location.href).href;
+  try{
+    if(navigator.clipboard)await navigator.clipboard.writeText(url);
+    afficherToast('Lien du formulaire maison copie',C.teal);
+  }catch(_){
+    afficherToast('Formulaire maison ouvert',C.teal);
+  }
+  window.open(url,'_blank','noopener');
+}
 function nomAuteur(id){
   if(!id)return 'Système';
   const p=PROFILS[id];
@@ -1315,6 +1344,7 @@ function dealVersLead(d){
     action:d.action_reco||'',
     sante:!!d.sante,
     source:d.source||'typeform',
+    ethique_financement:d.ethique_financement||'',
     // Champs confidentiels (utilisés à partir du Lot 2)
     societe:d.societe,
     montant_demande:d.montant_demande,
@@ -1331,7 +1361,7 @@ async function chargerDeals(){
   if(!sb||!UTILISATEUR)return;
   try{
     dataSource='chargement…';
-    const colonnesPubliques='id,date_soumission,cree_le,prenom,nom,email,activite,entreprise_creee,ca_tranche,description,document_url,telephone,telephone_source,telephone_enrichi_le,linkedin_url,linkedin_source,linkedin_valide_le,statut,score,decision,motif,points_forts,points_faibles,action_reco,sante,source';
+    const colonnesPubliques='id,date_soumission,cree_le,prenom,nom,email,activite,entreprise_creee,ca_tranche,description,document_url,telephone,telephone_source,telephone_enrichi_le,linkedin_url,linkedin_source,linkedin_valide_le,statut,score,decision,motif,points_forts,points_faibles,action_reco,sante,source,ethique_financement';
     // JAMAIS payload_brut : la réponse Typeform brute (plusieurs Mo cumulés sur 300+ dossiers)
     // est inutile pour la liste et bloque le chargement sur connexion lente (cas Djamel).
     const colonnesAdmin=colonnesPubliques+',societe,montant_demande,valorisation,montant_investi,notes_dd,prochaine_etape,date_prochaine_etape';
@@ -1435,6 +1465,38 @@ async function copierTelephone(id){
     afficherToast('Telephone copie',C.teal);
   }catch(e){
     afficherToast('Copie impossible',C.red);
+  }
+}
+
+function documentPriveDetectus(url){
+  return String(url||'').startsWith('storage://formulaire-maison-documents/');
+}
+
+function boutonDocumentDossier(l){
+  const url=String(l.docUrl||'');
+  if(!url)return '';
+  if(/^https?:\/\//i.test(url)){
+    return `<a class="mini-btn teal" href="${h(url)}" target="_blank" rel="noopener">Ouvrir document</a>`;
+  }
+  if(documentPriveDetectus(url)&&estAdmin()){
+    return `<button class="mini-btn teal" onclick="ouvrirDocumentDossier('${l.id}')">Ouvrir document</button>`;
+  }
+  return '';
+}
+
+async function ouvrirDocumentDossier(id){
+  if(!sb||!estAdmin())return afficherToast('Acces reserve aux admins',C.red);
+  const fenetre=window.open('about:blank','_blank','noopener');
+  try{
+    const {data,error}=await sb.functions.invoke('formulaire-maison-document',{body:{deal_id:id}});
+    if(error)throw error;
+    if(data&&data.erreur)throw new Error(data.message||data.erreur);
+    if(!data||!data.url)throw new Error('Lien document absent');
+    if(fenetre)fenetre.location.href=data.url;
+    else window.open(data.url,'_blank','noopener');
+  }catch(e){
+    if(fenetre)fenetre.close();
+    afficherToast('Document impossible a ouvrir : '+(e.message||e),C.red);
   }
 }
 
@@ -1974,8 +2036,9 @@ function showPanel(id,tab){document.querySelectorAll('.ftab').forEach(t=>t.class
 function selectAll(){getVisibleLeads().forEach(l=>selectedIds.add(l.id));renderMultiBar();render();}
 function selectByScore(){const min=+document.getElementById('sel-score-min').value||0;const max=+document.getElementById('sel-score-max').value||100;selectedIds.clear();getVisibleLeads().filter(l=>l.score>=min&&l.score<=max).forEach(l=>selectedIds.add(l.id));renderMultiBar();render();}
 function selectByDate(){const from=document.getElementById('sel-date-from').value;const to=document.getElementById('sel-date-to').value;if(!from&&!to)return;const fd=from?new Date(from):new Date('2000-01-01');const td=to?new Date(to):new Date('2099-12-31');selectedIds.clear();getVisibleLeads().filter(l=>{const d=parseDate(l.date);return d>=fd&&d<=td}).forEach(l=>selectedIds.add(l.id));renderMultiBar();render();}
-function getVisibleLeads(){const q=document.getElementById('sb-search').value.toLowerCase();return LEADS.filter(l=>{const mia=filterIA==="Tous"||(filterIA==="Santé"?l.sante:l.dec===filterIA);const mst=filterST==="Tous"||l.statut===filterST;const ms=!q||`${l.prenom} ${l.nom} ${l.email} ${l.tel} ${l.societe||''} ${l.linkedin_url||''} ${l.act} ${l.desc}`.toLowerCase().includes(q);return mia&&mst&&ms;});}
+function getVisibleLeads(){const q=document.getElementById('sb-search').value.toLowerCase();return LEADS.filter(l=>{const mia=filterIA==="Tous"||(filterIA==="Santé"?l.sante:l.dec===filterIA);const mst=filterST==="Tous"||l.statut===filterST;const msource=filterSource==="Tous"||l.source===filterSource;const ms=!q||`${l.prenom} ${l.nom} ${l.email} ${l.tel} ${l.societe||''} ${l.linkedin_url||''} ${l.act} ${l.desc} ${sourceLabel(l.source)}`.toLowerCase().includes(q);return mia&&mst&&msource&&ms;});}
 function setF(f,btn,group){if(group==='ia'){filterIA=f;document.querySelectorAll('#filters-ia .fb').forEach(b=>b.classList.remove('on'))}else{filterST=f;document.querySelectorAll('#filters-st .fb').forEach(b=>b.classList.remove('on'))}btn.classList.add('on');render();}
+function setSource(s,btn){filterSource=s;document.querySelectorAll('#filters-source .fb').forEach(b=>b.classList.remove('on'));btn.classList.add('on');render();}
 function setSort(s,btn){currentSort=s;document.querySelectorAll('#filters-date .fb').forEach(b=>b.classList.remove('on'));btn.classList.add('on');render();}
 function parseDate(d){const[dd,mm,yy]=d.split('/');return new Date(yy,mm-1,dd)}
 function sortLeads(list){if(currentSort==='recent')return list.sort((a,b)=>parseDate(b.date)-parseDate(a.date));if(currentSort==='ancien')return list.sort((a,b)=>parseDate(a.date)-parseDate(b.date));return list.sort((a,b)=>b.score-a.score);}
@@ -2100,7 +2163,7 @@ function emailBlock(l){const st=l.statut;if(st==='nouveau')return '';const tpl=t
 function blocContact(l){
   const tel=formaterTelephone(l.tel);
   const hrefTel=telHref(tel);
-  const sourceTel=tel?(l.telephone_source==='fullenrich'?'Telephone FullEnrich':'Telephone Typeform'):'Telephone';
+  const sourceTel=tel?(l.telephone_source==='fullenrich'?'Telephone FullEnrich':l.telephone_source==='formulaire_maison'?'Telephone formulaire maison':'Telephone Typeform'):'Telephone';
   const elig=fullenrichDisponible?entreeFullEnrichPossible(l):{ok:false,raison:'FullEnrich non configure'};
   const feEnCours=fullenrichEnCoursPour(l.id);
   const statutFe=blocStatutFullEnrich(l);
@@ -2247,13 +2310,14 @@ function renderDetail(){
   if(di.contains(document.activeElement)&&['INPUT','TEXTAREA'].includes(document.activeElement.tagName))return;
   di.style.display='block';
   const col=dc(l.dec),s=ST[l.statut];
+  const boutonDoc=boutonDocumentDossier(l);
   di.innerHTML=`
     <div class="mobile-detail-nav">
       <button type="button" class="mobile-back-btn" onclick="retourListeMobile()">&lsaquo; Liste</button>
       <div class="mobile-detail-title">${h(l.prenom)} ${h(l.nom)}</div>
     </div>
     <div class="dbar" style="background:${col}">
-      <div class="db-left"><div class="db-name">${h(l.prenom)} ${h(l.nom)}</div><div class="db-email">${h(l.email)} · ${h(l.date)}</div><div class="db-meta">${h(l.act)} · Entreprise : ${h(l.ent)} · CA : ${h(l.ca)}${l.source==='manuel'?' · Créé manuellement':''}</div></div>
+      <div class="db-left"><div class="db-name">${h(l.prenom)} ${h(l.nom)}</div><div class="db-email">${h(l.email)} · ${h(l.date)}</div><div class="db-meta">${h(l.act)} · Entreprise : ${h(l.ent)} · CA : ${h(l.ca)} · Source : ${h(sourceLabel(l.source))}</div></div>
       <div class="db-right"><div class="db-score">${h(l.score)}</div><div class="db-slbl">/100</div><div class="db-dec">${h(l.dec)}</div></div>
     </div>
     <div class="action-bar">
@@ -2263,7 +2327,7 @@ function renderDetail(){
     </div>
     ${blocContact(l)}
     ${blocConfidentiel(l)}
-    <div class="card"><div class="cb"><div class="clbl">Projet</div><div class="ctxt">${l.desc?h(l.desc):'<i>Aucune description</i>'}</div></div></div>
+    <div class="card"><div class="cb"><div class="clbl">Projet</div><div class="ctxt">${l.desc?h(l.desc):'<i>Aucune description</i>'}</div>${l.ethique_financement?`<div class="pnone" style="margin-top:10px">Finance ethique/islamique : ${h(l.ethique_financement)}</div>`:''}${boutonDoc?`<div class="contact-actions" style="margin-top:10px">${boutonDoc}</div>`:''}</div></div>
     <div class="card motif" style="border-left-color:${col}"><div class="cb"><div class="clbl">Analyse IA</div><div class="cmotif">${h(l.motif)}</div></div></div>
     <div class="pgrid">
       <div class="pcard"><div class="plbl" style="color:${C.green}">Points forts</div>${l.forts.length?l.forts.map(p=>`<div class="prow"><div class="pdot" style="background:${C.green}"></div><div class="ptxt">${h(p)}</div></div>`).join(''):'<div class="pnone">Aucun</div>'}</div>

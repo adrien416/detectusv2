@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Demande de financement - Lina Capital</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230d2137'/%3E%3Ccircle cx='32' cy='32' r='18' fill='none' stroke='%2300c9a7' stroke-width='5' stroke-linecap='round' stroke-dasharray='95 18'/%3E%3Crect x='24' y='24' width='16' height='16' rx='3' transform='rotate(45 32 32)' fill='%2300c9a7'/%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=Afacad:wght@400;500;600;700&family=Chivo:wght@600;700;800&display=swap" rel="stylesheet">
+<script src="config.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--navy:#0d2137;--ink:#102235;--muted:#657383;--line:#dbe5ec;--surface:#fbfdfc;--mint:#00c9a7;--mint-dark:#079a83;--soft:#eef8f5;--danger:#c94343;--font:'Afacad',sans-serif;--display:'Chivo',sans-serif}
+html,body{min-height:100%;background:var(--surface);color:var(--ink);font-family:var(--font);overflow-x:hidden}
+body{display:flex;align-items:stretch}
+button,input,textarea{font:inherit}
+.shell{min-height:100vh;width:100%;max-width:100vw;display:grid;grid-template-columns:minmax(280px,390px) minmax(0,1fr);overflow-x:hidden}
+.brand{background:var(--navy);color:#fff;padding:30px;display:flex;flex-direction:column;justify-content:space-between;gap:28px}
+.brand-mark{display:flex;align-items:center;gap:12px}
+.brand-logo{width:38px;height:38px;display:grid;place-items:center}
+.brand-logo svg{width:38px;height:38px}
+.brand-name{font-family:var(--display);font-weight:800;font-size:24px;letter-spacing:.01em;line-height:1}
+.brand-sub{color:var(--mint);font-size:14px;font-weight:600;margin-top:2px}
+.brand-copy{max-width:310px}
+.brand-copy .kicker{font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--mint);margin-bottom:14px}
+.brand-copy h1{font-family:var(--display);font-size:35px;line-height:1.02;font-weight:800;margin-bottom:16px}
+.brand-copy p{font-size:18px;line-height:1.4;color:rgba(255,255,255,.74)}
+.brand-foot{font-size:13px;color:rgba(255,255,255,.5);line-height:1.4}
+.form-zone{position:relative;display:flex;flex-direction:column;min-width:0;max-width:100vw}
+.progress-wrap{position:sticky;top:0;z-index:5;background:rgba(251,253,252,.96);border-bottom:1px solid var(--line);padding:18px 26px 14px}
+.progress-top{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:10px;color:var(--muted);font-size:14px;font-weight:700}
+.progress-bar{height:8px;border-radius:99px;background:#e8eef2;overflow:hidden}
+.progress-fill{height:100%;width:0;background:var(--mint);border-radius:inherit;transition:width .25s ease}
+.flow{flex:1;display:flex;align-items:center;justify-content:center;padding:34px 26px 96px;min-width:0;max-width:100%}
+form{width:min(760px,100%);min-width:0}
+.step{display:none;animation:rise .22s ease}
+.step.active{display:block}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.eyebrow{color:var(--mint-dark);font-weight:800;text-transform:uppercase;letter-spacing:.12em;font-size:13px;margin-bottom:14px}
+.question{font-family:var(--display);font-size:42px;line-height:1.08;color:var(--navy);margin-bottom:14px;max-width:720px;overflow-wrap:anywhere}
+.hint{font-size:18px;line-height:1.45;color:var(--muted);max-width:680px;margin-bottom:28px;overflow-wrap:anywhere}
+.fields{display:grid;gap:14px;max-width:680px}
+.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+label{display:block;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#617184;margin-bottom:7px}
+  input,textarea{width:100%;border:2px solid var(--line);background:#fff;color:var(--ink);border-radius:8px;padding:15px 16px;font-size:19px;outline:none;transition:border-color .15s,box-shadow .15s}
+  textarea{min-height:148px;resize:vertical;line-height:1.45}
+  input:focus,textarea:focus{border-color:var(--mint);box-shadow:0 0 0 4px rgba(0,201,167,.12)}
+  input.invalid,textarea.invalid{border-color:var(--danger)}
+  .upload-card{border:2px dashed var(--line);background:#fff;border-radius:8px;padding:16px;display:grid;gap:10px}
+  .upload-card:focus-within{border-color:var(--mint);box-shadow:0 0 0 4px rgba(0,201,167,.12)}
+  .upload-card input[type=file]{border:0;border-radius:0;padding:0;font-size:16px;background:transparent;box-shadow:none}
+  .upload-card input[type=file].invalid{color:var(--danger)}
+  .file-note{font-size:15px;line-height:1.35;color:var(--muted);font-weight:600}
+  .file-note.ready{color:var(--mint-dark);font-weight:800}
+.choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;max-width:680px}
+.choice{min-height:58px;border:2px solid var(--line);background:#fff;border-radius:8px;padding:13px 15px;cursor:pointer;text-align:left;color:var(--ink);font-weight:800;font-size:18px;transition:border-color .15s,background .15s,transform .15s}
+.choice:hover{border-color:var(--mint);transform:translateY(-1px)}
+.choice.active{background:var(--soft);border-color:var(--mint);color:var(--navy)}
+.choice span{display:block;font-size:14px;color:var(--muted);font-weight:600;margin-top:4px;line-height:1.3}
+.consent{display:flex;align-items:flex-start;gap:12px;background:#fff;border:2px solid var(--line);border-radius:8px;padding:16px;max-width:720px}
+.consent input{width:22px;height:22px;margin-top:2px;flex-shrink:0}
+.consent strong{display:block;font-size:18px;color:var(--navy);margin-bottom:3px}
+.consent p{font-size:15px;line-height:1.4;color:var(--muted)}
+.error{min-height:22px;margin-top:18px;color:var(--danger);font-weight:800;font-size:15px}
+  .nav{position:fixed;right:26px;bottom:24px;z-index:10;display:flex;gap:10px;align-items:center;max-width:calc(100vw - 52px);isolation:isolate}
+  .nav::before{content:"";position:absolute;left:-18px;right:-18px;top:-14px;bottom:calc(-24px - env(safe-area-inset-bottom));background:var(--surface);z-index:-1;pointer-events:none}
+.nav button{height:48px;border-radius:8px;border:2px solid transparent;padding:0 18px;font-weight:900;cursor:pointer;transition:transform .15s,opacity .15s,background .15s;min-width:0}
+.nav button:hover{transform:translateY(-1px)}
+.btn-secondary{background:#fff;border-color:var(--line)!important;color:var(--navy)}
+.btn-primary{background:var(--navy);color:#fff}
+.btn-primary.ready{background:var(--mint);color:var(--navy)}
+.nav button:disabled{opacity:.45;cursor:wait;transform:none}
+.success{display:none;min-height:100vh;width:100%;place-items:center;padding:30px;background:var(--surface)}
+.success-card{max-width:620px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:34px;text-align:left}
+.success-card h1{font-family:var(--display);font-size:34px;color:var(--navy);line-height:1.05;margin-bottom:14px}
+.success-card p{font-size:18px;line-height:1.45;color:var(--muted)}
+.hp{position:absolute;left:-9999px;opacity:0;pointer-events:none}
+@media (max-width:900px){
+  .shell{grid-template-columns:1fr}
+  .brand{min-height:auto;padding:22px 18px;gap:18px}
+  .brand-copy h1{font-size:28px}
+  .brand-copy p{font-size:16px}
+  .brand-foot{display:none}
+  .flow{align-items:flex-start;padding:28px 18px 102px}
+  .progress-wrap{padding:14px 18px 12px}
+  .question{font-size:32px}
+  .hint{font-size:16px;margin-bottom:18px}
+  .two,.choice-grid{grid-template-columns:1fr}
+  input,textarea{font-size:18px;padding:14px}
+  textarea{min-height:112px}
+  .fields{gap:12px}
+  .upload-card{padding:10px;gap:6px}
+  .file-note{font-size:14px}
+  .nav{left:18px;right:18px;bottom:calc(14px + env(safe-area-inset-bottom));max-width:calc(100vw - 36px)}
+  .nav button{flex:1}
+}
+@media (max-width:430px){
+  .brand-copy h1{font-size:25px}
+  .question{font-size:29px}
+  .brand-mark{gap:9px}
+  .brand-name{font-size:21px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+<div class="shell" id="app">
+  <aside class="brand">
+    <div class="brand-mark">
+      <div class="brand-logo" aria-hidden="true">
+        <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="32" cy="32" r="20" stroke="rgba(255,255,255,.55)" stroke-width="5.5" stroke-linecap="round" stroke-dasharray="100 20"/>
+          <rect x="24" y="24" width="16" height="16" rx="3" transform="rotate(45 32 32)" fill="#00c9a7"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-name">Lina Capital</div>
+        <div class="brand-sub">financement ethique</div>
+      </div>
+    </div>
+    <div class="brand-copy">
+      <div class="kicker">Demande de financement</div>
+      <h1>Quelques informations pour comprendre votre projet.</h1>
+      <p>Le formulaire prend environ trois minutes. Le telephone est obligatoire pour que l'equipe puisse revenir vers vous rapidement.</p>
+    </div>
+    <div class="brand-foot">Vos informations sont transmises a Lina Capital et utilisees uniquement pour etudier votre demande.</div>
+  </aside>
+
+  <main class="form-zone">
+    <div class="progress-wrap">
+      <div class="progress-top"><span id="step-label">Question 1</span><span id="step-count"></span></div>
+      <div class="progress-bar" aria-hidden="true"><div class="progress-fill" id="progress-fill"></div></div>
+    </div>
+
+    <div class="flow">
+      <form id="lead-form" novalidate>
+        <input class="hp" type="text" name="site_cache" tabindex="-1" autocomplete="off">
+        <input class="hp" type="text" name="website_url" tabindex="-1" autocomplete="off">
+        <input type="hidden" name="started_at" id="started_at">
+
+        <section class="step active" data-step>
+          <p class="eyebrow">Identite</p>
+          <h2 class="question">Qui porte le projet&nbsp;?</h2>
+          <p class="hint">Indiquez le nom de la personne que Lina Capital pourra contacter.</p>
+          <div class="fields two">
+            <div><label for="prenom">Prenom *</label><input id="prenom" name="prenom" autocomplete="given-name" required></div>
+            <div><label for="nom">Nom *</label><input id="nom" name="nom" autocomplete="family-name" required></div>
+          </div>
+          <div class="error" data-error></div>
+        </section>
+
+        <section class="step" data-step>
+          <p class="eyebrow">Contact</p>
+          <h2 class="question">Comment pouvons-nous vous joindre&nbsp;?</h2>
+          <p class="hint">Le numero de telephone est obligatoire pour accelerer le traitement du dossier.</p>
+          <div class="fields two">
+            <div><label for="email">Email *</label><input id="email" name="email" type="email" autocomplete="email" required></div>
+            <div><label for="telephone">Telephone *</label><input id="telephone" name="telephone" type="tel" autocomplete="tel" placeholder="+33 6 12 34 56 78" required></div>
+          </div>
+          <div class="error" data-error></div>
+        </section>
+
+        <section class="step" data-step>
+          <p class="eyebrow">Projet</p>
+          <h2 class="question">Quel est le nom de la societe ou du projet&nbsp;?</h2>
+          <p class="hint">Si la societe n'est pas encore creee, indiquez simplement le nom du projet.</p>
+          <div class="fields">
+            <div><label for="societe_projet">Societe ou nom du projet *</label><input id="societe_projet" name="societe_projet" autocomplete="organization" required></div>
+          </div>
+          <div class="error" data-error></div>
+        </section>
+
+        <section class="step" data-step>
+          <p class="eyebrow">Presence en ligne</p>
+          <h2 class="question">Avez-vous un site ou un profil LinkedIn&nbsp;?</h2>
+          <p class="hint">Ces liens sont optionnels, mais ils aident l'equipe a comprendre plus vite le contexte.</p>
+          <div class="fields two">
+            <div><label for="site_web">Site web</label><input id="site_web" name="site_web" inputmode="url" placeholder="exemple.fr"></div>
+            <div><label for="linkedin_url">LinkedIn</label><input id="linkedin_url" name="linkedin_url" inputmode="url" placeholder="linkedin.com/in/..."></div>
+          </div>
+          <div class="error" data-error></div>
+        </section>
+
+        <section class="step" data-step>
+          <p class="eyebrow">Activite</p>
+          <h2 class="question">Dans quel secteur evoluez-vous&nbsp;?</h2>
+          <p class="hint">Exemples : commerce, industrie, services, education, immobilier, sante, tech...</p>
+          <div class="fields">
+            <div><label for="activite">Secteur / activite *</label><input id="activite" name="activite" required></div>
+          </div>
+          <div class="error" data-error></div>
+        </section>
+
+        <section class="step" data-step>
+          <p class="eyebrow">Maturite</p>
+          <h2 class="question">Ou en est l'entreprise aujourd'hui&nbsp;?</h2>
+          <p class="hint">Ces informations servent a orienter l'analyse, pas a juger le projet trop vite.</p>
+          <div class="fields">
+            <div>
+              <label>Entreprise deja creee ? *</label>
+              <div class="choice-grid" data-choice="entreprise_creee" data-required>
+                <button class="choice" type="button" data-value="oui">Oui<span>La structure juridique existe deja.</span></button>
+                <button class="choice" type="button" data-value="non">Non<span>Le projet est encore en creation.</span></button>
+              </div>
+              <input type="hidden" name="entreprise_creee">
+            </div>
+            <div>
+              <label>CA / traction *</label>
+              <div class="choice-grid" data-choice="ca_traction" data-required>
+                <button class="choice" type="button" data-value="plus_50k">Plus de 50K EUR<span>CA ou traction commerciale deja significative.</span></button>
+                <button class="choice" type="button" data-value="moins_50k">Moins de 50K EUR<span>Activite lancee, encore en developpement.</span></button>
+                <button class="choice" type="button" data-value="pas_encore">Pas encore de CA<span>Projet en amorcage ou pre-lancement.</span></button>
+                <button class="choice" type="button" data-value="autre">Autre situation<span>Nous regarderons le detail du dossier.</span></button>
+              </div>
+              <input type="hidden" name="ca_traction">
+            </div>
+          </div>
+          <div class="error" data-error></div>
+        </section>
+
+        <section class="step" data-step>
+          <p class="eyebrow">Besoin</p>
+          <h2 class="question">Quel financement recherchez-vous&nbsp;?</h2>
+          <p class="hint">Indiquez le montant si vous l'avez. Sinon, decrivez surtout l'usage prevu.</p>
+          <div class="fields">
+            <div><label for="montant_recherche">Montant recherche (EUR)</label><input id="montant_recherche" name="montant_recherche" inputmode="numeric" placeholder="150000"></div>
+            <div><label for="besoin_financement">Besoin de financement</label><textarea id="besoin_financement" name="besoin_financement" placeholder="Stock, materiel, recrutement, croissance, reprise..."></textarea></div>
+          </div>
+          <div class="error" data-error></div>
+        </section>
+
+        <section class="step" data-step>
+          <p class="eyebrow">Description</p>
+          <h2 class="question">Expliquez votre projet en quelques lignes.</h2>
+          <p class="hint">Ce qui compte : ce que vous vendez, a qui, ou vous en etes, et ce que le financement rendrait possible.</p>
+          <div class="fields">
+            <div><label for="description_projet">Description du projet *</label><textarea id="description_projet" name="description_projet" required minlength="20"></textarea></div>
+            <div class="upload-card">
+              <label for="document_upload">Ajouter un deck ou document</label>
+              <input id="document_upload" name="document_upload" type="file" accept="application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/jpeg,image/png,image/webp,.pdf,.ppt,.pptx,.doc,.docx,.jpg,.jpeg,.png,.webp">
+              <div class="file-note" id="document-upload-note">PDF, PowerPoint, Word ou image. 15 Mo maximum.</div>
+            </div>
+            <div><label for="document_url">Ou lien vers deck ou document</label><input id="document_url" name="document_url" inputmode="url" placeholder="Lien Drive, Notion, site, deck..."></div>
+          </div>
+          <div class="error" data-error></div>
+        </section>
+
+        <section class="step" data-step>
+          <p class="eyebrow">Ethique</p>
+          <h2 class="question">Dans quelle mesure souhaitez-vous que votre financement respecte les principes de la finance ethique/islamique, notamment l'absence d'interets&nbsp;?</h2>
+          <p class="hint">Cette information nous aide a proposer une structure de financement adaptee, sans jugement ni obligation religieuse.</p>
+          <div class="choice-grid" data-choice="ethique_financement" data-required>
+            <button class="choice" type="button" data-value="tres_important">Tres important</button>
+            <button class="choice" type="button" data-value="important_ouvert">Important mais ouvert a discussion</button>
+            <button class="choice" type="button" data-value="pas_prioritaire">Pas prioritaire</button>
+            <button class="choice" type="button" data-value="decouverte">Je ne connais pas encore ces principes</button>
+          </div>
+          <input type="hidden" name="ethique_financement">
+          <div class="error" data-error></div>
+        </section>
+
+        <section class="step" data-step>
+          <p class="eyebrow">Validation</p>
+          <h2 class="question">Derniere etape avant l'envoi.</h2>
+          <p class="hint">Votre dossier sera transmis a l'equipe Lina Capital et cree automatiquement dans Detectus.</p>
+          <label class="consent">
+            <input type="checkbox" name="consentement_rgpd" required>
+            <span><strong>J'accepte que Lina Capital traite ces informations.</strong><p>Ces donnees sont utilisees uniquement pour etudier ma demande de financement et reprendre contact avec moi.</p></span>
+          </label>
+          <div class="error" data-error></div>
+        </section>
+      </form>
+    </div>
+  </main>
+</div>
+
+<div class="nav" id="nav">
+  <button class="btn-secondary" type="button" id="prev-btn">Retour</button>
+  <button class="btn-primary" type="button" id="next-btn">Continuer</button>
+</div>
+
+<div class="success" id="success">
+  <div class="success-card">
+    <p class="eyebrow">Dossier recu</p>
+    <h1>Merci, votre demande a bien ete transmise.</h1>
+    <p>Lina Capital va etudier les informations envoyees. Si le dossier entre dans le perimetre, l'equipe reviendra vers vous avec les prochaines etapes.</p>
+  </div>
+</div>
+
+<script>
+(function(){
+  const form=document.getElementById('lead-form');
+  const steps=[...document.querySelectorAll('[data-step]')];
+  const prev=document.getElementById('prev-btn');
+  const next=document.getElementById('next-btn');
+  const label=document.getElementById('step-label');
+  const count=document.getElementById('step-count');
+  const fill=document.getElementById('progress-fill');
+  const app=document.getElementById('app');
+  const nav=document.getElementById('nav');
+  const success=document.getElementById('success');
+  const fileInput=document.getElementById('document_upload');
+  const fileNote=document.getElementById('document-upload-note');
+  const maxUploadBytes=15*1024*1024;
+  const extensionsOk=new Set(['pdf','ppt','pptx','doc','docx','jpg','jpeg','png','webp']);
+  let current=0;
+  let sending=false;
+
+  document.getElementById('started_at').value=String(Date.now());
+
+  function activeStep(){return steps[current]}
+  function errorBox(){return activeStep().querySelector('[data-error]')}
+  function setError(message){
+    const box=errorBox();
+    if(box)box.textContent=message||'';
+  }
+  function showStep(){
+    steps.forEach((s,i)=>s.classList.toggle('active',i===current));
+    prev.style.display=current===0?'none':'block';
+    next.textContent=current===steps.length-1?'Envoyer la demande':'Continuer';
+    next.classList.toggle('ready',current===steps.length-1);
+    label.textContent='Question '+(current+1);
+    count.textContent=(current+1)+' / '+steps.length;
+    fill.style.width=(((current+1)/steps.length)*100)+'%';
+    setError('');
+    const first=activeStep().querySelector('input:not([type=hidden]):not(.hp),textarea,button.choice');
+    setTimeout(()=>first&&first.focus&&first.focus(),40);
+  }
+
+  function clearInvalid(step){
+    step.querySelectorAll('.invalid').forEach(el=>el.classList.remove('invalid'));
+  }
+
+  function erreurFichier(file){
+    if(!file)return '';
+    if(file.size>maxUploadBytes)return 'Le fichier depasse 15 Mo. Collez plutot un lien Drive si le deck est plus lourd.';
+    const ext=String(file.name||'').split('.').pop().toLowerCase();
+    if(!extensionsOk.has(ext))return 'Format accepte : PDF, PowerPoint, Word ou image.';
+    return '';
+  }
+
+  function validate(){
+    const step=activeStep();
+    clearInvalid(step);
+    const fields=[...step.querySelectorAll('input:not([type=hidden]):not(.hp),textarea')];
+    for(const field of fields){
+      if(field.type==='checkbox'){
+        if(field.required&&!field.checked){setError('Merci de confirmer ce point avant de continuer.');return false}
+        continue;
+      }
+      if(field.type==='file'){
+        const file=field.files&&field.files[0];
+        const message=erreurFichier(file);
+        if(message){
+          field.classList.add('invalid');
+          setError(message);
+          return false;
+        }
+        continue;
+      }
+      if(field.required&&!String(field.value||'').trim()){
+        field.classList.add('invalid');
+        setError('Ce champ est necessaire pour traiter votre demande.');
+        return false;
+      }
+      if(field.type==='email'&&field.value&&!field.checkValidity()){
+        field.classList.add('invalid');
+        setError('Verifiez le format de votre adresse email.');
+        return false;
+      }
+      if(field.name==='telephone'){
+        const digits=field.value.replace(/[^\d]/g,'');
+        if(digits.length<9){
+          field.classList.add('invalid');
+          setError('Le numero de telephone est obligatoire.');
+          return false;
+        }
+      }
+      if(field.name==='description_projet'&&field.value.trim().length<20){
+        field.classList.add('invalid');
+        setError('Ajoutez quelques details pour que nous comprenions le projet.');
+        return false;
+      }
+    }
+    for(const group of step.querySelectorAll('.choice-grid[data-required]')){
+      const name=group.dataset.choice;
+      const hidden=form.elements[name];
+      if(!hidden||!hidden.value){
+        setError('Choisissez une option pour continuer.');
+        return false;
+      }
+    }
+    setError('');
+    return true;
+  }
+
+  document.querySelectorAll('.choice-grid').forEach(group=>{
+    group.addEventListener('click',e=>{
+      const btn=e.target.closest('.choice');
+      if(!btn)return;
+      group.querySelectorAll('.choice').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const hidden=form.elements[group.dataset.choice];
+      if(hidden)hidden.value=btn.dataset.value||'';
+      setError('');
+    });
+  });
+
+  fileInput.addEventListener('change',()=>{
+    const file=fileInput.files&&fileInput.files[0];
+    fileInput.classList.remove('invalid');
+    fileNote.classList.remove('ready');
+    if(!file){
+      fileNote.textContent='PDF, PowerPoint, Word ou image. 15 Mo maximum.';
+      return;
+    }
+    const message=erreurFichier(file);
+    if(message){
+      fileInput.classList.add('invalid');
+      fileNote.textContent=message;
+      return;
+    }
+    const mo=(file.size/1024/1024).toFixed(file.size>1024*1024?1:2);
+    fileNote.textContent=`Fichier pret : ${file.name} (${mo} Mo)`;
+    fileNote.classList.add('ready');
+    setError('');
+  });
+
+  prev.addEventListener('click',()=>{
+    if(sending)return;
+    current=Math.max(0,current-1);
+    showStep();
+  });
+
+  next.addEventListener('click',async()=>{
+    if(sending)return;
+    if(!validate())return;
+    if(current<steps.length-1){
+      current++;
+      showStep();
+      return;
+    }
+    await submit();
+  });
+
+  form.addEventListener('keydown',e=>{
+    if(e.key!=='Enter'||e.target.tagName==='TEXTAREA')return;
+    e.preventDefault();
+    next.click();
+  });
+
+  async function submit(){
+    sending=true;
+    next.disabled=true;
+    prev.disabled=true;
+    next.textContent='Envoi en cours';
+    try{
+      if(!window.CONFIG||!CONFIG.SUPABASE_URL||!CONFIG.SUPABASE_ANON_KEY){
+        throw new Error('Configuration publique manquante.');
+      }
+      const payload=new FormData(form);
+      payload.set('consentement_rgpd',form.elements.consentement_rgpd.checked?'true':'false');
+      const res=await fetch(CONFIG.SUPABASE_URL+'/functions/v1/formulaire-maison-submit',{
+        method:'POST',
+        headers:{apikey:CONFIG.SUPABASE_ANON_KEY},
+        body:payload,
+      });
+      const data=await res.json().catch(()=>({}));
+      if(!res.ok||data.erreur){
+        throw new Error(data.message||'Envoi impossible pour le moment.');
+      }
+      app.style.display='none';
+      nav.style.display='none';
+      success.style.display='grid';
+    }catch(e){
+      setError(e.message||'Envoi impossible pour le moment. Reessayez dans quelques instants.');
+      next.disabled=false;
+      prev.disabled=false;
+      next.textContent='Envoyer la demande';
+    }finally{
+      sending=false;
+    }
+  }
+
+  showStep();
+})();
+</script>
+</body>
+</html>

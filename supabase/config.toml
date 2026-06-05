@@ -32,3 +32,11 @@ verify_jwt = false
 # linkedin-search : recherche web de profils LinkedIn candidats, admin uniquement.
 [functions.linkedin-search]
 verify_jwt = true
+
+# formulaire-maison-submit : appelee par le formulaire public Lina Capital.
+[functions.formulaire-maison-submit]
+verify_jwt = false
+
+# formulaire-maison-document : ouvre les documents uploades, admin uniquement.
+[functions.formulaire-maison-document]
+verify_jwt = true
