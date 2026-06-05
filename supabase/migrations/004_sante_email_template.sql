@@ -2,9 +2,14 @@
 -- Detectus v2 — Email "santé plus tard"
 -- =============================================================================
 
+-- Ne bascule QUE les dossiers santé encore NON triés (statut 'nouveau').
+-- ⚠️ Cette migration n'est pas enregistrée comme appliquée : elle est rejouée
+-- à chaque `npx supabase db push --include-all`. Elle ne doit JAMAIS toucher un
+-- dossier déjà déplacé à la main (refuse/info/pitch/attente/accepte), sinon elle
+-- écrase le tri de l'équipe (incident du 05/06/2026).
 update public.deals
 set statut = 'sante'
-where sante is true and statut <> 'sante';
+where sante is true and statut = 'nouveau';
 
 insert into public.email_templates (statut, label, subject, body)
 values (
