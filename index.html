@@ -16,7 +16,7 @@ html,body{width:100%;height:100%;overflow:hidden}
 [data-theme="dark"]{--navy:#e8ecf2;--pale:#2a3548;--light:#0d1a2b;--white:#111d2e;--grey:#8899aa;--topbar-bg:#0a1322;--sidebar-bg:#111d2e;--detail-bg:#0d1a2b;--card-bg:#162236;--card-border:#253448;--text-main:#e8ecf2;--text-sub:#8899aa;--input-bg:#162236;--sb-foot-bg:#0f1926;--li-hover:#1a2d42;--li-active:#1a2d42;--logo-circle:#6B7A8D;--logo-circle-opacity:.7;}
 body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direction:column;font-size:16.5px;color:var(--text-main)}
 #topbar{background:var(--topbar-bg);display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:54px;flex-shrink:0;border-bottom:1px solid rgba(71,211,176,.15);}
-.tb-brand{display:flex;align-items:center;gap:11px}
+.tb-brand{display:flex;align-items:center;gap:11px;flex-shrink:0}
 .tb-logo{width:36px;height:36px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
 .tb-logo svg{width:36px;height:36px}
 .tb-title{color:#fff;font-weight:800;font-size:18.5px;line-height:1.1}
@@ -25,11 +25,12 @@ body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direc
 .theme-toggle:hover{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.2)}
 .theme-toggle svg{width:18px;height:18px;color:rgba(255,255,255,.6);transition:color .2s}
 .theme-toggle:hover svg{color:#fff}
-.tb-kpis{display:flex;align-items:center;gap:6px}
+.tb-kpis{display:flex;align-items:center;gap:6px;min-width:0;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
+.tb-kpis::-webkit-scrollbar{display:none}
 .kpi{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:6px 14px;cursor:pointer;transition:background .15s,border-color .15s,transform .15s}
 .kpi:hover{background:rgba(255,255,255,.12);border-color:rgba(71,211,176,.35);transform:translateY(-1px)}
 .kpi-val{font-weight:800;font-size:23px;line-height:1}
-.kpi-lbl{font-size:12px;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+.kpi-lbl{font-size:12px;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.06em;font-weight:600;white-space:nowrap}
 .kpi-div{width:1px;height:30px;background:rgba(255,255,255,.12);margin:0 4px}
 #body{flex:1;overflow:hidden;min-height:0;position:relative}
 #sidebar{width:340px;flex-shrink:0;background:var(--sidebar-bg);border-right:none;display:flex;flex-direction:column;overflow:hidden;position:relative}
@@ -181,7 +182,7 @@ body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direc
 .linkedin-search-link{display:inline-block;margin-top:2px;color:var(--teal);font-size:13px;font-weight:800;text-decoration:none}
 .linkedin-search-link:hover{text-decoration:underline}
 .linkedin-searches{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
-.view-tabs{display:flex;gap:2px;background:rgba(255,255,255,.08);border-radius:8px;padding:2px;margin:0 18px}
+.view-tabs{display:flex;gap:2px;background:rgba(255,255,255,.08);border-radius:8px;padding:2px;margin:0 18px;flex-shrink:0}
 .view-tab{padding:5px 16px;border-radius:6px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;border:none;background:transparent;color:rgba(255,255,255,.4);font-family:var(--font);transition:all .15s}
 .view-tab.on{background:var(--teal);color:var(--navy)}
 .view-tab:hover:not(.on){color:rgba(255,255,255,.7)}
@@ -515,7 +516,7 @@ body.mobile-detail-open #detail{display:block}
     <button class="view-tab" onclick="switchView('rattacher',this)">À rattacher<span id="badge-rattacher" class="vt-badge" style="display:none">0</span></button>
   </div>
   <div class="tb-kpis" id="tb-kpis"></div>
-  <div class="tb-actions" style="display:flex;align-items:center">
+  <div class="tb-actions" style="display:flex;align-items:center;flex-shrink:0">
     <button class="tb-btn" onclick="synchroniserTypeform()" title="Importer les nouvelles réponses Typeform" id="btn-sync">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
       Synchroniser
@@ -1954,10 +1955,12 @@ function clearSelection(){selectedIds.clear();renderMultiBar();render()}
 function renderKpis(){
   const counts={};ST_ORDER.forEach(k=>counts[k]=0);
   LEADS.forEach(l=>{if(counts[l.statut]!==undefined)counts[l.statut]++});
+  // Libellés courts pour les pastilles du header (le titre garde le libellé complet)
+  const court={nouveau:'Nouveau',info:'Info',pitch:'Pitch',attente:'Attente',sante:'Santé',accepte:'Accepté',refuse:'Refusé'};
   document.getElementById('tb-kpis').innerHTML=`
     <div class="kpi" onclick="filtrerStatutDepuisKpi('Tous')" title="Afficher tous les dossiers"><div class="kpi-val" style="color:#fff">${LEADS.length}</div><div class="kpi-lbl">Dossiers</div></div>
     <div class="kpi-div"></div>
-    ${ST_ORDER.map(k=>`<div class="kpi" onclick="filtrerStatutDepuisKpi('${k}')" title="Filtrer : ${h(ST[k].label)}"><div class="kpi-val" style="color:${ST[k].color}">${counts[k]}</div><div class="kpi-lbl">${ST[k].label}</div></div>`).join('')}
+    ${ST_ORDER.map(k=>`<div class="kpi" onclick="filtrerStatutDepuisKpi('${k}')" title="Filtrer : ${h(ST[k].label)}"><div class="kpi-val" style="color:${ST[k].color}">${counts[k]}</div><div class="kpi-lbl">${court[k]||ST[k].label}</div></div>`).join('')}
   `;
 }
 
