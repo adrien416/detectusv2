@@ -421,7 +421,7 @@ Detectus v2 et ses extensions sont **en production** (Netlify + Supabase EU, pro
 `typeform-sync` · `typeform-webhook` · `fathom-webhook` · `fullenrich-credits` · `fullenrich-phone` · `fullenrich-webhook` · `linkedin-search`
 
 ### Migrations
-`001` → `007`. ⚠️ Historique de migration désynchronisé sur la prod : appliquer avec **`npx supabase db push --include-all`** (003/004 non enregistrées mais idempotentes).
+`001` → `008`. ⚠️ Historique de migration désynchronisé sur la prod : appliquer avec **`npx supabase db push --include-all`** (003/004 non enregistrées → **rejouées à chaque push**). ⚠️ **`004`/`007` (données santé) corrigées le 05/06/2026** : elles ne basculent plus que les dossiers `nouveau` (avant, `004` ré-aspirait TOUS les dossiers santé à chaque `--include-all` et écrasait le tri manuel — incident détaillé plus bas). **Toujours pull `main` avant un `db push`.**
 
 ### Décisions ajoutées après la v2 initiale
 - **D15** — Professions de santé conservées mais non financées (« Santé ⏳ »).
@@ -435,7 +435,7 @@ Codex et Claude codent indifféremment selon les sessions ; **chaque PR est relu
 - **1ᵉʳ vrai run FullEnrich** : vérifier le format de réponse (le brut est dans `fullenrich_requests.resultats`) ; ajuster le parsing tel/LinkedIn si besoin.
 - **Webhook Typeform temps réel** : à confirmer en place (token Djamel avec scope webhooks) ; sinon le bouton « Synchroniser » couvre.
 - **RGPD FullEnrich** (D17) à formaliser.
-- **v2.1** (toujours en backlog) : page admin/invitations + **masquage des champs confidentiels par rôle** (obligatoire avant tout compte non-admin) + backfill Fathom.
+- **v2.1** (toujours en backlog) : page admin/invitations + backfill Fathom. **Champs confidentiels** : l'*écriture* est désormais admin-only (migration `008` + gardes front, livré par Codex) ; la *lecture* par un non-admin reste possible (SELECT + Realtime non filtrés par colonne) → **à fermer avant tout compte non-admin**.
 
 ### Mobile (04/06/2026)
 Le front est désormais **responsive** (mobile/tablette) : viewport adaptatif, topbar compacte (boutons en icônes, KPIs masqués, onglets sur une ligne), vue **liste OU détail** plein écran avec bouton **« ← Tous les dossiers »**, board en défilement horizontal, modales plein écran. Le desktop est inchangé (overrides bornés à `@media ≤768px`).
@@ -460,4 +460,29 @@ Applique dans le tour suivant :
 - **LinkedIn search** : requetes plus tolerantes (`fr.linkedin.com`, contexte sans guillemets) et scoring renforce pour accents/noms composes. Fonction `linkedin-search` redeployee.
 - **Champs confidentiels** : garde front admin-only + migration `008_confidential_admin_guard.sql` appliquee en prod. Un non-admin ne peut plus modifier les champs de due diligence meme en appelant Supabase directement.
 - **Deploiement Supabase effectue** : `npx supabase db push --include-all --yes` puis `npx supabase functions deploy linkedin-search`.
-- Reste a faire dans ce tour : push front/HANDOFF sur `main`, puis verification Netlify.
+- Reste a faire dans ce tour : push front/HANDOFF sur `main`, puis verification Netlify. ✅ Fait.
+
+---
+
+## Ajout 05/06/2026 — session Claude (header, Journal, incident santé)
+
+### En prod (mergé sur `main`, build Netlify)
+- **Header surchargé corrigé** (PR #15) : pastilles KPI en libellés courts (Nouveau · Info · Pitch · Attente · Santé · Accepté · Refusé), plus de retour à la ligne, la bande de pastilles défile au lieu de couper les boutons (Synchroniser/Emails/Journal/Credits).
+- **Journal d'activité** (PR #16) : le filtre « membre » liste maintenant **toute l'équipe** (depuis `PROFILS`) + tout auteur du journal, trié par nom — un membre sans action enregistrée apparaît quand même. (Avant : seuls les auteurs présents dans les 400 derniers events → en pratique Adrien seul.)
+
+### Incident santé — dossiers « Refusé / Attente Pitch / Info demandée » aspirés en « Santé ⏳ »
+- **Symptôme** : des dossiers triés à la main avaient disparu de leurs colonnes pour atterrir en « Santé ⏳ ». Dernier *event de statut* = le choix humain, mais statut réel = `sante`, **sans trace** de l'opération.
+- **Cause réelle** : la migration de données **`004`** (`set statut='sante' where sante and statut<>'sante'`) n'est **pas enregistrée comme appliquée** → rejouée à chaque `npx supabase db push --include-all` (lancé la veille par Codex). Elle re-balaie **tous** les dossiers santé, y compris ceux déplacés à la main, et **ne logue aucun event** (d'où l'absence de trace). `007` avait le même défaut. (Ce n'était PAS la classification IA : son garde anti-écrasement PR #5 était déjà en place.)
+- **Restauration** : SQL ponctuel dans le **SQL Editor** (pas une migration) — chaque dossier `sante` remis dans sa colonne d'origine d'après son dernier *event de statut humain* (`type='statut'`, `auteur_id` non nul, cible `→ Refusé/Attente Pitch/Info demandée`), avec un event `correction_sante_glitch`. **Fait par Adrien le 05/06/2026.**
+- **Correctif de fond (ce commit)** : `004` et `007` ne basculent plus que les dossiers **`nouveau`** → plus jamais d'écrasement du tri manuel, même rejouées. ⚠️ **Effet à partir du prochain `db push` depuis un `main` à jour** (d'ici là, ne pas relancer `db push --include-all` depuis un ancien checkout, sinon re-balayage).
+
+### Revue du travail de Codex (commit `8c50275`) — RAS
+- **Migration `008`** (garde écriture confidentiel admin-only) : correcte, idempotente, `security definer` + `search_path` fixé, autorise service_role (`auth.uid()` null) et admins. Comble un vrai trou (le grant UPDATE colonne était ouvert à tous les connectés).
+- **Front** : modale FullEnrich (coût/ignorés/asynchrone), gardes `blocConfidentiel`/`sauvegarderConfidentiel` admin-only, ordre `chargerProfils` avant `chargerDeals`. OK.
+- **`linkedin-search`** : matching noms composés/accentués + variantes de requêtes. OK.
+- **Recoupement `chargerDeals`** : le correctif chargement (payload_brut) est passé après celui de Codex et garde sa séparation admin/non-admin sur le confidentiel tout en retirant `payload_brut` pour les admins (cause de la lenteur Djamel). Cohérent, rien à refaire.
+
+### Reste à faire
+- **Supprimer les branches mortes** (toujours pas fait — proxy git 403 côté assistant) : liste plus haut + `claude/fix-chargement`, `claude/fix-header`, `claude/journal-equipe`, `claude/handoff-maj`.
+- **1ᵉʳ vrai run FullEnrich** : confirmer le format de réponse.
+- **Fermer la lecture des champs confidentiels** avant tout compte non-admin (v2.1).
