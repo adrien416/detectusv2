@@ -4,6 +4,10 @@
 // Reception du formulaire public Lina Capital.
 // - Pas de JWT : appelee par une page publique.
 // - Aucun secret cote front : ecriture via service_role uniquement ici.
+// - Anti-spam robuste sans cle externe :
+//     * GET  → emet un jeton a usage unique (horodate cote serveur).
+//     * POST → honeypot + jeton (anti-rejeu + anti-remplissage trop rapide,
+//              non falsifiable) + limite de debit par IP (IP hashee).
 // - Validation serveur obligatoire, telephone et consentement RGPD requis.
 // =============================================================================
 
@@ -14,10 +18,17 @@ import { autoScore, scoringSante } from "../_shared/typeform.ts";
 import { classifierSanteIA } from "../_shared/sante.ts";
 
 const VERSION_FORMULAIRE = "formulaire_maison_v1_2026_06_05";
-const DELAI_MINIMUM_MS = 3000;
 const BUCKET_DOCUMENTS = "formulaire-maison-documents";
-const MAX_BODY_BYTES = 16 * 1024 * 1024;
-const MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
+const MAX_BODY_BYTES = 11 * 1024 * 1024;
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+
+// Anti-spam (jeton serveur + limite IP) — aucun secret externe requis.
+const JETON_AGE_MIN_MS = 3000;                 // remplissage plus rapide = robot
+const JETON_AGE_MAX_MS = 2 * 60 * 60 * 1000;   // jeton perime au-dela de 2 h
+const MAX_JETONS_PAR_IP_HEURE = 20;            // ouvertures de formulaire / IP / h
+const MAX_SOUMISSIONS_PAR_IP_HEURE = 8;        // envois reels / IP / h
+const SEL_IP = "detectus-formulaire-maison-2026"; // sel de pseudonymisation (RGPD)
+
 const EXTENSIONS_DOCUMENTS = new Set(["pdf", "ppt", "pptx", "doc", "docx", "jpg", "jpeg", "png", "webp"]);
 const TYPES_MIME_DOCUMENTS = new Set([
   "application/pdf",
@@ -35,6 +46,13 @@ const ETHIQUE_LABELS: Record<string, string> = {
   important_ouvert: "Important mais ouvert a discussion",
   pas_prioritaire: "Pas prioritaire",
   decouverte: "Je ne connais pas encore ces principes",
+};
+
+const CA_LABELS: Record<string, string> = {
+  plus_50k: "50K€ de CA deja realise",
+  moins_50k: "Moins de 50K€ de CA",
+  pas_encore: "Pas encore de CA",
+  autre: "Autre situation",
 };
 
 type CorpsFormulaire = Record<string, unknown>;
@@ -63,6 +81,28 @@ function emailValide(email: string): boolean {
 function telephoneValide(telephone: string): boolean {
   const chiffres = telephone.replace(/[^\d]/g, "");
   return chiffres.length >= 9 && chiffres.length <= 16 && /^[+\d][\d\s().-]+$/.test(telephone);
+}
+
+// Variantes courantes d'un numero FR (avec/sans indicatif) pour la detection de doublons.
+function variantesTelephone(telephone: string): string[] {
+  const brut = telephone.trim();
+  const chiffres = brut.replace(/\D/g, "");
+  const set = new Set<string>();
+  if (brut) set.add(brut);
+  if (chiffres) set.add(chiffres);
+  let national = chiffres;
+  if (chiffres.startsWith("0033")) national = "0" + chiffres.slice(4);
+  else if (chiffres.startsWith("33")) national = "0" + chiffres.slice(2);
+  else if (chiffres.startsWith("0")) national = chiffres;
+  else national = "0" + chiffres;
+  if (national.length >= 9) {
+    const sansZero = national.replace(/^0/, "");
+    set.add(national);          // 0612345678
+    set.add("+33" + sansZero);  // +33612345678
+    set.add("33" + sansZero);   // 33612345678
+    set.add("0033" + sansZero); // 0033612345678
+  }
+  return [...set].filter(Boolean);
 }
 
 function urlOptionnelle(v: unknown, champ: string): string | null {
@@ -126,7 +166,7 @@ function extensionFichier(nom: string): string {
 
 function erreurFichier(fichier: File): string | null {
   if (fichier.size > MAX_UPLOAD_BYTES) {
-    return "Le fichier depasse 15 Mo.";
+    return "Le fichier depasse 10 Mo. Collez plutot un lien (Drive, Notion...).";
   }
   const extension = extensionFichier(fichier.name || "");
   if (extension && EXTENSIONS_DOCUMENTS.has(extension)) {
@@ -142,7 +182,7 @@ function securiserNomFichier(nom: string): string {
   const extension = extensionFichier(nom);
   const base = (nom || "document")
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\p{Diacritic}/gu, "")
     .replace(/[^a-zA-Z0-9._-]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 90);
@@ -150,32 +190,115 @@ function securiserNomFichier(nom: string): string {
   return `${Date.now()}-${avecExtension || "document"}`;
 }
 
+// ── Anti-spam : IP + jeton ────────────────────────────────────────────────────
+
+function ipClient(req: Request): string {
+  const xff = req.headers.get("x-forwarded-for") ?? "";
+  const premier = xff.split(",")[0].trim();
+  return premier || (req.headers.get("x-real-ip") ?? "").trim();
+}
+
+async function hacherIp(ip: string): Promise<string> {
+  if (!ip) return "";
+  const data = new TextEncoder().encode(SEL_IP + "|" + ip);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+// GET : emet un jeton (horodate cote serveur) apres controle de debit par IP.
+// deno-lint-ignore no-explicit-any
+async function emettreJeton(req: Request, sb: any): Promise<Response> {
+  const ipHash = await hacherIp(ipClient(req));
+  if (ipHash) {
+    const ilya1h = new Date(Date.now() - 3600_000).toISOString();
+    const { count } = await sb
+      .from("formulaire_soumissions")
+      .select("id", { count: "exact", head: true })
+      .eq("ip_hash", ipHash)
+      .gte("emis_le", ilya1h);
+    if ((count ?? 0) >= MAX_JETONS_PAR_IP_HEURE) {
+      return reponseJson({ erreur: "trop_de_demandes", message: "Trop de tentatives. Reessayez plus tard." }, 429);
+    }
+  }
+  const jeton = crypto.randomUUID();
+  const { error } = await sb.from("formulaire_soumissions").insert({ jeton, ip_hash: ipHash || null });
+  if (error) {
+    console.error("formulaire-maison-submit emettreJeton:", error.message);
+    return reponseJson({ erreur: "jeton_indisponible" }, 500);
+  }
+  return reponseJson({ jeton });
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
+  }
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!supabaseUrl || !serviceRoleKey) {
+    return reponseJson({ erreur: "configuration_serveur" }, 500);
+  }
+  const sb = createClient(supabaseUrl, serviceRoleKey);
+
+  // Ouverture du formulaire : delivrance d'un jeton anti-spam.
+  if (req.method === "GET") {
+    return await emettreJeton(req, sb);
   }
   if (req.method !== "POST") {
     return reponseJson({ erreur: "methode_non_autorisee" }, 405);
   }
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!supabaseUrl || !serviceRoleKey) {
-      return reponseJson({ erreur: "configuration_serveur" }, 500);
-    }
-
     const { champs: body, fichier } = await lireCorps(req);
-    const sb = createClient(supabaseUrl, serviceRoleKey);
 
     // Honeypot : un vrai porteur ne remplit jamais ce champ invisible.
     if (texte(body.site_cache) || texte(body.website_url)) {
       return reponseJson({ statut: "recu" });
     }
 
-    const startedAt = Number(body.started_at ?? 0);
-    if (!startedAt || Date.now() - startedAt < DELAI_MINIMUM_MS) {
-      return erreur("started_at", "Merci de renvoyer le formulaire normalement.");
+    // ── Jeton anti-spam (sans le consommer encore : une erreur de validation
+    //    ne doit pas « bruler » le jeton du porteur) ──────────────────────────
+    const jeton = texte(body.jeton);
+    if (!jeton) {
+      return erreur("jeton", "Merci de recharger la page et de renvoyer le formulaire.");
+    }
+    const { data: jetonRow, error: erreurJetonLecture } = await sb
+      .from("formulaire_soumissions")
+      .select("id, emis_le, consomme_le")
+      .eq("jeton", jeton)
+      .maybeSingle();
+    if (erreurJetonLecture) {
+      console.error("formulaire-maison-submit lecture jeton:", erreurJetonLecture.message);
+      return reponseJson({ erreur: "interne", message: "Traitement impossible." }, 500);
+    }
+    if (!jetonRow || jetonRow.consomme_le) {
+      return erreur("jeton", "Formulaire expire ou deja envoye. Rechargez la page.");
+    }
+    const ageJetonMs = Date.now() - new Date(jetonRow.emis_le).getTime();
+    if (ageJetonMs < JETON_AGE_MIN_MS) {
+      return erreur("jeton", "Merci de renvoyer le formulaire normalement.");
+    }
+    if (ageJetonMs > JETON_AGE_MAX_MS) {
+      return erreur("jeton", "Formulaire expire. Rechargez la page.");
+    }
+
+    // ── Limite de debit par IP (sur les envois reellement consommes) ──────────
+    const ipHash = await hacherIp(ipClient(req));
+    if (ipHash) {
+      const ilya1h = new Date(Date.now() - 3600_000).toISOString();
+      const { count } = await sb
+        .from("formulaire_soumissions")
+        .select("id", { count: "exact", head: true })
+        .eq("ip_hash", ipHash)
+        .not("consomme_le", "is", null)
+        .gte("consomme_le", ilya1h);
+      if ((count ?? 0) >= MAX_SOUMISSIONS_PAR_IP_HEURE) {
+        return reponseJson(
+          { erreur: "trop_de_demandes", message: "Trop d'envois depuis votre connexion. Reessayez plus tard." },
+          429,
+        );
+      }
     }
 
     const prenom = normaliserEspaces(body.prenom);
@@ -187,6 +310,8 @@ Deno.serve(async (req) => {
     const besoinFinancement = normaliserEspaces(body.besoin_financement);
     const descriptionProjet = normaliserEspaces(body.description_projet);
     const caTraction = normaliserEspaces(body.ca_traction);
+    const caLabel = CA_LABELS[texte(body.ca_traction)] ?? "";
+    const anciennete = normaliserEspaces(body.anciennete);
     const ethiqueCode = texte(body.ethique_financement);
     const ethiqueFinancement = ETHIQUE_LABELS[ethiqueCode] ?? "";
     const consentement = body.consentement_rgpd === true || texte(body.consentement_rgpd) === "true";
@@ -224,7 +349,25 @@ Deno.serve(async (req) => {
       return erreur("montant_recherche", "Le montant recherche doit etre un nombre.");
     }
 
+    // ── Consommation du jeton (usage unique, atomique) ────────────────────────
+    // Tout est valide : on brule le jeton maintenant. Un double-clic / renvoi
+    // simultane echoue ici (la ligne n'est mise a jour qu'une fois).
     const maintenant = new Date().toISOString();
+    const { data: jetonConsomme, error: erreurConsommation } = await sb
+      .from("formulaire_soumissions")
+      .update({ consomme_le: maintenant })
+      .eq("jeton", jeton)
+      .is("consomme_le", null)
+      .select("id")
+      .maybeSingle();
+    if (erreurConsommation) {
+      console.error("formulaire-maison-submit consommation jeton:", erreurConsommation.message);
+      return reponseJson({ erreur: "interne", message: "Traitement impossible." }, 500);
+    }
+    if (!jetonConsomme) {
+      return erreur("jeton", "Formulaire deja envoye. Rechargez la page si besoin.");
+    }
+
     const submissionId = `formulaire_maison:${crypto.randomUUID()}`;
     let documentUrlFinal = documentUrl;
     let documentUpload: Record<string, unknown> | null = null;
@@ -257,8 +400,12 @@ Deno.serve(async (req) => {
       };
     }
 
+    // Description enrichie (lisible par l'equipe) : on conserve le detail des
+    // reponses, mais le SCORING tourne sur la description brute du porteur.
     const descriptionComplete = [
       descriptionProjet,
+      caLabel ? `CA : ${caLabel}` : "",
+      anciennete ? `Anciennete : ${anciennete}` : "",
       besoinFinancement ? `Besoin de financement : ${besoinFinancement}` : "",
       ethiqueFinancement ? `Finance ethique/islamique : ${ethiqueFinancement}` : "",
       siteWeb ? `Site : ${siteWeb}` : "",
@@ -270,7 +417,7 @@ Deno.serve(async (req) => {
       activite,
       entrepriseCreee: entrepriseCreee(body.entreprise_creee),
       caPlus50K: caPlus50K(caTraction),
-      description: descriptionComplete,
+      description: descriptionProjet,
       documentFourni: !!documentUrlFinal,
     });
 
@@ -290,7 +437,9 @@ Deno.serve(async (req) => {
         linkedin_url: linkedinUrl,
         activite,
         entreprise_creee: entrepriseCreee(body.entreprise_creee),
+        anciennete: anciennete || null,
         ca_traction: caTraction,
+        ca_traction_label: caLabel || null,
         montant_recherche: montantDemande,
         besoin_financement: besoinFinancement,
         description_projet: descriptionProjet,
@@ -313,7 +462,7 @@ Deno.serve(async (req) => {
     const { data: memeTelephone } = await sb
       .from("deals")
       .select("id, prenom, nom, email, telephone, source")
-      .eq("telephone", telephone)
+      .in("telephone", variantesTelephone(telephone))
       .limit(5);
     if (memeTelephone) {
       for (const d of memeTelephone) {
@@ -365,6 +514,9 @@ Deno.serve(async (req) => {
       console.error("formulaire-maison-submit insertion:", erreurInsert.message);
       return reponseJson({ erreur: "insertion_deal", message: "Enregistrement impossible." }, 500);
     }
+
+    // Rattache la soumission au dossier cree (tracabilite anti-spam).
+    await sb.from("formulaire_soumissions").update({ deal_id: insere.id }).eq("jeton", jeton);
 
     const events: Array<Record<string, unknown>> = [{
       deal_id: insere.id,
