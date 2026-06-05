@@ -2,20 +2,17 @@
 -- Detectus v2 — Email "santé plus tard"
 -- =============================================================================
 
--- Ne bascule QUE les dossiers santé JAMAIS triés par un humain.
--- ⚠️ Cette migration n'est pas enregistrée comme appliquée : elle est rejouée
--- à chaque `npx supabase db push --include-all`. Elle ne doit JAMAIS toucher un
--- dossier que l'équipe a déplacé à la main — y compris un dossier remis
--- volontairement en « Nouveau » (statut 'nouveau' ne suffit donc pas) : on exclut
--- tout dossier ayant un event de statut humain (incident du 05/06/2026, revue Codex).
-update public.deals d
-set statut = 'sante'
-where d.sante is true
-  and d.statut = 'nouveau'
-  and not exists (
-    select 1 from public.deal_events e
-    where e.deal_id = d.id and e.type = 'statut' and e.auteur_id is not null
-  );
+-- NB (05/06/2026, revue Codex) : la bascule en masse des dossiers santé vers
+-- « Santé plus tard » a été RETIRÉE d'ici. Cette migration n'est pas enregistrée
+-- comme appliquée → rejouée à chaque `db push --include-all`. Quel que soit le
+-- garde, il s'appuyait sur les events `deal_events` écrits en best-effort côté
+-- client (insert non attendu, erreurs avalées) : une bascule rejouée pouvait donc
+-- réécraser le tri manuel de l'équipe (incident santé du 05/06/2026).
+-- La classification santé se fait désormais UNIQUEMENT là où c'est atomique et sûr :
+--   • à l'import — `reponseVersDeal` pose directement `statut='sante'` ;
+--   • via l'IA en arrière-plan — garde `statut='nouveau'`, ne touche jamais un
+--     dossier déplacé à la main.
+-- Cette migration ne fait plus que (ré)installer le modèle d'email (idempotent).
 
 insert into public.email_templates (statut, label, subject, body)
 values (
