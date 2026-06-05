@@ -5,7 +5,7 @@
 // ⚠️ Les clés Typeform, Fathom et Anthropic ne vont JAMAIS ici : elles vivent
 //    côté serveur dans les secrets des Edge Functions Supabase (`supabase secrets set`).
 
-const CONFIG = {
+window.CONFIG = {
   SUPABASE_URL: "https://xxxx.supabase.co",   // URL du projet Supabase
   SUPABASE_ANON_KEY: "eyJ...",                // clé anonyme publique (protégée par RLS)
 };
