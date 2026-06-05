@@ -486,3 +486,20 @@ Applique dans le tour suivant :
 - **Supprimer les branches mortes** (toujours pas fait — proxy git 403 côté assistant) : liste plus haut + `claude/fix-chargement`, `claude/fix-header`, `claude/journal-equipe`, `claude/handoff-maj`.
 - **1ᵉʳ vrai run FullEnrich** : confirmer le format de réponse.
 - **Fermer la lecture des champs confidentiels** avant tout compte non-admin (v2.1).
+---
+
+## Ajout 05/06/2026 - polish topbar responsive
+
+Contexte : la barre haute etait trop chargee et pouvait etre coupee sur PC/Mac, surtout autour de 1280-1880 px, avec un rendu mobile encore trop serre.
+
+Applique dans `index.html` :
+- Topbar transformee en grille responsive : marque, onglets, KPIs et actions ont chacun une zone dediee.
+- KPIs passes sur une deuxieme ligne sous 1880 px, au lieu de forcer tous les compteurs sur une seule ligne.
+- Actions compactees sur petits ecrans : icones seules sous 1180 px, credit FullEnrich plus court en mobile.
+- Onglet mobile `A rattacher` raccourci visuellement en `Ratt.` pour eviter la coupe.
+- Largeur mobile verrouillee : pas de scroll horizontal de page.
+
+Tests locaux :
+- Captures topbar 1440 px et 1280 px : plus de coupe a droite, actions visibles.
+- Test navigateur mobile force en 390 px et 360 px : `docWidth == innerWidth`, onglets visibles, pas de debordement horizontal.
+- Changement front uniquement : aucune migration Supabase et aucun redeploiement Edge Function requis.
