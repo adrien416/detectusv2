@@ -229,6 +229,31 @@ async function emettreJeton(req: Request, sb: any): Promise<Response> {
   return reponseJson({ jeton });
 }
 
+// GET ?action=upload&jeton=...&nom=... → URL d'upload signee pour un envoi DIRECT
+// vers Storage (le fichier ne transite pas par la fonction → pas de limite de corps,
+// gros decks acceptes). Gate par un jeton valide non consomme.
+// deno-lint-ignore no-explicit-any
+async function emettreUrlUpload(url: URL, sb: any): Promise<Response> {
+  const jeton = (url.searchParams.get("jeton") ?? "").trim();
+  const nom = (url.searchParams.get("nom") ?? "").trim();
+  if (!jeton) return reponseJson({ erreur: "jeton_absent" }, 400);
+  const { data: jetonRow } = await sb
+    .from("formulaire_soumissions")
+    .select("id, consomme_le")
+    .eq("jeton", jeton)
+    .maybeSingle();
+  if (!jetonRow || jetonRow.consomme_le) {
+    return reponseJson({ erreur: "jeton_invalide" }, 400);
+  }
+  const chemin = `formulaire_maison/${jeton}/${securiserNomFichier(nom || "document")}`;
+  const { data, error } = await sb.storage.from(BUCKET_DOCUMENTS).createSignedUploadUrl(chemin);
+  if (error || !data?.token) {
+    console.error("formulaire-maison-submit url upload:", error?.message);
+    return reponseJson({ erreur: "url_upload_indisponible" }, 500);
+  }
+  return reponseJson({ bucket: BUCKET_DOCUMENTS, path: data.path ?? chemin, token: data.token });
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -241,8 +266,12 @@ Deno.serve(async (req) => {
   }
   const sb = createClient(supabaseUrl, serviceRoleKey);
 
-  // Ouverture du formulaire : delivrance d'un jeton anti-spam.
+  // Ouverture du formulaire : jeton anti-spam, ou URL d'upload signee.
   if (req.method === "GET") {
+    const url = new URL(req.url);
+    if (url.searchParams.get("action") === "upload") {
+      return await emettreUrlUpload(url, sb);
+    }
     return await emettreJeton(req, sb);
   }
   if (req.method !== "POST") {
@@ -371,7 +400,9 @@ Deno.serve(async (req) => {
     const submissionId = `formulaire_maison:${crypto.randomUUID()}`;
     let documentUrlFinal = documentUrl;
     let documentUpload: Record<string, unknown> | null = null;
+    const cheminUploadDirect = texte(body.document_storage_path);
     if (fichier) {
+      // Fallback : petit fichier passe par la fonction (rare, voie principale = upload direct).
       const messageFichier = erreurFichier(fichier);
       if (messageFichier) return erreur("document_upload", messageFichier);
 
@@ -397,6 +428,22 @@ Deno.serve(async (req) => {
         nom_stocke: nomStocke,
         taille_octets: fichier.size,
         type_mime: fichier.type || null,
+      };
+    } else if (cheminUploadDirect) {
+      // Voie principale : fichier deja televerse directement vers Storage (URL signee).
+      // Le chemin doit appartenir a CE jeton (anti-usurpation de chemin).
+      const prefixe = `formulaire_maison/${jeton}/`;
+      if (!cheminUploadDirect.startsWith(prefixe) || cheminUploadDirect.includes("..")) {
+        return erreur("document_upload", "Document invalide. Reessayez l'envoi.");
+      }
+      documentUrlFinal = `storage://${BUCKET_DOCUMENTS}/${cheminUploadDirect}`;
+      documentUpload = {
+        bucket: BUCKET_DOCUMENTS,
+        path: cheminUploadDirect,
+        nom_original: texte(body.document_nom) || null,
+        taille_octets: Number(body.document_taille) || null,
+        type_mime: texte(body.document_type) || null,
+        mode: "upload_direct",
       };
     }
 

@@ -32,7 +32,8 @@ alter table public.formulaire_soumissions enable row level security;
 comment on table public.formulaire_soumissions is
   'Jetons anti-spam du formulaire public : emis a l ouverture, consommes a usage unique a la soumission, base de la limite par IP (IP hashee).';
 
--- Aligne le plafond du bucket sur la limite reellement acceptee par la fonction (10 Mo).
+-- Favorise l'upload : plafond du bucket releve a 50 Mo (upload direct vers Storage,
+-- hors limite de corps des Edge Functions). Le fichier reste prive et interne.
 update storage.buckets
-  set file_size_limit = 10485760
+  set file_size_limit = 52428800
   where id = 'formulaire-maison-documents';
