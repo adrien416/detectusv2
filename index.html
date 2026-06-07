@@ -1473,9 +1473,21 @@ function documentPriveDetectus(url){
   return String(url||'').startsWith('storage://formulaire-maison-documents/');
 }
 
+function documentTypeformProtege(url){
+  try{
+    const u=new URL(String(url||''));
+    return u.hostname==='api.typeform.com'&&u.pathname.includes('/files/');
+  }catch(e){
+    return false;
+  }
+}
+
 function boutonDocumentDossier(l){
   const url=String(l.docUrl||'');
   if(!url)return '';
+  if(documentTypeformProtege(url)&&estAdmin()){
+    return `<button class="mini-btn teal" onclick="ouvrirDocumentDossier('${l.id}')">Ouvrir document</button>`;
+  }
   if(/^https?:\/\//i.test(url)){
     return `<a class="mini-btn teal" href="${h(url)}" target="_blank" rel="noopener">Ouvrir document</a>`;
   }
@@ -1493,6 +1505,11 @@ async function ouvrirDocumentDossier(id){
     if(error)throw error;
     if(data&&data.erreur)throw new Error(data.message||data.erreur);
     if(!data||!data.url)throw new Error('Lien document absent');
+    if(data.document_url){
+      const l=LEADS.find(x=>x.id===id);
+      if(l){l.docUrl=data.document_url;l.doc=!!data.document_url;}
+      if(currentL&&currentL.id===id){currentL.docUrl=data.document_url;currentL.doc=!!data.document_url;}
+    }
     if(fenetre)fenetre.location.href=data.url;
     else window.open(data.url,'_blank','noopener');
   }catch(e){
