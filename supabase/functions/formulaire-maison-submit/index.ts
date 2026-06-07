@@ -57,7 +57,7 @@ const CA_LABELS: Record<string, string> = {
 
 const TEMPLATE_PORTEUR_RECU = "formulaire_porteur_recu";
 const TEMPLATE_EQUIPE_NOUVEAU = "formulaire_equipe_nouveau";
-const EMAIL_FROM_DEFAUT = "Lina Capital <noreply@lina.capital>";
+const EMAIL_FROM_DEFAUT = "Adrien <adrien@prouesse.vc>";
 const EMAIL_EQUIPE_DEFAUT = "adrien@prouesse.vc,djamel@lina.finance,mahefa@prouesse.vc";
 const DETECTUS_URL_DEFAUT = "https://detectus2.netlify.app";
 
