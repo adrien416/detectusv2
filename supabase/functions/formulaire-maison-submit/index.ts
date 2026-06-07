@@ -277,34 +277,42 @@ interface ResultatEmail {
   message: string;
 }
 
+function expediteurEmail(): { name: string; email: string } {
+  const brut = Deno.env.get("EMAIL_FROM") || EMAIL_FROM_DEFAUT;
+  const match = brut.match(/^\s*(.*?)\s*<([^>]+)>\s*$/);
+  if (match && emailValide(match[2])) {
+    return { name: match[1].trim() || match[2], email: match[2] };
+  }
+  return { name: "Adrien", email: emailValide(brut) ? brut : "adrien@prouesse.vc" };
+}
+
 async function envoyerEmail(
   destinataires: string[],
   sujet: string,
   texteEmail: string,
   replyTo?: string,
 ): Promise<ResultatEmail> {
-  const resendKey = Deno.env.get("RESEND_API_KEY") ?? "";
-  if (!resendKey) {
-    return { ok: false, message: "RESEND_API_KEY manquant" };
+  const brevoKey = Deno.env.get("BREVO_API_KEY") ?? "";
+  if (!brevoKey) {
+    return { ok: false, message: "BREVO_API_KEY manquant" };
   }
-  const from = Deno.env.get("EMAIL_FROM") || EMAIL_FROM_DEFAUT;
   const to = destinataires.filter(emailValide);
   if (to.length === 0) {
     return { ok: false, message: "Aucun destinataire valide" };
   }
 
   const body: Record<string, unknown> = {
-    from,
-    to,
+    sender: expediteurEmail(),
+    to: to.map((email) => ({ email })),
     subject: sujet,
-    text: texteEmail,
+    textContent: texteEmail,
   };
-  if (replyTo && emailValide(replyTo)) body.reply_to = replyTo;
+  if (replyTo && emailValide(replyTo)) body.replyTo = { email: replyTo };
 
-  const res = await fetch("https://api.resend.com/emails", {
+  const res = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${resendKey}`,
+      "xkeysib-key": brevoKey,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(body),
@@ -312,7 +320,7 @@ async function envoyerEmail(
 
   if (!res.ok) {
     const message = await res.text().catch(() => "");
-    return { ok: false, message: `Resend ${res.status}: ${message.slice(0, 300)}` };
+    return { ok: false, message: `Brevo ${res.status}: ${message.slice(0, 300)}` };
   }
   return { ok: true, message: "envoye" };
 }
