@@ -63,29 +63,29 @@ const DETECTUS_URL_DEFAUT = "https://detectus2.netlify.app";
 
 const EMAIL_AUTO_DEFAULTS: Record<string, { label: string; subject: string; body: string }> = {
   formulaire_porteur_recu: {
-    label: "Accuse reception formulaire",
-    subject: "Lina Capital - Votre demande a bien ete recue",
+    label: "Accusé réception formulaire",
+    subject: "Lina Capital - Votre demande a bien été reçue",
     body: `Bonjour {{prenom}},
 
-Nous avons bien recu votre demande de financement pour {{societe}}.
+Nous avons bien reçu votre demande de financement pour {{societe}}.
 
-Notre equipe va etudier les informations transmises. Si le dossier entre dans notre perimetre, nous reviendrons vers vous avec les prochaines etapes.
+Notre équipe va étudier les informations transmises. Si le dossier entre dans notre périmètre, nous reviendrons vers vous avec les prochaines étapes.
 
 Bien cordialement,
-L'Equipe Lina Capital
+L'Équipe Lina Capital
 
 https://lina.capital`,
   },
   formulaire_equipe_nouveau: {
-    label: "Notification equipe formulaire",
+    label: "Notification équipe formulaire",
     subject: "Nouveau dossier Lina Capital - {{societe}}",
-    body: `Nouveau dossier recu via le formulaire maison.
+    body: `Nouveau dossier reçu via le formulaire maison.
 
 Porteur : {{prenom}} {{nom}}
 Email : {{email}}
 Telephone : {{telephone}}
 Projet : {{societe}}
-Activite : {{activite}}
+Activité : {{activite}}
 CA : {{ca}}
 Score : {{score}}/100 - {{decision}}
 

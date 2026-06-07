@@ -12,30 +12,30 @@ insert into public.email_templates (statut, label, subject, body)
 values
 (
   'formulaire_porteur_recu',
-  'Accuse reception formulaire',
-  'Lina Capital - Votre demande a bien ete recue',
+  'Accusé réception formulaire',
+  'Lina Capital - Votre demande a bien été reçue',
   'Bonjour {{prenom}},
 
-Nous avons bien recu votre demande de financement pour {{societe}}.
+Nous avons bien reçu votre demande de financement pour {{societe}}.
 
-Notre equipe va etudier les informations transmises. Si le dossier entre dans notre perimetre, nous reviendrons vers vous avec les prochaines etapes.
+Notre équipe va étudier les informations transmises. Si le dossier entre dans notre périmètre, nous reviendrons vers vous avec les prochaines étapes.
 
 Bien cordialement,
-L''Equipe Lina Capital
+L''Équipe Lina Capital
 
 https://lina.capital'
 ),
 (
   'formulaire_equipe_nouveau',
-  'Notification equipe formulaire',
+  'Notification équipe formulaire',
   'Nouveau dossier Lina Capital - {{societe}}',
-  'Nouveau dossier recu via le formulaire maison.
+  'Nouveau dossier reçu via le formulaire maison.
 
 Porteur : {{prenom}} {{nom}}
 Email : {{email}}
 Telephone : {{telephone}}
 Projet : {{societe}}
-Activite : {{activite}}
+Activité : {{activite}}
 CA : {{ca}}
 Score : {{score}}/100 - {{decision}}
 

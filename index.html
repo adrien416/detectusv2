@@ -820,8 +820,8 @@ const ST={
 const ST_ORDER=['nouveau','info','pitch','attente','sante','accepte','refuse'];
 const EMAIL_TEMPLATE_ORDER=['info','pitch','attente','sante','accepte','refuse','formulaire_porteur_recu','formulaire_equipe_nouveau'];
 const EMAIL_TEMPLATE_NAMES={
-  formulaire_porteur_recu:'Accuse reception formulaire',
-  formulaire_equipe_nouveau:'Notification equipe formulaire',
+  formulaire_porteur_recu:'Accusé réception formulaire',
+  formulaire_equipe_nouveau:'Notification équipe formulaire',
 };
 
 const EMAIL_DEFAULTS={
@@ -906,23 +906,23 @@ Cordialement,
 L'Équipe Lina Finance
 
 https://lina.capital`},
-  formulaire_porteur_recu:{label:'Accuse reception formulaire',subject:'Lina Capital - Votre demande a bien ete recue',body:`Bonjour {{prenom}},
+  formulaire_porteur_recu:{label:'Accusé réception formulaire',subject:'Lina Capital - Votre demande a bien été reçue',body:`Bonjour {{prenom}},
 
-Nous avons bien recu votre demande de financement pour {{societe}}.
+Nous avons bien reçu votre demande de financement pour {{societe}}.
 
-Notre equipe va etudier les informations transmises. Si le dossier entre dans notre perimetre, nous reviendrons vers vous avec les prochaines etapes.
+Notre équipe va étudier les informations transmises. Si le dossier entre dans notre périmètre, nous reviendrons vers vous avec les prochaines étapes.
 
 Bien cordialement,
-L'Equipe Lina Capital
+L'Équipe Lina Capital
 
 https://lina.capital`},
-  formulaire_equipe_nouveau:{label:'Notification equipe formulaire',subject:'Nouveau dossier Lina Capital - {{societe}}',body:`Nouveau dossier recu via le formulaire maison.
+  formulaire_equipe_nouveau:{label:'Notification équipe formulaire',subject:'Nouveau dossier Lina Capital - {{societe}}',body:`Nouveau dossier reçu via le formulaire maison.
 
 Porteur : {{prenom}} {{nom}}
 Email : {{email}}
 Telephone : {{telephone}}
 Projet : {{societe}}
-Activite : {{activite}}
+Activité : {{activite}}
 CA : {{ca}}
 Score : {{score}}/100 - {{decision}}
 
