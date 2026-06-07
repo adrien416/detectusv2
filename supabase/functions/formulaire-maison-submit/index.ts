@@ -55,11 +55,64 @@ const CA_LABELS: Record<string, string> = {
   autre: "Autre situation",
 };
 
+const TEMPLATE_PORTEUR_RECU = "formulaire_porteur_recu";
+const TEMPLATE_EQUIPE_NOUVEAU = "formulaire_equipe_nouveau";
+const EMAIL_FROM_DEFAUT = "Lina Capital <noreply@lina.capital>";
+const EMAIL_EQUIPE_DEFAUT = "adrien@prouesse.vc,djamel@lina.finance,mahefa@prouesse.vc";
+const DETECTUS_URL_DEFAUT = "https://detectus2.netlify.app";
+
+const EMAIL_AUTO_DEFAULTS: Record<string, { label: string; subject: string; body: string }> = {
+  formulaire_porteur_recu: {
+    label: "Accuse reception formulaire",
+    subject: "Lina Capital - Votre demande a bien ete recue",
+    body: `Bonjour {{prenom}},
+
+Nous avons bien recu votre demande de financement pour {{societe}}.
+
+Notre equipe va etudier les informations transmises. Si le dossier entre dans notre perimetre, nous reviendrons vers vous avec les prochaines etapes.
+
+Bien cordialement,
+L'Equipe Lina Capital
+
+https://lina.capital`,
+  },
+  formulaire_equipe_nouveau: {
+    label: "Notification equipe formulaire",
+    subject: "Nouveau dossier Lina Capital - {{societe}}",
+    body: `Nouveau dossier recu via le formulaire maison.
+
+Porteur : {{prenom}} {{nom}}
+Email : {{email}}
+Telephone : {{telephone}}
+Projet : {{societe}}
+Activite : {{activite}}
+CA : {{ca}}
+Score : {{score}}/100 - {{decision}}
+
+Ouvrir Detectus :
+{{lien_detectus}}`,
+  },
+};
+
 type CorpsFormulaire = Record<string, unknown>;
 
 interface CorpsLu {
   champs: CorpsFormulaire;
   fichier: File | null;
+}
+
+interface VariablesEmail {
+  prenom: string;
+  nom: string;
+  email: string;
+  telephone: string;
+  societe: string;
+  entreprise: string;
+  activite: string;
+  ca: string;
+  score: string;
+  decision: string;
+  lien_detectus: string;
 }
 
 function texte(v: unknown): string {
@@ -188,6 +241,126 @@ function securiserNomFichier(nom: string): string {
     .slice(0, 90);
   const avecExtension = base.includes(".") || !extension ? base : `${base}.${extension}`;
   return `${Date.now()}-${avecExtension || "document"}`;
+}
+
+function emailsListe(v: string): string[] {
+  return v.split(/[;,]/).map((x) => x.trim()).filter((x) => emailValide(x));
+}
+
+function appliquerTemplate(texteTemplate: string, variables: VariablesEmail): string {
+  return String(texteTemplate || "").replace(
+    /\{\{\s*(prenom|nom|email|telephone|societe|entreprise|activite|ca|score|decision|lien_detectus)\s*\}\}/gi,
+    (_, cle) => variables[cle.toLowerCase() as keyof VariablesEmail] ?? "",
+  );
+}
+
+// deno-lint-ignore no-explicit-any
+async function chargerTemplateEmail(sb: any, cle: string): Promise<{ label: string; subject: string; body: string }> {
+  const defaut = EMAIL_AUTO_DEFAULTS[cle];
+  const { data, error } = await sb
+    .from("email_templates")
+    .select("label, subject, body")
+    .eq("statut", cle)
+    .maybeSingle();
+  if (error) {
+    console.error("formulaire-maison-submit template email:", cle, error.message);
+  }
+  return {
+    label: data?.label || defaut.label,
+    subject: data?.subject || defaut.subject,
+    body: data?.body || defaut.body,
+  };
+}
+
+interface ResultatEmail {
+  ok: boolean;
+  message: string;
+}
+
+async function envoyerEmail(
+  destinataires: string[],
+  sujet: string,
+  texteEmail: string,
+  replyTo?: string,
+): Promise<ResultatEmail> {
+  const resendKey = Deno.env.get("RESEND_API_KEY") ?? "";
+  if (!resendKey) {
+    return { ok: false, message: "RESEND_API_KEY manquant" };
+  }
+  const from = Deno.env.get("EMAIL_FROM") || EMAIL_FROM_DEFAUT;
+  const to = destinataires.filter(emailValide);
+  if (to.length === 0) {
+    return { ok: false, message: "Aucun destinataire valide" };
+  }
+
+  const body: Record<string, unknown> = {
+    from,
+    to,
+    subject: sujet,
+    text: texteEmail,
+  };
+  if (replyTo && emailValide(replyTo)) body.reply_to = replyTo;
+
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${resendKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const message = await res.text().catch(() => "");
+    return { ok: false, message: `Resend ${res.status}: ${message.slice(0, 300)}` };
+  }
+  return { ok: true, message: "envoye" };
+}
+
+// deno-lint-ignore no-explicit-any
+async function envoyerEmailsAutomatiquesFormulaire(sb: any, dealId: string, variables: VariablesEmail): Promise<void> {
+  const equipe = emailsListe(Deno.env.get("FORMULAIRE_EQUIPE_TO") || EMAIL_EQUIPE_DEFAUT);
+  const templatePorteur = await chargerTemplateEmail(sb, TEMPLATE_PORTEUR_RECU);
+  const templateEquipe = await chargerTemplateEmail(sb, TEMPLATE_EQUIPE_NOUVEAU);
+
+  const sujetPorteur = appliquerTemplate(templatePorteur.subject, variables);
+  const corpsPorteur = appliquerTemplate(templatePorteur.body, variables);
+  const sujetEquipe = appliquerTemplate(templateEquipe.subject, variables);
+  const corpsEquipe = appliquerTemplate(templateEquipe.body, variables);
+
+  const resultats = [
+    {
+      cible: "porteur",
+      destinataires: [variables.email],
+      resultat: await envoyerEmail([variables.email], sujetPorteur, corpsPorteur),
+    },
+    {
+      cible: "equipe",
+      destinataires: equipe,
+      resultat: await envoyerEmail(equipe, sujetEquipe, corpsEquipe, variables.email),
+    },
+  ];
+
+  const evenements = resultats.map((r) => ({
+    deal_id: dealId,
+    type: "email",
+    resume: r.resultat.ok
+      ? `Email automatique ${r.cible} envoye`
+      : `Email automatique ${r.cible} non envoye : ${r.resultat.message}`,
+    payload: {
+      source: "formulaire-maison-submit",
+      cible: r.cible,
+      destinataires: r.destinataires,
+      ok: r.resultat.ok,
+      message: r.resultat.message,
+    },
+    auteur_id: null,
+  }));
+
+  const { error } = await sb.from("deal_events").insert(evenements);
+  if (error) {
+    console.error("formulaire-maison-submit events emails:", error.message);
+  }
 }
 
 // ── Anti-spam : IP + jeton ────────────────────────────────────────────────────
@@ -564,6 +737,20 @@ Deno.serve(async (req) => {
 
     // Rattache la soumission au dossier cree (tracabilite anti-spam).
     await sb.from("formulaire_soumissions").update({ deal_id: insere.id }).eq("jeton", jeton);
+
+    enArrierePlan(envoyerEmailsAutomatiquesFormulaire(sb, insere.id, {
+      prenom,
+      nom,
+      email,
+      telephone,
+      societe: societeProjet,
+      entreprise: societeProjet,
+      activite,
+      ca: caLabel || caTraction || (caPlus50K(caTraction) ? "+ 50K" : "< 50K"),
+      score: String(scoring.score),
+      decision: scoring.decision,
+      lien_detectus: Deno.env.get("DETECTUS_URL") || DETECTUS_URL_DEFAUT,
+    }));
 
     const events: Array<Record<string, unknown>> = [{
       deal_id: insere.id,

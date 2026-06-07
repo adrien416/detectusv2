@@ -104,6 +104,8 @@ body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direc
 .db-left .db-email{color:rgba(255,255,255,.7);font-size:14px}
 .db-left .db-meta{color:rgba(255,255,255,.55);font-size:14px;margin-top:2px}
 .db-right{text-align:right;flex-shrink:0}
+.db-score-btn{appearance:none;background:transparent;border:1px solid rgba(255,255,255,.22);border-radius:10px;padding:7px 10px;text-align:right;cursor:pointer;font-family:var(--font);transition:background .15s,border-color .15s,transform .15s}
+.db-score-btn:hover{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.45);transform:translateY(-1px)}
 .db-score{color:#fff;font-weight:800;font-size:46px;line-height:1}
 .db-slbl{color:rgba(255,255,255,.5);font-size:13px}
 .db-dec{color:#fff;font-weight:700;font-size:15px;margin-top:3px;text-transform:uppercase;letter-spacing:.06em}
@@ -319,6 +321,17 @@ body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direc
 .template-tab.on{background:var(--teal);border-color:var(--teal);color:#061D39}
 .template-vars{font-size:12.5px;color:var(--text-sub);line-height:1.5;margin-top:-4px}
 .template-vars code{background:var(--input-bg);border:1px solid var(--card-border);border-radius:5px;padding:1px 5px;color:var(--text-main)}
+.score-summary{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;background:var(--navy);border-radius:10px;padding:16px 18px;margin-bottom:14px}
+.score-summary-main{color:#fff;font-size:42px;font-weight:800;line-height:1}
+.score-summary-main span{font-size:14px;color:rgba(255,255,255,.55)}
+.score-summary-decision{color:var(--teal);font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;text-align:right}
+.score-lines{display:flex;flex-direction:column;gap:8px}
+.score-line{display:grid;grid-template-columns:82px 1fr;gap:12px;align-items:start;background:var(--input-bg);border:1px solid var(--card-border);border-radius:8px;padding:10px 12px}
+.score-points{font-size:18px;font-weight:800;color:var(--teal);white-space:nowrap}
+.score-points.zero{color:var(--text-sub)}
+.score-title{font-size:14px;font-weight:800;color:var(--text-main);margin-bottom:2px}
+.score-detail{font-size:13px;line-height:1.45;color:var(--text-sub)}
+.score-note{margin-top:12px;font-size:13px;line-height:1.45;color:var(--text-sub)}
 
 /* ── v2 : réunions Fathom (F9) ────────────────────────────────────────────── */
 .reunion-card{background:var(--input-bg);border:1px solid var(--card-border);border-radius:10px;padding:12px 14px;margin-bottom:10px}
@@ -711,7 +724,12 @@ body.mobile-detail-open #detail{display:block}
         <code>{{societe}}</code>
         <code>{{entreprise}}</code>
         <code>{{email}}</code>
+        <code>{{telephone}}</code>
         <code>{{activite}}</code>
+        <code>{{ca}}</code>
+        <code>{{score}}</code>
+        <code>{{decision}}</code>
+        <code>{{lien_detectus}}</code>
       </div>
       <div class="modal-actions">
         <button type="submit" class="modal-btn-ok" id="tpl-btn-save">Enregistrer</button>
@@ -731,6 +749,16 @@ body.mobile-detail-open #detail{display:block}
     <div id="journal-liste" class="journal-liste"></div>
     <div class="modal-actions">
       <button type="button" class="modal-btn-annuler" onclick="fermerJournal()">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-score" class="modal-fond" style="display:none" onclick="if(event.target===this)fermerScore()">
+  <div class="modal-carte admin-email">
+    <div class="modal-titre">Explication du score</div>
+    <div id="score-modal-body"></div>
+    <div class="modal-actions">
+      <button type="button" class="modal-btn-annuler" onclick="fermerScore()">Fermer</button>
     </div>
   </div>
 </div>
@@ -790,6 +818,11 @@ const ST={
   refuse:{label:'Refusé',color:C.red},
 };
 const ST_ORDER=['nouveau','info','pitch','attente','sante','accepte','refuse'];
+const EMAIL_TEMPLATE_ORDER=['info','pitch','attente','sante','accepte','refuse','formulaire_porteur_recu','formulaire_equipe_nouveau'];
+const EMAIL_TEMPLATE_NAMES={
+  formulaire_porteur_recu:'Accuse reception formulaire',
+  formulaire_equipe_nouveau:'Notification equipe formulaire',
+};
 
 const EMAIL_DEFAULTS={
   info:{label:'Demande de documents',subject:'Lina Finance — Compléments nécessaires pour votre dossier',body:`Bonjour {{prenom}},
@@ -873,6 +906,28 @@ Cordialement,
 L'Équipe Lina Finance
 
 https://lina.capital`},
+  formulaire_porteur_recu:{label:'Accuse reception formulaire',subject:'Lina Capital - Votre demande a bien ete recue',body:`Bonjour {{prenom}},
+
+Nous avons bien recu votre demande de financement pour {{societe}}.
+
+Notre equipe va etudier les informations transmises. Si le dossier entre dans notre perimetre, nous reviendrons vers vous avec les prochaines etapes.
+
+Bien cordialement,
+L'Equipe Lina Capital
+
+https://lina.capital`},
+  formulaire_equipe_nouveau:{label:'Notification equipe formulaire',subject:'Nouveau dossier Lina Capital - {{societe}}',body:`Nouveau dossier recu via le formulaire maison.
+
+Porteur : {{prenom}} {{nom}}
+Email : {{email}}
+Telephone : {{telephone}}
+Projet : {{societe}}
+Activite : {{activite}}
+CA : {{ca}}
+Score : {{score}}/100 - {{decision}}
+
+Ouvrir Detectus :
+{{lien_detectus}}`},
 };
 let EMAIL_TEMPLATES=JSON.parse(JSON.stringify(EMAIL_DEFAULTS));
 
@@ -1189,11 +1244,16 @@ function appliquerVariablesTemplate(texte,l){
     prenom:l?.prenom||'',
     nom:l?.nom||'',
     email:l?.email||'',
+    telephone:l?.tel||'',
     societe:entreprise,
     entreprise,
     activite:l?.act||'',
+    ca:l?.ca||'',
+    score:String(l?.score??''),
+    decision:l?.dec||'',
+    lien_detectus:window.location.origin,
   };
-  return String(texte||'').replace(/\{\{\s*(prenom|nom|email|societe|entreprise|activite)\s*\}\}/gi,(_,cle)=>valeurs[cle.toLowerCase()]||'');
+  return String(texte||'').replace(/\{\{\s*(prenom|nom|email|telephone|societe|entreprise|activite|ca|score|decision|lien_detectus)\s*\}\}/gi,(_,cle)=>valeurs[cle.toLowerCase()]||'');
 }
 
 function templateEmail(statut){
@@ -2012,9 +2072,9 @@ function renderAdminEmails(){
   const modal=document.getElementById('modal-admin-emails');
   if(!modal||modal.style.display==='none')return;
   const tabs=document.getElementById('template-tabs');
-  tabs.innerHTML=ST_ORDER.filter(k=>k!=='nouveau').map(k=>{
+  tabs.innerHTML=EMAIL_TEMPLATE_ORDER.map(k=>{
     const tpl=templateEmail(k);
-    return `<button type="button" class="template-tab${k===templateCourant?' on':''}" onclick="choisirTemplateEmail('${k}')">${h(tpl?.label||ST[k].label)}</button>`;
+    return `<button type="button" class="template-tab${k===templateCourant?' on':''}" onclick="choisirTemplateEmail('${k}')">${h(tpl?.label||EMAIL_TEMPLATE_NAMES[k]||ST[k]?.label||'Email')}</button>`;
   }).join('');
   const tpl=templateEmail(templateCourant)||{label:'',subject:'',body:''};
   document.getElementById('tpl-label').value=tpl.label||'';
@@ -2319,6 +2379,60 @@ function blocTimeline(){
     </div></div>`;
 }
 
+function fermerScore(){
+  document.getElementById('modal-score').style.display='none';
+}
+
+function lignesScoreDossier(l){
+  const activiteTexte=String((l.act||'')+' '+(l.desc||'')).toLowerCase();
+  const secteurExclu=['restauration','transport','vtc','taxi','btp'].find(s=>activiteTexte.includes(s));
+  if(secteurExclu){
+    return {
+      note:'Secteur exclu : le score est force a 5, quelle que soit la qualite du reste du dossier.',
+      lignes:[{points:'+5',titre:'Refus direct',detail:`Le dossier contient le secteur exclu « ${secteurExclu} ».`}]
+    };
+  }
+  if(l.sante){
+    return {
+      note:'Secteur sante : le dossier est conserve, mais Lina ne finance pas encore ce segment. Le score est donc specifique.',
+      lignes:[{points:'+15',titre:'Sante plus tard',detail:'Dossier garde en suivi pour reouverture future, sans traitement prioritaire aujourd hui.'}]
+    };
+  }
+
+  const entrepriseOk=String(l.ent||'').toLowerCase().startsWith('oui');
+  const caOk=String(l.ca||'').includes('+')||/50k.*plus/i.test(String(l.ca||''));
+  const docOk=!!l.doc;
+  const descriptionOk=String(l.desc||'').length>150;
+  const lignes=[
+    {points:'+30',titre:'Base de depart',detail:'Tout dossier recevable commence a 30 points.'},
+    {points:entrepriseOk?'+15':'+0',titre:'Entreprise deja creee',detail:entrepriseOk?'Structure juridique existante.':'Projet encore en creation.',zero:!entrepriseOk},
+    {points:caOk?'+15':'+0',titre:'CA 50K€ ou plus',detail:caOk?'Seuil de chiffre d affaires atteint sur les 12 derniers mois.':'Seuil non atteint ou situation a confirmer.',zero:!caOk},
+    {points:docOk?'+10':'+0',titre:'Document fourni',detail:docOk?'Un deck ou document est disponible.':'Aucun document exploitable dans le dossier.',zero:!docOk},
+    {points:descriptionOk?'+5':'+0',titre:'Description detaillee',detail:descriptionOk?'Description suffisamment longue pour l analyse automatique.':'Description courte : pas de bonus detail.',zero:!descriptionOk},
+  ];
+  return {note:'Decision : 65+ = qualifie, 21-64 = a etudier, 0-20 = refuse.',lignes};
+}
+
+function ouvrirScoreDossier(id){
+  const l=LEADS.find(x=>x.id===id);
+  if(!l)return;
+  const exp=lignesScoreDossier(l);
+  document.getElementById('score-modal-body').innerHTML=`
+    <div class="score-summary">
+      <div class="score-summary-main">${h(l.score)}<span>/100</span></div>
+      <div class="score-summary-decision">${h(l.dec)}</div>
+    </div>
+    <div class="score-lines">
+      ${exp.lignes.map(r=>`<div class="score-line">
+        <div class="score-points${r.zero?' zero':''}">${h(r.points)}</div>
+        <div><div class="score-title">${h(r.titre)}</div><div class="score-detail">${h(r.detail)}</div></div>
+      </div>`).join('')}
+    </div>
+    <div class="score-note">${h(exp.note)}<br>Motif IA : ${h(l.motif||'Non renseigne')}</div>
+  `;
+  document.getElementById('modal-score').style.display='flex';
+}
+
 function renderDetail(){
   const l=currentL;
   document.getElementById('empty').style.display=l?'none':'flex';
@@ -2336,7 +2450,7 @@ function renderDetail(){
     </div>
     <div class="dbar" style="background:${col}">
       <div class="db-left"><div class="db-name">${h(l.prenom)} ${h(l.nom)}</div><div class="db-email">${h(l.email)} · ${h(l.date)}</div><div class="db-meta">${h(l.act)} · Entreprise : ${h(l.ent)} · CA : ${h(l.ca)} · Source : ${h(sourceLabel(l.source))}</div></div>
-      <div class="db-right"><div class="db-score">${h(l.score)}</div><div class="db-slbl">/100</div><div class="db-dec">${h(l.dec)}</div></div>
+      <div class="db-right"><button type="button" class="db-score-btn" onclick="ouvrirScoreDossier('${l.id}')" title="Expliquer ce score"><div class="db-score">${h(l.score)}</div><div class="db-slbl">/100</div><div class="db-dec">${h(l.dec)}</div></button></div>
     </div>
     <div class="action-bar">
       <div class="action-bar-label">Traitement</div>
