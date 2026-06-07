@@ -48,6 +48,13 @@ const ETHIQUE_LABELS: Record<string, string> = {
   decouverte: "Je ne connais pas encore ces principes",
 };
 
+const ENGAGEMENT_LABELS: Record<string, string> = {
+  pret_engagement: "Oui, c'est un engagement important pour moi",
+  besoin_clarte: "Oui, mais j'aimerais comprendre précisément ce que cela implique",
+  non: "Non, je souhaite garder la possibilité d'emprunter avec intérêts",
+  ne_sais_pas: "Je ne sais pas encore",
+};
+
 const CA_LABELS: Record<string, string> = {
   plus_50k: "50K€ ou plus de CA",
   moins_50k: "Moins de 50K€ de CA",
@@ -524,6 +531,8 @@ Deno.serve(async (req) => {
     const anciennete = normaliserEspaces(body.anciennete);
     const ethiqueCode = texte(body.ethique_financement);
     const ethiqueFinancement = ETHIQUE_LABELS[ethiqueCode] ?? "";
+    const engagementCode = texte(body.engagement_sans_interets);
+    const engagementSansInterets = ENGAGEMENT_LABELS[engagementCode] ?? "";
     const consentement = body.consentement_rgpd === true || texte(body.consentement_rgpd) === "true";
 
     if (!prenom) return erreur("prenom", "Le prenom est requis.");
@@ -536,6 +545,7 @@ Deno.serve(async (req) => {
       return erreur("description_projet", "La description doit contenir au moins 20 caracteres.");
     }
     if (!ethiqueFinancement) return erreur("ethique_financement", "Merci de choisir une option.");
+    if (!engagementSansInterets) return erreur("engagement_sans_interets", "Merci de choisir une option.");
     if (!consentement) return erreur("consentement_rgpd", "Le consentement RGPD est requis.");
 
     let siteWeb: string | null = null;
@@ -636,6 +646,7 @@ Deno.serve(async (req) => {
       anciennete ? `Anciennete : ${anciennete}` : "",
       besoinFinancement ? `Besoin de financement : ${besoinFinancement}` : "",
       ethiqueFinancement ? `Finance ethique/islamique : ${ethiqueFinancement}` : "",
+      engagementSansInterets ? `Engagement sans financement portant intérêts : ${engagementSansInterets}` : "",
       siteWeb ? `Site : ${siteWeb}` : "",
     ].filter(Boolean).join("\n\n");
 
@@ -654,6 +665,7 @@ Deno.serve(async (req) => {
       version: VERSION_FORMULAIRE,
       soumis_le: maintenant,
       question_ethique: "Dans quelle mesure souhaitez-vous que votre financement respecte les principes de la finance ethique/islamique, notamment l'absence d'interets ?",
+      question_engagement_sans_interets: "Dans le cadre de ce projet, seriez-vous prêt à vous engager à ne pas recourir à un financement portant intérêts si Lina Capital vous accompagne ?",
       consentement_rgpd_texte: "J'accepte que Lina Capital traite les informations transmises afin d'etudier ma demande de financement.",
       donnees: {
         prenom,
@@ -675,6 +687,7 @@ Deno.serve(async (req) => {
         document_lien_saisi: documentUrl,
         document_upload: documentUpload,
         ethique_financement: ethiqueFinancement,
+        engagement_sans_interets: engagementSansInterets,
         consentement_rgpd: true,
       },
     };
@@ -728,6 +741,7 @@ Deno.serve(async (req) => {
       linkedin_source: linkedinUrl ? "formulaire_maison" : null,
       linkedin_valide_le: linkedinUrl ? maintenant : null,
       ethique_financement: ethiqueFinancement,
+      engagement_sans_interets: engagementSansInterets,
       consentement_rgpd: true,
       consentement_rgpd_le: maintenant,
     };

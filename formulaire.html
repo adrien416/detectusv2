@@ -272,6 +272,20 @@ label{display:block;font-size:13px;font-weight:800;text-transform:uppercase;lett
         </section>
 
         <section class="step" data-step>
+          <p class="eyebrow">Engagement</p>
+          <h2 class="question">Dans le cadre de ce projet, seriez-vous prêt à vous engager à ne pas recourir à un financement portant intérêts si Lina Capital vous accompagne&nbsp;?</h2>
+          <p class="hint">Cette question permet de vérifier l'alignement avec une structuration sans intérêts pour le projet financé.</p>
+          <div class="choice-grid" data-choice="engagement_sans_interets" data-required>
+            <button class="choice" type="button" data-value="pret_engagement">Oui, c'est un engagement important pour moi</button>
+            <button class="choice" type="button" data-value="besoin_clarte">Oui, mais j'aimerais comprendre précisément ce que cela implique</button>
+            <button class="choice" type="button" data-value="non">Non, je souhaite garder la possibilité d'emprunter avec intérêts</button>
+            <button class="choice" type="button" data-value="ne_sais_pas">Je ne sais pas encore</button>
+          </div>
+          <input type="hidden" name="engagement_sans_interets">
+          <div class="error" data-error></div>
+        </section>
+
+        <section class="step" data-step>
           <p class="eyebrow">Validation</p>
           <h2 class="question">Derniere etape avant l'envoi.</h2>
           <p class="hint">Votre dossier sera transmis a l'equipe Lina Capital et cree automatiquement dans Detectus.</p>

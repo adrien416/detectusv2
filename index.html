@@ -1406,6 +1406,7 @@ function dealVersLead(d){
     sante:!!d.sante,
     source:d.source||'typeform',
     ethique_financement:d.ethique_financement||'',
+    engagement_sans_interets:d.engagement_sans_interets||'',
     // Champs confidentiels (utilisés à partir du Lot 2)
     societe:d.societe,
     montant_demande:d.montant_demande,
@@ -1422,7 +1423,7 @@ async function chargerDeals(){
   if(!sb||!UTILISATEUR)return;
   try{
     dataSource='chargement…';
-    const colonnesPubliques='id,date_soumission,cree_le,prenom,nom,email,activite,entreprise_creee,ca_tranche,description,document_url,telephone,telephone_source,telephone_enrichi_le,linkedin_url,linkedin_source,linkedin_valide_le,statut,score,decision,motif,points_forts,points_faibles,action_reco,sante,source,ethique_financement';
+    const colonnesPubliques='id,date_soumission,cree_le,prenom,nom,email,activite,entreprise_creee,ca_tranche,description,document_url,telephone,telephone_source,telephone_enrichi_le,linkedin_url,linkedin_source,linkedin_valide_le,statut,score,decision,motif,points_forts,points_faibles,action_reco,sante,source,ethique_financement,engagement_sans_interets';
     // JAMAIS payload_brut : la réponse Typeform brute (plusieurs Mo cumulés sur 300+ dossiers)
     // est inutile pour la liste et bloque le chargement sur connexion lente (cas Djamel).
     const colonnesAdmin=colonnesPubliques+',societe,montant_demande,valorisation,montant_investi,notes_dd,prochaine_etape,date_prochaine_etape';
@@ -2459,7 +2460,7 @@ function renderDetail(){
     </div>
     ${blocContact(l)}
     ${blocConfidentiel(l)}
-    <div class="card"><div class="cb"><div class="clbl">Projet</div><div class="ctxt">${l.desc?h(l.desc):'<i>Aucune description</i>'}</div>${l.ethique_financement?`<div class="pnone" style="margin-top:10px">Finance ethique/islamique : ${h(l.ethique_financement)}</div>`:''}${boutonDoc?`<div class="contact-actions" style="margin-top:10px">${boutonDoc}</div>`:''}</div></div>
+    <div class="card"><div class="cb"><div class="clbl">Projet</div><div class="ctxt">${l.desc?h(l.desc):'<i>Aucune description</i>'}</div>${l.ethique_financement?`<div class="pnone" style="margin-top:10px">Finance éthique/islamique : ${h(l.ethique_financement)}</div>`:''}${l.engagement_sans_interets?`<div class="pnone" style="margin-top:6px">Engagement sans intérêts : ${h(l.engagement_sans_interets)}</div>`:''}${boutonDoc?`<div class="contact-actions" style="margin-top:10px">${boutonDoc}</div>`:''}</div></div>
     <div class="card motif" style="border-left-color:${col}"><div class="cb"><div class="clbl">Analyse IA</div><div class="cmotif">${h(l.motif)}</div></div></div>
     <div class="pgrid">
       <div class="pcard"><div class="plbl" style="color:${C.green}">Points forts</div>${l.forts.length?l.forts.map(p=>`<div class="prow"><div class="pdot" style="background:${C.green}"></div><div class="ptxt">${h(p)}</div></div>`).join(''):'<div class="pnone">Aucun</div>'}</div>
