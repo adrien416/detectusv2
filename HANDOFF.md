@@ -534,3 +534,22 @@ Attention deploiement :
 - Deployer `npx supabase functions deploy formulaire-maison-submit --no-verify-jwt`
 - Deployer `npx supabase functions deploy formulaire-maison-document`
 - Pousser le front Netlify seulement apres migration 009, sinon `index.html` selectionnera une colonne encore absente.
+
+## Ajout 05/06/2026 (suite) — revue du lot Codex + 8 corrections
+
+Revue du lot « formulaire maison » de Codex (verdict : bon, propre, mais anti-spam faible et pas de branchements). 8 corrections appliquees :
+
+1. **Anti-spam robuste, sans cle externe** : le `started_at` (falsifiable cote client) est remplace par un **jeton serveur a usage unique**, emis a l'ouverture (`GET formulaire-maison-submit`) et consomme une seule fois a la soumission. Horodatage cote serveur → anti-remplissage-trop-rapide non falsifiable, anti-rejeu et anti-double-clic.
+2. **Limite de debit par IP** (IP hashee, RGPD) : max 20 ouvertures et 8 envois / IP / heure. Nouvelle table `formulaire_soumissions` (migration `010_formulaire_anti_spam.sql`, RLS active sans policy = service_role uniquement).
+3. **Branchements conditionnels** dans le formulaire (`data-visible-si`) : 1re application = question « anciennete » affichee seulement si l'entreprise est deja creee. (Editeur de questions no-code pour l'equipe = chantier separe, non inclus ici.)
+4. **Upload privilegie (et non le lien)** — choix d'Adrien : un fichier sur nos serveurs vaut mieux qu'un lien qui perime et reste analysable par l'IA. Mise en oeuvre : **upload DIRECT vers Storage** via URL signee (le fichier ne transite plus par la fonction → plus de limite de corps), plafond **50 Mo**, l'upload est l'option **recommandee** et le lien devient un secours. Page : supabase-js charge en CDN ; fonction : `GET ?action=upload` emet l'URL signee (gate par jeton), le submit accepte `document_storage_path` (prefixe verrouille sur le jeton).
+5. **Dedup telephone** : comparaison sur les **variantes FR** du numero (+33 / 0033 / 06…) au lieu d'une egalite stricte.
+6. **Scoring** calcule sur la **description brute** du porteur (et non le bloc concatene) → moins de faux positifs « sante » et bonus « description detaillee » plus juste.
+7. **Notification equipe** : toast distinct dans Detectus quand un dossier arrive via le formulaire maison (Realtime).
+8. **CA precis conserve** : le libelle exact du CA + l'anciennete sont ajoutes a la description lisible et a `payload_brut` (la colonne `ca_tranche` reste +50K/<50K pour le Board).
+
+Deploiement de ces corrections :
+- `npx supabase db push --include-all --yes` (migration `010`)
+- `npx supabase functions deploy formulaire-maison-submit --no-verify-jwt`
+- Repousser le front Netlify (`formulaire.html`, `index.html`)
+- Aucun secret ni cle externe a configurer.

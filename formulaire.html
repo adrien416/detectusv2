@@ -7,6 +7,7 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230d2137'/%3E%3Ccircle cx='32' cy='32' r='18' fill='none' stroke='%2300c9a7' stroke-width='5' stroke-linecap='round' stroke-dasharray='95 18'/%3E%3Crect x='24' y='24' width='16' height='16' rx='3' transform='rotate(45 32 32)' fill='%2300c9a7'/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Afacad:wght@400;500;600;700&family=Chivo:wght@600;700;800&display=swap" rel="stylesheet">
 <script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--navy:#0d2137;--ink:#102235;--muted:#657383;--line:#dbe5ec;--surface:#fbfdfc;--mint:#00c9a7;--mint-dark:#079a83;--soft:#eef8f5;--danger:#c94343;--font:'Afacad',sans-serif;--display:'Chivo',sans-serif}
@@ -137,7 +138,7 @@ label{display:block;font-size:13px;font-weight:800;text-transform:uppercase;lett
       <form id="lead-form" novalidate>
         <input class="hp" type="text" name="site_cache" tabindex="-1" autocomplete="off">
         <input class="hp" type="text" name="website_url" tabindex="-1" autocomplete="off">
-        <input type="hidden" name="started_at" id="started_at">
+        <input type="hidden" name="jeton" id="jeton">
 
         <section class="step active" data-step>
           <p class="eyebrow">Identite</p>
@@ -219,6 +220,16 @@ label{display:block;font-size:13px;font-weight:800;text-transform:uppercase;lett
           <div class="error" data-error></div>
         </section>
 
+        <section class="step" data-step data-visible-si="entreprise_creee=oui">
+          <p class="eyebrow">Historique</p>
+          <h2 class="question">Depuis combien de temps l'entreprise existe-t-elle&nbsp;?</h2>
+          <p class="hint">Une estimation suffit (par exemple 8 mois, 3 ans).</p>
+          <div class="fields">
+            <div><label for="anciennete">Anciennete de l'entreprise</label><input id="anciennete" name="anciennete" placeholder="Ex. 2 ans"></div>
+          </div>
+          <div class="error" data-error></div>
+        </section>
+
         <section class="step" data-step>
           <p class="eyebrow">Besoin</p>
           <h2 class="question">Quel financement recherchez-vous&nbsp;?</h2>
@@ -237,11 +248,11 @@ label{display:block;font-size:13px;font-weight:800;text-transform:uppercase;lett
           <div class="fields">
             <div><label for="description_projet">Description du projet *</label><textarea id="description_projet" name="description_projet" required minlength="20"></textarea></div>
             <div class="upload-card">
-              <label for="document_upload">Ajouter un deck ou document</label>
+              <label for="document_upload">Joignez votre dossier (recommandé)</label>
               <input id="document_upload" name="document_upload" type="file" accept="application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/jpeg,image/png,image/webp,.pdf,.ppt,.pptx,.doc,.docx,.jpg,.jpeg,.png,.webp">
-              <div class="file-note" id="document-upload-note">PDF, PowerPoint, Word ou image. 15 Mo maximum.</div>
+              <div class="file-note" id="document-upload-note">Recommandé : joindre le fichier (PDF, PowerPoint, Word ou image, max 50 Mo).</div>
             </div>
-            <div><label for="document_url">Ou lien vers deck ou document</label><input id="document_url" name="document_url" inputmode="url" placeholder="Lien Drive, Notion, site, deck..."></div>
+            <div><label for="document_url">Ou, à défaut, un lien (optionnel)</label><input id="document_url" name="document_url" inputmode="url" placeholder="Lien Drive, Notion, site, deck..."></div>
           </div>
           <div class="error" data-error></div>
         </section>
@@ -302,12 +313,22 @@ label{display:block;font-size:13px;font-weight:800;text-transform:uppercase;lett
   const success=document.getElementById('success');
   const fileInput=document.getElementById('document_upload');
   const fileNote=document.getElementById('document-upload-note');
-  const maxUploadBytes=15*1024*1024;
+  const maxUploadBytes=50*1024*1024;
   const extensionsOk=new Set(['pdf','ppt','pptx','doc','docx','jpg','jpeg','png','webp']);
   let current=0;
   let sending=false;
 
-  document.getElementById('started_at').value=String(Date.now());
+  const jetonInput=document.getElementById('jeton');
+  async function obtenirJeton(){
+    try{
+      if(!window.CONFIG||!CONFIG.SUPABASE_URL||!CONFIG.SUPABASE_ANON_KEY)return false;
+      const res=await fetch(CONFIG.SUPABASE_URL+'/functions/v1/formulaire-maison-submit',{headers:{apikey:CONFIG.SUPABASE_ANON_KEY}});
+      const data=await res.json().catch(()=>({}));
+      if(res.ok&&data&&data.jeton){jetonInput.value=data.jeton;return true;}
+    }catch(_){}
+    return false;
+  }
+  obtenirJeton();
 
   function activeStep(){return steps[current]}
   function errorBox(){return activeStep().querySelector('[data-error]')}
@@ -315,14 +336,29 @@ label{display:block;font-size:13px;font-weight:800;text-transform:uppercase;lett
     const box=errorBox();
     if(box)box.textContent=message||'';
   }
+  // Branchements : une etape porteuse de data-visible-si ne s'affiche que si la
+  // reponse designee correspond (ex. anciennete visible si entreprise creee = oui).
+  function stepVisible(step){
+    const cond=step.dataset.visibleSi;
+    if(!cond)return true;
+    const eq=cond.indexOf('=');
+    if(eq<0)return true;
+    const champ=cond.slice(0,eq),val=cond.slice(eq+1);
+    const el=form.elements[champ];
+    return !!(el&&String(el.value)===val);
+  }
+  function visibleSteps(){return steps.filter(stepVisible);}
   function showStep(){
+    const vis=visibleSteps();
+    const pos=Math.max(0,vis.indexOf(steps[current]));
+    const dernier=pos===vis.length-1;
     steps.forEach((s,i)=>s.classList.toggle('active',i===current));
-    prev.style.display=current===0?'none':'block';
-    next.textContent=current===steps.length-1?'Envoyer la demande':'Continuer';
-    next.classList.toggle('ready',current===steps.length-1);
-    label.textContent='Question '+(current+1);
-    count.textContent=(current+1)+' / '+steps.length;
-    fill.style.width=(((current+1)/steps.length)*100)+'%';
+    prev.style.display=pos===0?'none':'block';
+    next.textContent=dernier?'Envoyer la demande':'Continuer';
+    next.classList.toggle('ready',dernier);
+    label.textContent='Question '+(pos+1);
+    count.textContent=(pos+1)+' / '+vis.length;
+    fill.style.width=((pos+1)/vis.length*100)+'%';
     setError('');
     const first=activeStep().querySelector('input:not([type=hidden]):not(.hp),textarea,button.choice');
     setTimeout(()=>first&&first.focus&&first.focus(),40);
@@ -334,7 +370,7 @@ label{display:block;font-size:13px;font-weight:800;text-transform:uppercase;lett
 
   function erreurFichier(file){
     if(!file)return '';
-    if(file.size>maxUploadBytes)return 'Le fichier depasse 15 Mo. Collez plutot un lien Drive si le deck est plus lourd.';
+    if(file.size>maxUploadBytes)return 'Le fichier depasse 50 Mo. Collez plutot un lien (Drive, Notion...) si le deck est plus lourd.';
     const ext=String(file.name||'').split('.').pop().toLowerCase();
     if(!extensionsOk.has(ext))return 'Format accepte : PDF, PowerPoint, Word ou image.';
     return '';
@@ -412,7 +448,7 @@ label{display:block;font-size:13px;font-weight:800;text-transform:uppercase;lett
     fileInput.classList.remove('invalid');
     fileNote.classList.remove('ready');
     if(!file){
-      fileNote.textContent='PDF, PowerPoint, Word ou image. 15 Mo maximum.';
+      fileNote.textContent='Recommandé : joindre le fichier (PDF, PowerPoint, Word ou image, max 50 Mo).';
       return;
     }
     const message=erreurFichier(file);
@@ -429,18 +465,17 @@ label{display:block;font-size:13px;font-weight:800;text-transform:uppercase;lett
 
   prev.addEventListener('click',()=>{
     if(sending)return;
-    current=Math.max(0,current-1);
-    showStep();
+    let j=current-1;
+    while(j>=0&&!stepVisible(steps[j]))j--;
+    if(j>=0){current=j;showStep();}
   });
 
   next.addEventListener('click',async()=>{
     if(sending)return;
     if(!validate())return;
-    if(current<steps.length-1){
-      current++;
-      showStep();
-      return;
-    }
+    let j=current+1;
+    while(j<steps.length&&!stepVisible(steps[j]))j++;
+    if(j<steps.length){current=j;showStep();return;}
     await submit();
   });
 
@@ -459,7 +494,41 @@ label{display:block;font-size:13px;font-weight:800;text-transform:uppercase;lett
       if(!window.CONFIG||!CONFIG.SUPABASE_URL||!CONFIG.SUPABASE_ANON_KEY){
         throw new Error('Configuration publique manquante.');
       }
+      if(!jetonInput.value)await obtenirJeton();
+      if(!jetonInput.value)throw new Error('Merci de recharger la page (protection anti-spam).');
+      // Upload direct du document vers Storage (hors limite des Edge Functions) :
+      // on privilegie le fichier joint, plus utile en interne (et pour l'IA) qu'un lien qui perime.
+      let docPath='',docNom='',docTaille='',docType='';
+      const fichierJoint=fileInput.files&&fileInput.files[0];
+      if(fichierJoint){
+        const msg=erreurFichier(fichierJoint);
+        if(msg)throw new Error(msg);
+      }
+      // Voie principale : upload direct vers Storage. Repli : si supabase-js n'a pas
+      // charge, le fichier part via la fonction (FormData) — OK pour les petits fichiers.
+      if(fichierJoint&&window.supabase){
+        next.textContent='Envoi du document…';
+        const u=new URL(CONFIG.SUPABASE_URL+'/functions/v1/formulaire-maison-submit');
+        u.searchParams.set('action','upload');
+        u.searchParams.set('jeton',jetonInput.value);
+        u.searchParams.set('nom',fichierJoint.name||'document');
+        const infoRes=await fetch(u,{headers:{apikey:CONFIG.SUPABASE_ANON_KEY}});
+        const info=await infoRes.json().catch(()=>({}));
+        if(!infoRes.ok||!info.path||!info.token)throw new Error("Impossible de preparer l'envoi du document. Reessayez ou collez un lien.");
+        const cli=window.supabase.createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_ANON_KEY);
+        const up=await cli.storage.from(info.bucket).uploadToSignedUrl(info.path,info.token,fichierJoint,{contentType:fichierJoint.type||'application/octet-stream'});
+        if(up.error)throw new Error("L'envoi du document a echoue. Reessayez ou collez un lien.");
+        docPath=info.path;docNom=fichierJoint.name||'';docTaille=String(fichierJoint.size);docType=fichierJoint.type||'';
+        next.textContent='Finalisation…';
+      }
       const payload=new FormData(form);
+      if(docPath)payload.delete('document_upload');
+      if(docPath){
+        payload.set('document_storage_path',docPath);
+        payload.set('document_nom',docNom);
+        payload.set('document_taille',docTaille);
+        payload.set('document_type',docType);
+      }
       payload.set('consentement_rgpd',form.elements.consentement_rgpd.checked?'true':'false');
       const res=await fetch(CONFIG.SUPABASE_URL+'/functions/v1/formulaire-maison-submit',{
         method:'POST',

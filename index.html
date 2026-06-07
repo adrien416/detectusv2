@@ -1269,7 +1269,8 @@ function gererChangementDeal(payload){
       const lead=dealVersLead(payload.new);
       if(!LEADS.find(l=>l.id===lead.id)){
         LEADS.unshift(lead);
-        afficherToast(`Nouveau dossier : ${lead.prenom} ${lead.nom}`,C.green);
+        const viaFormulaire=payload.new&&payload.new.source==='formulaire_maison';
+        afficherToast(viaFormulaire?`Nouveau dossier via le formulaire maison : ${lead.prenom} ${lead.nom}`:`Nouveau dossier : ${lead.prenom} ${lead.nom}`,viaFormulaire?C.teal:C.green);
         render();
       }
     }else if(payload.eventType==='UPDATE'){
