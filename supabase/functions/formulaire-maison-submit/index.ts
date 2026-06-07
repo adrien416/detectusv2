@@ -49,7 +49,7 @@ const ETHIQUE_LABELS: Record<string, string> = {
 };
 
 const CA_LABELS: Record<string, string> = {
-  plus_50k: "50K€ de CA deja realise",
+  plus_50k: "50K€ ou plus de CA",
   moins_50k: "Moins de 50K€ de CA",
   pas_encore: "Pas encore de CA",
   autre: "Autre situation",

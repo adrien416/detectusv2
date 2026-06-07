@@ -94,7 +94,7 @@ ANTHROPIC_API_KEY         ← clé API Anthropic d'Adrien (celle de Lina_fathom_
 - Base : 30 points
 - Secteur santé (mots-clés dans activité + description) : **+25**
 - Entreprise déjà créée : **+15**
-- CA > 50K : **+15**
+- CA 50K€ ou plus : **+15**
 - Document fourni : **+10**
 - Description > 150 caractères : **+5**
 - Secteurs exclus (Restauration, Transport, VTC, Taxi, BTP) : **score 5, REFUSÉ direct**
