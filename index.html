@@ -1558,22 +1558,13 @@ function boutonDocumentDossier(l){
   return '';
 }
 
-async function ouvrirDocumentDossier(id){
+function ouvrirDocumentDossier(id){
   if(!sb||!estAdmin())return afficherToast('Acces reserve aux admins',C.red);
-  afficherToast('Préparation du document...',C.teal);
-  try{
-    const {data,error}=await sb.functions.invoke('formulaire-maison-document',{body:{deal_id:id}});
-    if(error)throw error;
-    if(data&&data.erreur)throw new Error(data.message||data.erreur);
-    if(!data||!data.url)throw new Error('Lien document absent');
-    if(data.document_url){
-      const l=LEADS.find(x=>x.id===id);
-      if(l){l.docUrl=data.document_url;l.doc=!!data.document_url;}
-      if(currentL&&currentL.id===id){currentL.docUrl=data.document_url;currentL.doc=!!data.document_url;}
-    }
-    window.location.assign(data.url);
-  }catch(e){
-    afficherToast('Document impossible a ouvrir : '+(e.message||e),C.red);
+  const url=new URL('document.html',window.location.href);
+  url.searchParams.set('deal_id',id);
+  const onglet=window.open(url.toString(),'_blank','noopener');
+  if(!onglet){
+    afficherToast('Autorisez les popups pour ouvrir le document dans un nouvel onglet.',C.orange);
   }
 }
 

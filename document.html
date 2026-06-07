@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Préparation du document - Detectus</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%;font-family:'DM Sans',sans-serif;background:#0d1a2b;color:#e8ecf2}
+body{display:grid;place-items:center;padding:26px}
+.box{width:min(560px,100%);border:1px solid rgba(71,211,176,.24);background:#111d2e;border-radius:12px;padding:26px 28px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+.kicker{font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#47d3b0;margin-bottom:12px}
+h1{font-size:28px;line-height:1.1;margin-bottom:10px}
+p{font-size:15px;line-height:1.5;color:#9aa8b7}
+.loader{height:8px;border-radius:99px;background:#253448;overflow:hidden;margin-top:22px}
+.loader span{display:block;height:100%;width:38%;border-radius:inherit;background:#47d3b0;animation:load 1s ease-in-out infinite alternate}
+.error{display:none;margin-top:18px;padding:12px 14px;border:1px solid #e05252;border-radius:8px;color:#ffb6b6;background:rgba(224,82,82,.12);font-size:14px;line-height:1.45}
+.actions{display:none;margin-top:18px}
+a{color:#47d3b0;font-weight:800;text-decoration:none}
+a:hover{text-decoration:underline}
+@keyframes load{from{transform:translateX(-70%)}to{transform:translateX(190%)}}
+</style>
+</head>
+<body>
+  <main class="box">
+    <div class="kicker">Detectus</div>
+    <h1>Préparation du document…</h1>
+    <p>Nous générons un lien temporaire sécurisé. Cet onglet va afficher le document automatiquement.</p>
+    <div class="loader" aria-hidden="true"><span></span></div>
+    <div class="error" id="error"></div>
+    <div class="actions" id="actions"><a href="/" id="back">Retour à Detectus</a></div>
+  </main>
+
+<script>
+(async function(){
+  const errorBox=document.getElementById('error');
+  const actions=document.getElementById('actions');
+  function showError(message){
+    errorBox.textContent=message||'Document impossible à ouvrir.';
+    errorBox.style.display='block';
+    actions.style.display='block';
+  }
+  try{
+    const params=new URLSearchParams(window.location.search);
+    const dealId=params.get('deal_id')||'';
+    if(!dealId)throw new Error('Identifiant de dossier manquant.');
+    if(typeof CONFIG==='undefined'||!CONFIG.SUPABASE_URL||!CONFIG.SUPABASE_ANON_KEY){
+      throw new Error('Configuration Detectus manquante.');
+    }
+    const sb=window.supabase.createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_ANON_KEY);
+    const {data:sessionData}=await sb.auth.getSession();
+    if(!sessionData||!sessionData.session){
+      throw new Error('Session expirée. Revenez à Detectus et reconnectez-vous.');
+    }
+    const {data,error}=await sb.functions.invoke('formulaire-maison-document',{body:{deal_id:dealId}});
+    if(error)throw error;
+    if(data&&data.erreur)throw new Error(data.message||data.erreur);
+    if(!data||!data.url)throw new Error('Lien document absent.');
+    window.location.replace(data.url);
+  }catch(e){
+    showError(e.message||String(e));
+  }
+})();
+</script>
+</body>
+</html>
