@@ -1560,7 +1560,7 @@ function boutonDocumentDossier(l){
 
 async function ouvrirDocumentDossier(id){
   if(!sb||!estAdmin())return afficherToast('Acces reserve aux admins',C.red);
-  const fenetre=window.open('about:blank','_blank','noopener');
+  afficherToast('Préparation du document...',C.teal);
   try{
     const {data,error}=await sb.functions.invoke('formulaire-maison-document',{body:{deal_id:id}});
     if(error)throw error;
@@ -1571,10 +1571,8 @@ async function ouvrirDocumentDossier(id){
       if(l){l.docUrl=data.document_url;l.doc=!!data.document_url;}
       if(currentL&&currentL.id===id){currentL.docUrl=data.document_url;currentL.doc=!!data.document_url;}
     }
-    if(fenetre)fenetre.location.href=data.url;
-    else window.open(data.url,'_blank','noopener');
+    window.location.assign(data.url);
   }catch(e){
-    if(fenetre)fenetre.close();
     afficherToast('Document impossible a ouvrir : '+(e.message||e),C.red);
   }
 }
