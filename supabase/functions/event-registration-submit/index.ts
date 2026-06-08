@@ -11,7 +11,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders, reponseJson } from "../_shared/cors.ts";
 
 const EVENT_SLUG = "paris-19juin-2026";
-const EVENT_LABEL = "Startups, diasporas et finance éthique - 19 juin 2026";
+const EVENT_LABEL = "Startups, diasporas et finance éthique - 19 juin 2026 à 18h30";
 const NOTIFY_TO = "adrien@prouesse.vc";
 const EMAIL_FROM_DEFAUT = "Adrien <adrien@prouesse.vc>";
 
