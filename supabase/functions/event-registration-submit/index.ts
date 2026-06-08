@@ -116,7 +116,7 @@ Lien : https://detectus2.netlify.app/paris-19juin`;
   const res = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
     headers: {
-      "xkeysib-key": brevoKey,
+      "api-key": brevoKey,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
