@@ -10,7 +10,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--navy:#0d2137;--ink:#102235;--muted:#657383;--line:#dbe5ec;--surface:#fbfdfc;--mint:#00c9a7;--mint-dark:#079a83;--soft:#eef8f5;--danger:#c94343;--font:'Afacad',sans-serif;--display:'Chivo',sans-serif}
+:root{--navy:#0d2137;--ink:#102235;--muted:#657383;--line:#dbe5ec;--surface:#fbfdfc;--mint:#00c9a7;--mint-dark:#007c69;--soft:#eef8f5;--danger:#c94343;--font:'Afacad',sans-serif;--display:'Chivo',sans-serif}
 html,body{min-height:100%;background:var(--surface);color:var(--ink);font-family:var(--font);overflow-x:hidden}
 body{display:flex;align-items:stretch}
 button,input,textarea{font:inherit}
@@ -30,7 +30,7 @@ button,input,textarea{font:inherit}
 .progress-wrap{position:sticky;top:0;z-index:5;background:rgba(251,253,252,.96);border-bottom:1px solid var(--line);padding:18px 26px 14px}
 .progress-top{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:10px;color:var(--muted);font-size:14px;font-weight:700}
 .progress-bar{height:8px;border-radius:99px;background:#e8eef2;overflow:hidden}
-.progress-fill{height:100%;width:0;background:var(--mint);border-radius:inherit;transition:width .25s ease}
+.progress-fill{height:100%;width:100%;background:var(--mint);border-radius:inherit;transform:scaleX(0);transform-origin:left center;transition:transform .25s ease}
 .flow{flex:1;display:flex;align-items:center;justify-content:center;padding:34px 26px 96px;min-width:0;max-width:100%}
 form{width:min(760px,100%);min-width:0}
 .step{display:none;animation:rise .22s ease}
@@ -41,7 +41,7 @@ form{width:min(760px,100%);min-width:0}
 .hint{font-size:18px;line-height:1.45;color:var(--muted);max-width:680px;margin-bottom:28px;overflow-wrap:anywhere}
 .fields{display:grid;gap:14px;max-width:680px}
 .two{grid-template-columns:repeat(2,minmax(0,1fr))}
-label{display:block;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#617184;margin-bottom:7px}
+label{display:block;font-size:14px;font-weight:800;letter-spacing:.02em;color:#617184;margin-bottom:7px}
   input,textarea{width:100%;border:2px solid var(--line);background:#fff;color:var(--ink);border-radius:8px;padding:15px 16px;font-size:19px;outline:none;transition:border-color .15s,box-shadow .15s}
   textarea{min-height:148px;resize:vertical;line-height:1.45}
   input:focus,textarea:focus{border-color:var(--mint);box-shadow:0 0 0 4px rgba(0,201,167,.12)}
@@ -117,15 +117,15 @@ label{display:block;font-size:13px;font-weight:800;text-transform:uppercase;lett
       </div>
       <div>
         <div class="brand-name">Lina Capital</div>
-        <div class="brand-sub">financement ethique</div>
+        <div class="brand-sub">financement éthique</div>
       </div>
     </div>
     <div class="brand-copy">
       <div class="kicker">Demande de financement</div>
       <h1>Quelques informations pour comprendre votre projet.</h1>
-      <p>Le formulaire prend environ trois minutes. Le telephone est obligatoire pour que l'equipe puisse revenir vers vous rapidement.</p>
+      <p>Le formulaire prend environ trois minutes. Le téléphone est obligatoire pour que l'équipe puisse revenir vers vous rapidement.</p>
     </div>
-    <div class="brand-foot">Vos informations sont transmises a Lina Capital et utilisees uniquement pour etudier votre demande.</div>
+    <div class="brand-foot">Vos informations sont transmises à Lina Capital et utilisées uniquement pour étudier votre demande.</div>
   </aside>
 
   <main class="form-zone">
@@ -141,11 +141,11 @@ label{display:block;font-size:13px;font-weight:800;text-transform:uppercase;lett
         <input type="hidden" name="jeton" id="jeton">
 
         <section class="step active" data-step>
-          <p class="eyebrow">Identite</p>
+          <p class="eyebrow">Identité</p>
           <h2 class="question">Qui porte le projet&nbsp;?</h2>
           <p class="hint">Indiquez le nom de la personne que Lina Capital pourra contacter.</p>
           <div class="fields two">
-            <div><label for="prenom">Prenom *</label><input id="prenom" name="prenom" autocomplete="given-name" required></div>
+            <div><label for="prenom">Prénom *</label><input id="prenom" name="prenom" autocomplete="given-name" required></div>
             <div><label for="nom">Nom *</label><input id="nom" name="nom" autocomplete="family-name" required></div>
           </div>
           <div class="error" data-error></div>
@@ -154,28 +154,28 @@ label{display:block;font-size:13px;font-weight:800;text-transform:uppercase;lett
         <section class="step" data-step>
           <p class="eyebrow">Contact</p>
           <h2 class="question">Comment pouvons-nous vous joindre&nbsp;?</h2>
-          <p class="hint">Le numero de telephone est obligatoire pour accelerer le traitement du dossier.</p>
+          <p class="hint">Le numéro de téléphone est obligatoire pour accélérer le traitement du dossier.</p>
           <div class="fields two">
             <div><label for="email">Email *</label><input id="email" name="email" type="email" autocomplete="email" required></div>
-            <div><label for="telephone">Telephone *</label><input id="telephone" name="telephone" type="tel" autocomplete="tel" placeholder="+33 6 12 34 56 78" required></div>
+            <div><label for="telephone">Téléphone *</label><input id="telephone" name="telephone" type="tel" autocomplete="tel" placeholder="+33 6 12 34 56 78" required></div>
           </div>
           <div class="error" data-error></div>
         </section>
 
         <section class="step" data-step>
           <p class="eyebrow">Projet</p>
-          <h2 class="question">Quel est le nom de la societe ou du projet&nbsp;?</h2>
-          <p class="hint">Si la societe n'est pas encore creee, indiquez simplement le nom du projet.</p>
+          <h2 class="question">Quel est le nom de la société ou du projet&nbsp;?</h2>
+          <p class="hint">Si la société n'est pas encore créée, indiquez simplement le nom du projet.</p>
           <div class="fields">
-            <div><label for="societe_projet">Societe ou nom du projet *</label><input id="societe_projet" name="societe_projet" autocomplete="organization" required></div>
+            <div><label for="societe_projet">Société ou nom du projet *</label><input id="societe_projet" name="societe_projet" autocomplete="organization" required></div>
           </div>
           <div class="error" data-error></div>
         </section>
 
         <section class="step" data-step>
-          <p class="eyebrow">Presence en ligne</p>
+          <p class="eyebrow">Présence en ligne</p>
           <h2 class="question">Avez-vous un site ou un profil LinkedIn&nbsp;?</h2>
-          <p class="hint">Ces liens sont optionnels, mais ils aident l'equipe a comprendre plus vite le contexte.</p>
+          <p class="hint">Ces liens sont optionnels, mais ils aident l'équipe à comprendre plus vite le contexte.</p>
           <div class="fields two">
             <div><label for="site_web">Site web</label><input id="site_web" name="site_web" inputmode="url" placeholder="exemple.fr"></div>
             <div><label for="linkedin_url">LinkedIn</label><input id="linkedin_url" name="linkedin_url" inputmode="url" placeholder="linkedin.com/in/..."></div>
@@ -184,25 +184,25 @@ label{display:block;font-size:13px;font-weight:800;text-transform:uppercase;lett
         </section>
 
         <section class="step" data-step>
-          <p class="eyebrow">Activite</p>
-          <h2 class="question">Dans quel secteur evoluez-vous&nbsp;?</h2>
-          <p class="hint">Exemples : commerce, industrie, services, education, immobilier, sante, tech...</p>
+          <p class="eyebrow">Activité</p>
+          <h2 class="question">Dans quel secteur évoluez-vous&nbsp;?</h2>
+          <p class="hint">Exemples : commerce, industrie, services, éducation, immobilier, santé, tech...</p>
           <div class="fields">
-            <div><label for="activite">Secteur / activite *</label><input id="activite" name="activite" required></div>
+            <div><label for="activite">Secteur / activité *</label><input id="activite" name="activite" required></div>
           </div>
           <div class="error" data-error></div>
         </section>
 
         <section class="step" data-step>
-          <p class="eyebrow">Maturite</p>
+          <p class="eyebrow">Maturité</p>
           <h2 class="question">Ou en est l'entreprise aujourd'hui&nbsp;?</h2>
-          <p class="hint">Ces informations servent a orienter l'analyse, pas a juger le projet trop vite.</p>
+          <p class="hint">Ces informations servent à orienter l'analyse, pas à juger le projet trop vite.</p>
           <div class="fields">
             <div>
-              <label>Entreprise deja creee ? *</label>
+              <label>Entreprise déjà créée ? *</label>
               <div class="choice-grid" data-choice="entreprise_creee" data-required>
-                <button class="choice" type="button" data-value="oui">Oui<span>La structure juridique existe deja.</span></button>
-                <button class="choice" type="button" data-value="non">Non<span>Le projet est encore en creation.</span></button>
+                <button class="choice" type="button" data-value="oui">Oui<span>La structure juridique existe déjà.</span></button>
+                <button class="choice" type="button" data-value="non">Non<span>Le projet est encore en création.</span></button>
               </div>
               <input type="hidden" name="entreprise_creee">
             </div>
@@ -211,8 +211,8 @@ label{display:block;font-size:13px;font-weight:800;text-transform:uppercase;lett
               <div class="choice-grid" data-choice="ca_traction" data-required>
                 <button class="choice" type="button" data-value="plus_50k">50K&euro; ou plus de CA<span>Sur les 12 derniers mois glissants.</span></button>
                 <button class="choice" type="button" data-value="moins_50k">Moins de 50K&euro; de CA<span>Sur les 12 derniers mois glissants.</span></button>
-                <button class="choice" type="button" data-value="pas_encore">Pas encore de CA<span>Projet en amorcage ou pre-lancement.</span></button>
-                <button class="choice" type="button" data-value="autre">Autre situation<span>Nous regarderons le detail du dossier.</span></button>
+                <button class="choice" type="button" data-value="pas_encore">Pas encore de CA<span>Projet en amorçage ou pré-lancement.</span></button>
+                <button class="choice" type="button" data-value="autre">Autre situation<span>Nous regarderons le détail du dossier.</span></button>
               </div>
               <input type="hidden" name="ca_traction">
             </div>
@@ -225,7 +225,7 @@ label{display:block;font-size:13px;font-weight:800;text-transform:uppercase;lett
           <h2 class="question">Depuis combien de temps l'entreprise existe-t-elle&nbsp;?</h2>
           <p class="hint">Une estimation suffit (par exemple 8 mois, 3 ans).</p>
           <div class="fields">
-            <div><label for="anciennete">Anciennete de l'entreprise</label><input id="anciennete" name="anciennete" placeholder="Ex. 2 ans"></div>
+            <div><label for="anciennete">Ancienneté de l'entreprise</label><input id="anciennete" name="anciennete" placeholder="Ex. 2 ans"></div>
           </div>
           <div class="error" data-error></div>
         </section>
@@ -244,7 +244,7 @@ label{display:block;font-size:13px;font-weight:800;text-transform:uppercase;lett
         <section class="step" data-step>
           <p class="eyebrow">Description</p>
           <h2 class="question">Expliquez votre projet en quelques lignes.</h2>
-          <p class="hint">Ce qui compte : ce que vous vendez, a qui, ou vous en etes, et ce que le financement rendrait possible.</p>
+          <p class="hint">Ce qui compte : ce que vous vendez, à qui, où vous en êtes, et ce que le financement rendrait possible.</p>
           <div class="fields">
             <div><label for="description_projet">Description du projet *</label><textarea id="description_projet" name="description_projet" required minlength="20"></textarea></div>
             <div class="upload-card">
@@ -258,12 +258,12 @@ label{display:block;font-size:13px;font-weight:800;text-transform:uppercase;lett
         </section>
 
         <section class="step" data-step>
-          <p class="eyebrow">Ethique</p>
-          <h2 class="question">Dans quelle mesure souhaitez-vous que votre financement respecte les principes de la finance ethique/islamique, notamment l'absence d'interets&nbsp;?</h2>
-          <p class="hint">Cette information nous aide a proposer une structure de financement adaptee, sans jugement ni obligation religieuse.</p>
+          <p class="eyebrow">Éthique</p>
+          <h2 class="question">Dans quelle mesure souhaitez-vous que votre financement respecte les principes de la finance éthique/islamique, notamment l'absence d'intérêts&nbsp;?</h2>
+          <p class="hint">Cette information nous aide à proposer une structure de financement adaptée, sans jugement ni obligation religieuse.</p>
           <div class="choice-grid" data-choice="ethique_financement" data-required>
-            <button class="choice" type="button" data-value="tres_important">Tres important</button>
-            <button class="choice" type="button" data-value="important_ouvert">Important mais ouvert a discussion</button>
+            <button class="choice" type="button" data-value="tres_important">Très important</button>
+            <button class="choice" type="button" data-value="important_ouvert">Important mais ouvert à discussion</button>
             <button class="choice" type="button" data-value="pas_prioritaire">Pas prioritaire</button>
             <button class="choice" type="button" data-value="decouverte">Je ne connais pas encore ces principes</button>
           </div>
@@ -287,11 +287,11 @@ label{display:block;font-size:13px;font-weight:800;text-transform:uppercase;lett
 
         <section class="step" data-step>
           <p class="eyebrow">Validation</p>
-          <h2 class="question">Derniere etape avant l'envoi.</h2>
-          <p class="hint">Votre dossier sera transmis a l'equipe Lina Capital et cree automatiquement dans Detectus.</p>
+          <h2 class="question">Dernière étape avant l'envoi.</h2>
+          <p class="hint">Votre dossier sera transmis à l'équipe Lina Capital et créé automatiquement dans Detectus.</p>
           <label class="consent">
             <input type="checkbox" name="consentement_rgpd" required>
-            <span><strong>J'accepte que Lina Capital traite ces informations.</strong><p>Ces donnees sont utilisees uniquement pour etudier ma demande de financement et reprendre contact avec moi.</p></span>
+            <span><strong>J'accepte que Lina Capital traite ces informations.</strong><p>Ces données sont utilisées uniquement pour étudier ma demande de financement et reprendre contact avec moi.</p></span>
           </label>
           <div class="error" data-error></div>
         </section>
@@ -307,9 +307,9 @@ label{display:block;font-size:13px;font-weight:800;text-transform:uppercase;lett
 
 <div class="success" id="success">
   <div class="success-card">
-    <p class="eyebrow">Dossier recu</p>
-    <h1>Merci, votre demande a bien ete transmise.</h1>
-    <p>Lina Capital va etudier les informations envoyees. Si le dossier entre dans le perimetre, l'equipe reviendra vers vous avec les prochaines etapes.</p>
+    <p class="eyebrow">Dossier reçu</p>
+    <h1>Merci, votre demande a bien été transmise.</h1>
+    <p>Lina Capital va étudier les informations envoyées. Si le dossier entre dans le périmètre, l'équipe reviendra vers vous avec les prochaines étapes.</p>
   </div>
 </div>
 
@@ -332,6 +332,13 @@ label{display:block;font-size:13px;font-weight:800;text-transform:uppercase;lett
   let current=0;
   let sending=false;
 
+  document.querySelectorAll('[data-error]').forEach(box=>{
+    box.setAttribute('aria-live','polite');
+  });
+  document.querySelectorAll('.choice').forEach(btn=>{
+    btn.setAttribute('aria-pressed','false');
+  });
+
   const jetonInput=document.getElementById('jeton');
   async function obtenirJeton(){
     try{
@@ -350,8 +357,8 @@ label{display:block;font-size:13px;font-weight:800;text-transform:uppercase;lett
     const box=errorBox();
     if(box)box.textContent=message||'';
   }
-  // Branchements : une etape porteuse de data-visible-si ne s'affiche que si la
-  // reponse designee correspond (ex. anciennete visible si entreprise creee = oui).
+  // Branchements : une étape porteuse de data-visible-si ne s'affiche que si la
+  // réponse désignée correspond (ex. ancienneté visible si entreprise créée = oui).
   function stepVisible(step){
     const cond=step.dataset.visibleSi;
     if(!cond)return true;
@@ -370,9 +377,9 @@ label{display:block;font-size:13px;font-weight:800;text-transform:uppercase;lett
     prev.style.display=pos===0?'none':'block';
     next.textContent=dernier?'Envoyer la demande':'Continuer';
     next.classList.toggle('ready',dernier);
-    label.textContent='Question '+(pos+1);
-    count.textContent=(pos+1)+' / '+vis.length;
-    fill.style.width=((pos+1)/vis.length*100)+'%';
+    label.textContent='Étape '+(pos+1);
+    count.textContent='≈ 3 min';
+    fill.style.transform='scaleX('+((pos+1)/vis.length)+')';
     setError('');
     const first=activeStep().querySelector('input:not([type=hidden]):not(.hp),textarea,button.choice');
     setTimeout(()=>first&&first.focus&&first.focus(),40);
@@ -384,9 +391,9 @@ label{display:block;font-size:13px;font-weight:800;text-transform:uppercase;lett
 
   function erreurFichier(file){
     if(!file)return '';
-    if(file.size>maxUploadBytes)return 'Le fichier depasse 50 Mo. Collez plutot un lien (Drive, Notion...) si le deck est plus lourd.';
+    if(file.size>maxUploadBytes)return 'Le fichier dépasse 50 Mo. Collez plutôt un lien (Drive, Notion...) si le deck est plus lourd.';
     const ext=String(file.name||'').split('.').pop().toLowerCase();
-    if(!extensionsOk.has(ext))return 'Format accepte : PDF, PowerPoint, Word ou image.';
+    if(!extensionsOk.has(ext))return 'Format accepté : PDF, PowerPoint, Word ou image.';
     return '';
   }
 
@@ -411,25 +418,25 @@ label{display:block;font-size:13px;font-weight:800;text-transform:uppercase;lett
       }
       if(field.required&&!String(field.value||'').trim()){
         field.classList.add('invalid');
-        setError('Ce champ est necessaire pour traiter votre demande.');
+        setError('Ce champ est nécessaire pour traiter votre demande.');
         return false;
       }
       if(field.type==='email'&&field.value&&!field.checkValidity()){
         field.classList.add('invalid');
-        setError('Verifiez le format de votre adresse email.');
+        setError('Vérifiez le format de votre adresse email.');
         return false;
       }
       if(field.name==='telephone'){
         const digits=field.value.replace(/[^\d]/g,'');
         if(digits.length<9){
           field.classList.add('invalid');
-          setError('Le numero de telephone est obligatoire.');
+          setError('Le numéro de téléphone est obligatoire.');
           return false;
         }
       }
       if(field.name==='description_projet'&&field.value.trim().length<20){
         field.classList.add('invalid');
-        setError('Ajoutez quelques details pour que nous comprenions le projet.');
+        setError('Ajoutez quelques détails pour que nous comprenions le projet.');
         return false;
       }
     }
@@ -449,8 +456,12 @@ label{display:block;font-size:13px;font-weight:800;text-transform:uppercase;lett
     group.addEventListener('click',e=>{
       const btn=e.target.closest('.choice');
       if(!btn)return;
-      group.querySelectorAll('.choice').forEach(b=>b.classList.remove('active'));
+      group.querySelectorAll('.choice').forEach(b=>{
+        b.classList.remove('active');
+        b.setAttribute('aria-pressed','false');
+      });
       btn.classList.add('active');
+      btn.setAttribute('aria-pressed','true');
       const hidden=form.elements[group.dataset.choice];
       if(hidden)hidden.value=btn.dataset.value||'';
       setError('');
@@ -472,7 +483,7 @@ label{display:block;font-size:13px;font-weight:800;text-transform:uppercase;lett
       return;
     }
     const mo=(file.size/1024/1024).toFixed(file.size>1024*1024?1:2);
-    fileNote.textContent=`Fichier pret : ${file.name} (${mo} Mo)`;
+    fileNote.textContent=`Fichier prêt : ${file.name} (${mo} Mo)`;
     fileNote.classList.add('ready');
     setError('');
   });
@@ -511,7 +522,7 @@ label{display:block;font-size:13px;font-weight:800;text-transform:uppercase;lett
       if(!jetonInput.value)await obtenirJeton();
       if(!jetonInput.value)throw new Error('Merci de recharger la page (protection anti-spam).');
       // Upload direct du document vers Storage (hors limite des Edge Functions) :
-      // on privilegie le fichier joint, plus utile en interne (et pour l'IA) qu'un lien qui perime.
+      // on privilégie le fichier joint, plus utile en interne (et pour l'IA) qu'un lien qui périme.
       let docPath='',docNom='',docTaille='',docType='';
       const fichierJoint=fileInput.files&&fileInput.files[0];
       if(fichierJoint){
@@ -519,7 +530,7 @@ label{display:block;font-size:13px;font-weight:800;text-transform:uppercase;lett
         if(msg)throw new Error(msg);
       }
       // Voie principale : upload direct vers Storage. Repli : si supabase-js n'a pas
-      // charge, le fichier part via la fonction (FormData) — OK pour les petits fichiers.
+      // chargé, le fichier part via la fonction (FormData) — OK pour les petits fichiers.
       if(fichierJoint&&window.supabase){
         next.textContent='Envoi du document…';
         const u=new URL(CONFIG.SUPABASE_URL+'/functions/v1/formulaire-maison-submit');
@@ -528,10 +539,10 @@ label{display:block;font-size:13px;font-weight:800;text-transform:uppercase;lett
         u.searchParams.set('nom',fichierJoint.name||'document');
         const infoRes=await fetch(u,{headers:{apikey:CONFIG.SUPABASE_ANON_KEY}});
         const info=await infoRes.json().catch(()=>({}));
-        if(!infoRes.ok||!info.path||!info.token)throw new Error("Impossible de preparer l'envoi du document. Reessayez ou collez un lien.");
+        if(!infoRes.ok||!info.path||!info.token)throw new Error("Impossible de préparer l'envoi du document. Réessayez ou collez un lien.");
         const cli=window.supabase.createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_ANON_KEY);
         const up=await cli.storage.from(info.bucket).uploadToSignedUrl(info.path,info.token,fichierJoint,{contentType:fichierJoint.type||'application/octet-stream'});
-        if(up.error)throw new Error("L'envoi du document a echoue. Reessayez ou collez un lien.");
+        if(up.error)throw new Error("L'envoi du document a échoué. Réessayez ou collez un lien.");
         docPath=info.path;docNom=fichierJoint.name||'';docTaille=String(fichierJoint.size);docType=fichierJoint.type||'';
         next.textContent='Finalisation…';
       }
@@ -557,7 +568,7 @@ label{display:block;font-size:13px;font-weight:800;text-transform:uppercase;lett
       nav.style.display='none';
       success.style.display='grid';
     }catch(e){
-      setError(e.message||'Envoi impossible pour le moment. Reessayez dans quelques instants.');
+      setError(e.message||'Envoi impossible pour le moment. Réessayez dans quelques instants.');
       next.disabled=false;
       prev.disabled=false;
       next.textContent='Envoyer la demande';

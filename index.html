@@ -12,8 +12,8 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{width:100%;height:100%;overflow:hidden}
-:root{--navy:#061D39;--blue:#3c6da4;--pale:#E4EBF3;--teal:#47d3b0;--grey:#757575;--light:#F4F6FB;--white:#fff;--red:#e05252;--orange:#e08c3a;--green:#2ecc71;--purple:#8b5cf6;--font:'DM Sans',system-ui,sans-serif;--topbar-bg:#061D39;--sidebar-bg:#fff;--detail-bg:#F4F6FB;--card-bg:#fff;--card-border:#E4EBF3;--text-main:#061D39;--text-sub:#757575;--input-bg:#F4F6FB;--sb-foot-bg:#fafbfd;--li-hover:#f8f9fc;--li-active:#F4F6FB;--logo-circle:#061D39;--logo-circle-opacity:1;}
-[data-theme="dark"]{--navy:#e8ecf2;--pale:#2a3548;--light:#0d1a2b;--white:#111d2e;--grey:#8899aa;--topbar-bg:#0a1322;--sidebar-bg:#111d2e;--detail-bg:#0d1a2b;--card-bg:#162236;--card-border:#253448;--text-main:#e8ecf2;--text-sub:#8899aa;--input-bg:#162236;--sb-foot-bg:#0f1926;--li-hover:#1a2d42;--li-active:#1a2d42;--logo-circle:#6B7A8D;--logo-circle-opacity:.7;}
+:root{--navy:#061D39;--blue:#3c6da4;--pale:#E4EBF3;--teal:#47d3b0;--teal-text:#007c69;--grey:#606f7d;--light:#F4F6FB;--white:#fff;--red:#e05252;--orange:#e08c3a;--green:#198754;--purple:#7651d1;--font:'DM Sans',system-ui,sans-serif;--topbar-bg:#061D39;--sidebar-bg:#fff;--detail-bg:#F4F6FB;--card-bg:#fff;--card-border:#E4EBF3;--text-main:#061D39;--text-sub:#606f7d;--input-bg:#F4F6FB;--sb-foot-bg:#fafbfd;--li-hover:#f8f9fc;--li-active:#F4F6FB;--logo-circle:#061D39;--logo-circle-opacity:1;}
+[data-theme="dark"]{--navy:#e8ecf2;--pale:#2a3548;--light:#0d1a2b;--white:#111d2e;--grey:#8899aa;--teal-text:#47d3b0;--topbar-bg:#0a1322;--sidebar-bg:#111d2e;--detail-bg:#0d1a2b;--card-bg:#162236;--card-border:#253448;--text-main:#e8ecf2;--text-sub:#8899aa;--input-bg:#162236;--sb-foot-bg:#0f1926;--li-hover:#1a2d42;--li-active:#1a2d42;--logo-circle:#6B7A8D;--logo-circle-opacity:.7;}
 body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direction:column;font-size:16.5px;color:var(--text-main)}
 #topbar{background:var(--topbar-bg);display:grid;grid-template-columns:auto auto minmax(180px,1fr) auto;grid-template-areas:"brand views kpis actions";align-items:center;gap:8px 12px;padding:7px 14px;min-height:54px;height:auto;width:100%;max-width:100vw;flex-shrink:0;border-bottom:1px solid rgba(71,211,176,.15);overflow:hidden;}
 .tb-brand{grid-area:brand;display:flex;align-items:center;gap:11px;min-width:134px;flex-shrink:0}
@@ -46,7 +46,7 @@ body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direc
 .ftabs{display:flex;border-bottom:2px solid var(--card-border);margin-bottom:8px}
 .ftab{flex:1;text-align:center;padding:7px 4px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--text-sub);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .12s;white-space:nowrap}
 .ftab:hover{color:var(--text-main)}
-.ftab.on{color:var(--teal);border-bottom-color:var(--teal)}
+.ftab.on{color:var(--teal-text);border-bottom-color:var(--teal)}
 .fpanel{display:none}
 .fpanel.on{display:block}
 .sb-filters{display:flex;gap:4px;flex-wrap:wrap}
@@ -106,9 +106,11 @@ body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direc
 .db-right{text-align:right;flex-shrink:0}
 .db-score-btn{appearance:none;background:transparent;border:1px solid rgba(255,255,255,.22);border-radius:10px;padding:7px 10px;text-align:right;cursor:pointer;font-family:var(--font);transition:background .15s,border-color .15s,transform .15s}
 .db-score-btn:hover{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.45);transform:translateY(-1px)}
+.db-score-btn:focus-visible{outline:3px solid rgba(255,255,255,.75);outline-offset:3px}
 .db-score{color:#fff;font-weight:800;font-size:46px;line-height:1}
 .db-slbl{color:rgba(255,255,255,.5);font-size:13px}
 .db-dec{color:#fff;font-weight:700;font-size:15px;margin-top:3px;text-transform:uppercase;letter-spacing:.06em}
+.db-score-help{display:inline-flex;align-items:center;gap:5px;margin-top:7px;color:#061D39;background:rgba(255,255,255,.86);border-radius:999px;padding:3px 8px;font-size:11px;font-weight:900;letter-spacing:.03em;text-transform:uppercase}
 .action-bar{background:var(--card-bg);border-radius:10px;border:1px solid var(--card-border);padding:14px 18px;margin-bottom:10px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .action-bar-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-sub);margin-right:4px;white-space:nowrap}
 .action-bar-status{display:flex;align-items:center;gap:6px;padding:5px 14px;border-radius:99px;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;margin-right:auto}
@@ -165,10 +167,10 @@ body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direc
 .contact-label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--text-sub);margin-bottom:4px}
 .contact-value{font-size:15px;font-weight:700;color:var(--text-main);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .contact-value a{color:var(--text-main);text-decoration:none}
-.contact-value a:hover{color:var(--teal);text-decoration:underline}
+.contact-value a:hover{color:var(--teal-text);text-decoration:underline}
 .contact-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
 .mini-btn{border:1.5px solid var(--card-border);background:var(--card-bg);color:var(--text-main);border-radius:7px;padding:6px 9px;font-family:var(--font);font-size:12px;font-weight:800;cursor:pointer;text-decoration:none;line-height:1}
-.mini-btn:hover{border-color:var(--teal);color:var(--teal)}
+.mini-btn:hover{border-color:var(--teal);color:var(--teal-text)}
 .mini-btn.teal{background:var(--teal);border-color:var(--teal);color:#061D39}
 .mini-btn.orange{border-color:var(--orange);color:var(--orange)}
 .mini-btn:disabled{opacity:.45;cursor:not-allowed}
@@ -183,7 +185,7 @@ body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direc
 .linkedin-candidate:hover{border-color:var(--teal)}
 .linkedin-candidate strong{display:block;font-size:14px;margin-bottom:3px}
 .linkedin-candidate span{display:block;font-size:12.5px;color:var(--text-sub);line-height:1.35}
-.linkedin-search-link{display:inline-block;margin-top:2px;color:var(--teal);font-size:13px;font-weight:800;text-decoration:none}
+.linkedin-search-link{display:inline-block;margin-top:2px;color:var(--teal-text);font-size:13px;font-weight:800;text-decoration:none}
 .linkedin-search-link:hover{text-decoration:underline}
 .linkedin-searches{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
 .view-tabs{grid-area:views;display:flex;gap:2px;background:rgba(255,255,255,.08);border-radius:8px;padding:2px;margin:0;min-width:0;flex-shrink:0}
@@ -227,7 +229,7 @@ body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direc
 .login-logo{display:flex;align-items:center;gap:12px;margin-bottom:24px;justify-content:center}
 .login-logo svg{width:44px;height:44px}
 .login-title{font-size:24px;font-weight:800;color:#061D39;line-height:1.1}
-.login-sub{font-size:13px;color:#47d3b0;font-weight:600}
+.login-sub{font-size:13px;color:var(--teal-text);font-weight:700}
 .login-field{margin-bottom:12px}
 .login-field label{display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#757575;margin-bottom:5px}
 .login-field input{width:100%;padding:11px 14px;border-radius:8px;border:1.5px solid #E4EBF3;font-size:15px;font-family:var(--font);outline:none;background:#F4F6FB;color:#061D39;transition:border .15s}
@@ -274,7 +276,7 @@ body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direc
 .note-form button:hover{opacity:.88}
 .note-item{padding:10px 12px;border-radius:8px;background:var(--input-bg);border:1px solid var(--card-border);margin-bottom:8px}
 .note-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
-.note-auteur{font-size:12px;font-weight:700;color:var(--teal)}
+.note-auteur{font-size:12px;font-weight:700;color:var(--teal-text)}
 .note-date{font-size:11.5px;color:var(--text-sub)}
 .note-contenu{font-size:14.5px;line-height:1.5;color:var(--text-main);white-space:pre-wrap}
 .note-suppr{background:none;border:none;color:var(--text-sub);cursor:pointer;font-size:13px;padding:2px 6px;border-radius:4px}
@@ -290,7 +292,7 @@ body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direc
 
 /* ── v2 : bouton + modal nouveau dossier (F13) ────────────────────────────── */
 .btn-nouveau{width:100%;margin-top:8px;padding:9px;border-radius:8px;border:1.5px dashed var(--card-border);background:transparent;color:var(--text-sub);font-weight:700;font-size:13px;cursor:pointer;font-family:var(--font);transition:all .15s}
-.btn-nouveau:hover{border-color:var(--teal);color:var(--teal)}
+.btn-nouveau:hover{border-color:var(--teal);color:var(--teal-text)}
 .modal-fond{position:fixed;inset:0;background:rgba(6,29,57,.65);z-index:8000;display:flex;align-items:center;justify-content:center}
 .modal-carte{background:var(--card-bg);border-radius:14px;padding:26px 30px;width:440px;max-height:85vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.35)}
 .modal-titre{font-size:19px;font-weight:800;color:var(--text-main);margin-bottom:18px}
@@ -327,7 +329,7 @@ body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direc
 .score-summary-decision{color:var(--teal);font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;text-align:right}
 .score-lines{display:flex;flex-direction:column;gap:8px}
 .score-line{display:grid;grid-template-columns:82px 1fr;gap:12px;align-items:start;background:var(--input-bg);border:1px solid var(--card-border);border-radius:8px;padding:10px 12px}
-.score-points{font-size:18px;font-weight:800;color:var(--teal);white-space:nowrap}
+.score-points{font-size:18px;font-weight:800;color:var(--teal-text);white-space:nowrap}
 .score-points.zero{color:var(--text-sub)}
 .score-title{font-size:14px;font-weight:800;color:var(--text-main);margin-bottom:2px}
 .score-detail{font-size:13px;line-height:1.45;color:var(--text-sub)}
@@ -338,7 +340,7 @@ body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direc
 .reunion-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px}
 .reunion-titre{font-weight:700;font-size:15px;color:var(--text-main);line-height:1.3}
 .reunion-meta{font-size:12.5px;color:var(--text-sub);margin-top:2px}
-.reunion-lien{font-size:12px;font-weight:700;color:var(--teal);text-decoration:none;white-space:nowrap;flex-shrink:0}
+.reunion-lien{font-size:12px;font-weight:700;color:var(--teal-text);text-decoration:none;white-space:nowrap;flex-shrink:0}
 .reunion-lien:hover{text-decoration:underline}
 .reunion-scores{display:flex;gap:8px;margin:8px 0;flex-wrap:wrap}
 .score-pill{display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 12px;border-radius:8px;border:1.5px solid;min-width:86px}
@@ -349,7 +351,7 @@ body{font-family:var(--font);background:var(--detail-bg);display:flex;flex-direc
 .reunion-resume:not(.deplie)::after{content:'';position:absolute;bottom:0;left:0;right:0;height:28px;background:linear-gradient(transparent,var(--input-bg))}
 .reunion-actions-items{margin-top:8px;padding-top:8px;border-top:1px solid var(--card-border)}
 .reunion-ai-item{display:flex;gap:6px;font-size:13px;color:var(--text-main);margin-bottom:3px;align-items:flex-start}
-.reunion-ai-item::before{content:'☐';color:var(--teal);flex-shrink:0}
+.reunion-ai-item::before{content:'☐';color:var(--teal-text);flex-shrink:0}
 .reunion-structure{display:inline-block;background:var(--navy);color:var(--teal);font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;margin-top:6px}
 .reunion-alerte{display:inline-block;background:#fdf0f0;color:var(--red);border:1px solid var(--red);font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;margin-top:6px;margin-left:6px}
 
@@ -459,8 +461,10 @@ body.mobile-detail-open #detail{display:block}
 .db-left .db-name{font-size:21px}
 .db-left .db-email,.db-left .db-meta{font-size:13px;line-height:1.35;overflow-wrap:anywhere}
 .db-right{min-width:0;text-align:left;display:flex;align-items:baseline;gap:7px;flex-wrap:wrap}
+.db-score-btn{text-align:left}
 .db-score{font-size:32px}
 .db-slbl,.db-dec{font-size:12px;margin-top:0}
+.db-score-help{margin-top:5px;font-size:10px}
 .action-bar{padding:12px;gap:8px;align-items:stretch}
 .action-bar-label{width:100%;margin-right:0}
 .action-bar-status{width:100%;margin-right:0;justify-content:center;min-height:40px}
@@ -532,8 +536,8 @@ body.mobile-detail-open #detail{display:block}
       <button type="submit" class="login-btn" id="login-btn">Se connecter</button>
     </form>
     <span class="login-forgot" onclick="motDePasseOublie()">Mot de passe oublié ?</span>
-    <div class="login-error" id="login-error"></div>
-    <div class="login-info" id="login-info"></div>
+    <div class="login-error" id="login-error" role="alert"></div>
+    <div class="login-info" id="login-info" aria-live="polite"></div>
   </div>
   <div class="login-footer">Accès réservé à l'équipe Lina Capital · Prouesse VC</div>
 </div>
@@ -574,7 +578,7 @@ body.mobile-detail-open #detail{display:block}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h5"/></svg>
       Formulaire
     </button>
-    <button class="tb-btn credit-pill" onclick="chargerCreditsFullEnrich()" title="Rafraichir les credits FullEnrich" id="btn-fullenrich-credits" style="display:none">
+    <button class="tb-btn credit-pill" onclick="chargerCreditsFullEnrich()" title="Rafraîchir les crédits FullEnrich" id="btn-fullenrich-credits" style="display:none">
       Credits FE&nbsp;<strong id="fullenrich-credit-val">--</strong>
     </button>
     <button class="theme-toggle" onclick="toggleTheme()" title="Mode sombre / clair" id="theme-btn">
@@ -601,14 +605,14 @@ body.mobile-detail-open #detail{display:block}
         <div class="ftab" onclick="showPanel('st',this)">Backlog</div>
         <div class="ftab" onclick="showPanel('tri',this)">Tri</div>
         <div class="ftab" onclick="showPanel('source',this)">Source</div>
-        <div class="ftab" onclick="showPanel('sel',this)">Selection</div>
+        <div class="ftab" onclick="showPanel('sel',this)">Sélection</div>
       </div>
       <div class="fpanel on" id="panel-ia">
         <div class="sb-filters" id="filters-ia">
           <button class="fb on" onclick="setF('Tous',this,'ia')">Tous</button>
-          <button class="fb" onclick="setF('QUALIFIÉ',this,'ia')">A appeler</button>
+          <button class="fb" onclick="setF('QUALIFIÉ',this,'ia')">À appeler</button>
           <button class="fb" onclick="setF('À ÉTUDIER',this,'ia')">Pas d'avis</button>
-          <button class="fb" onclick="setF('REFUSÉ',this,'ia')">A refuser</button>
+          <button class="fb" onclick="setF('REFUSÉ',this,'ia')">À refuser</button>
           <button class="fb" onclick="setF('Santé',this,'ia')">Santé</button>
         </div>
       </div>
@@ -920,7 +924,7 @@ https://lina.capital`},
 
 Porteur : {{prenom}} {{nom}}
 Email : {{email}}
-Telephone : {{telephone}}
+Téléphone : {{telephone}}
 Projet : {{societe}}
 Activité : {{activite}}
 CA : {{ca}}
@@ -998,13 +1002,24 @@ function toastErreur(message,e){ if(e!==undefined)console.error(message,e); affi
 
 /* ═══ F1 — Authentification ═══════════════════════════════════════════════ */
 
+function reglerAppDerriereLogin(cachee){
+  ['topbar','body'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    el.toggleAttribute('inert',cachee);
+    el.setAttribute('aria-hidden',cachee?'true':'false');
+  });
+}
+
 function afficherLogin(){
   document.getElementById('login-overlay').classList.remove('cache');
+  reglerAppDerriereLogin(true);
   document.getElementById('login-error').classList.remove('visible');
   document.getElementById('login-info').classList.remove('visible');
 }
 function masquerLogin(){
   document.getElementById('login-overlay').classList.add('cache');
+  reglerAppDerriereLogin(false);
 }
 
 async function connexion(event){
@@ -1022,12 +1037,12 @@ async function connexion(event){
       console.error('connexion',error);
       const message=String(error.message||'').toLowerCase();
       erreur.textContent=message.includes('invalid login credentials')
-        ?'Email ou mot de passe incorrect, ou compte non cree dans Supabase.'
+        ?'Email ou mot de passe incorrect, ou compte non créé dans Supabase.'
         :message.includes('email not confirmed')
-          ?'Compte cree mais email non confirme. Demandez a un admin de confirmer le compte Supabase.'
+          ?'Compte créé mais email non confirmé. Demandez à un admin de confirmer le compte Supabase.'
           :message.includes('rate limit')||message.includes('too many')
-            ?'Trop de tentatives. Attendez quelques minutes puis reessayez.'
-            :'Connexion impossible pour le moment. Reessayez dans un instant.';
+            ?'Trop de tentatives. Attendez quelques minutes puis réessayez.'
+            :'Connexion impossible pour le moment. Réessayez dans un instant.';
       erreur.classList.add('visible');
       return;
       erreur.textContent=error.message==='Invalid login credentials'
@@ -1480,7 +1495,7 @@ function linkedinValide(url){
 }
 
 function entreeFullEnrichPossible(l){
-  if(!l||l.tel)return {ok:false,raison:'Telephone deja present'};
+  if(!l||l.tel)return {ok:false,raison:'Téléphone déjà présent'};
   if(linkedinValide(l.linkedin_url))return {ok:true,raison:'LinkedIn valide'};
   const societe=String(l.societe||'').trim();
   const domaine=domaineEmailPro(l.email);
@@ -1524,7 +1539,7 @@ async function copierTelephone(id){
   if(!l||!l.tel)return;
   try{
     await navigator.clipboard.writeText(l.tel);
-    afficherToast('Telephone copie',C.teal);
+    afficherToast('Téléphone copié',C.teal);
   }catch(e){
     afficherToast('Copie impossible',C.red);
   }
@@ -1704,11 +1719,11 @@ function confirmerLancementFullEnrich(params){
     const body=document.getElementById('fullenrich-confirm-body');
     body.innerHTML=`
       <div class="fe-status wait" style="margin-top:0">
-        <strong>${h(nb)} dossier${nb>1?'s':''} pret${nb>1?'s':''} pour FullEnrich</strong>
-        <span>Le resultat n'est pas immediat. Detectus affichera d'abord "Recherche en cours", puis "Telephone trouve" ou "Aucun resultat" quand FullEnrich repondra par webhook.</span>
+        <strong>${h(nb)} dossier${nb>1?'s':''} prêt${nb>1?'s':''} pour FullEnrich</strong>
+        <span>Le résultat n'est pas immédiat. Detectus affichera d'abord "Recherche en cours", puis "Téléphone trouvé" ou "Aucun résultat" quand FullEnrich répondra par webhook.</span>
       </div>
       <div class="contact-grid" style="margin-top:12px">
-        <div class="contact-item"><div class="contact-label">Cout maximum</div><div class="contact-value">${h(coutMax)} credits</div></div>
+        <div class="contact-item"><div class="contact-label">Coût maximum</div><div class="contact-value">${h(coutMax)} crédits</div></div>
         <div class="contact-item"><div class="contact-label">Dossiers ignores</div><div class="contact-value">${h(ignores)}</div></div>
       </div>
       <div class="pnone" style="margin-top:10px">Un credit n'est consomme que si FullEnrich trouve une donnee facturable.</div>`;
@@ -1727,7 +1742,7 @@ function repondreConfirmationFullEnrich(ok){
 
 async function enrichirTelephones(ids){
   if(!sb||!UTILISATEUR||!estAdmin())return afficherToast('Acces reserve aux admins',C.red);
-  if(!fullenrichDisponible)return afficherToast('FullEnrich n’est pas encore configure',C.orange);
+  if(!fullenrichDisponible)return afficherToast('FullEnrich n’est pas encore configuré',C.orange);
   if(fullenrichEnCours)return;
   const uniques=[...new Set(ids)].filter(Boolean);
   const eligibles=uniques.map(id=>LEADS.find(l=>l.id===id)).filter(Boolean).filter(l=>entreeFullEnrichPossible(l).ok&&!fullenrichEnCoursPour(l.id));
@@ -2231,22 +2246,22 @@ function emailBlock(l){const st=l.statut;if(st==='nouveau')return '';const tpl=t
 function blocContact(l){
   const tel=formaterTelephone(l.tel);
   const hrefTel=telHref(tel);
-  const sourceTel=tel?(l.telephone_source==='fullenrich'?'Telephone FullEnrich':l.telephone_source==='formulaire_maison'?'Telephone formulaire maison':'Telephone Typeform'):'Telephone';
-  const elig=fullenrichDisponible?entreeFullEnrichPossible(l):{ok:false,raison:'FullEnrich non configure'};
+  const sourceTel=tel?(l.telephone_source==='fullenrich'?'Téléphone FullEnrich':l.telephone_source==='formulaire_maison'?'Téléphone formulaire maison':'Téléphone Typeform'):'Téléphone';
+  const elig=fullenrichDisponible?entreeFullEnrichPossible(l):{ok:false,raison:'FullEnrich non configuré'};
   const feEnCours=fullenrichEnCoursPour(l.id);
   const statutFe=blocStatutFullEnrich(l);
   const actionsTel=tel
     ? `<div class="contact-actions"><button class="mini-btn" onclick="copierTelephone('${l.id}')">Copier</button>${hrefTel?`<a class="mini-btn teal" href="${h(hrefTel)}">Appeler</a>`:''}</div>`
-    : estAdmin()?`<div class="contact-actions"><button class="mini-btn teal" onclick="enrichirTelephone('${l.id}')" ${elig.ok&&!feEnCours?'':`disabled title="${h(feEnCours?'Recherche FullEnrich déjà en cours':elig.raison)}"`}>Lancer recherche FullEnrich</button><button class="mini-btn" onclick="chercherLinkedin('${l.id}')">Chercher LinkedIn</button></div><div class="pnone" style="margin-top:6px">${h(feEnCours?'Recherche déjà lancée : le retour FullEnrich arrive via webhook.':elig.raison)}</div>${statutFe}`:'<div class="pnone">Aucun telephone</div>';
+    : estAdmin()?`<div class="contact-actions"><button class="mini-btn teal" onclick="enrichirTelephone('${l.id}')" ${elig.ok&&!feEnCours?'':`disabled title="${h(feEnCours?'Recherche FullEnrich déjà en cours':elig.raison)}"`}>Lancer recherche FullEnrich</button><button class="mini-btn" onclick="chercherLinkedin('${l.id}')">Chercher LinkedIn</button></div><div class="pnone" style="margin-top:6px">${h(feEnCours?'Recherche déjà lancée : le retour FullEnrich arrive via webhook.':elig.raison)}</div>${statutFe}`:'<div class="pnone">Aucun téléphone</div>';
   const linkedin=l.linkedin_url
     ? `<a href="${h(l.linkedin_url)}" target="_blank" rel="noopener">${h(l.linkedin_url)}</a>`
-    : 'Non renseigne';
+    : 'Non renseigné';
   const actionsLinkedin=estAdmin()?`<div class="contact-actions"><button class="mini-btn" onclick="chercherLinkedin('${l.id}')">${l.linkedin_url?'Modifier LinkedIn':'Chercher LinkedIn'}</button>${l.linkedin_url?`<button class="mini-btn" onclick="sauvegarderLinkedin('${l.id}','')">Retirer</button>`:''}</div>`:'';
   return `<div class="card"><div class="cb">
     <div class="clbl">Contact</div>
     <div class="contact-grid">
-      <div class="contact-item"><div class="contact-label">Email</div><div class="contact-value">${l.email?h(l.email):'Non renseigne'}</div></div>
-      <div class="contact-item"><div class="contact-label">${h(sourceTel)}</div><div class="contact-value">${tel?h(tel):'Aucun telephone'}</div>${actionsTel}</div>
+      <div class="contact-item"><div class="contact-label">Email</div><div class="contact-value">${l.email?h(l.email):'Non renseigné'}</div></div>
+      <div class="contact-item"><div class="contact-label">${h(sourceTel)}</div><div class="contact-value">${tel?h(tel):'Aucun téléphone'}</div>${actionsTel}</div>
       <div class="contact-item full"><div class="contact-label">LinkedIn valide</div><div class="contact-value">${linkedin}</div>${actionsLinkedin}</div>
     </div>
   </div></div>`;
@@ -2378,14 +2393,14 @@ function lignesScoreDossier(l){
   const secteurExclu=['restauration','transport','vtc','taxi','btp'].find(s=>activiteTexte.includes(s));
   if(secteurExclu){
     return {
-      note:'Secteur exclu : le score est force a 5, quelle que soit la qualite du reste du dossier.',
+      note:'Secteur exclu : le score est forcé à 5, quelle que soit la qualité du reste du dossier.',
       lignes:[{points:'+5',titre:'Refus direct',detail:`Le dossier contient le secteur exclu « ${secteurExclu} ».`}]
     };
   }
   if(l.sante){
     return {
-      note:'Secteur sante : le dossier est conserve, mais Lina ne finance pas encore ce segment. Le score est donc specifique.',
-      lignes:[{points:'+15',titre:'Sante plus tard',detail:'Dossier garde en suivi pour reouverture future, sans traitement prioritaire aujourd hui.'}]
+      note:'Secteur santé : le dossier est conservé, mais Lina ne finance pas encore ce segment. Le score est donc spécifique.',
+      lignes:[{points:'+15',titre:'Santé plus tard',detail:"Dossier gardé en suivi pour réouverture future, sans traitement prioritaire aujourd'hui."}]
     };
   }
 
@@ -2394,13 +2409,13 @@ function lignesScoreDossier(l){
   const docOk=!!l.doc;
   const descriptionOk=String(l.desc||'').length>150;
   const lignes=[
-    {points:'+30',titre:'Base de depart',detail:'Tout dossier recevable commence a 30 points.'},
-    {points:entrepriseOk?'+15':'+0',titre:'Entreprise deja creee',detail:entrepriseOk?'Structure juridique existante.':'Projet encore en creation.',zero:!entrepriseOk},
-    {points:caOk?'+15':'+0',titre:'CA 50K€ ou plus',detail:caOk?'Seuil de chiffre d affaires atteint sur les 12 derniers mois.':'Seuil non atteint ou situation a confirmer.',zero:!caOk},
+    {points:'+30',titre:'Base de départ',detail:'Tout dossier recevable commence à 30 points.'},
+    {points:entrepriseOk?'+15':'+0',titre:'Entreprise déjà créée',detail:entrepriseOk?'Structure juridique existante.':'Projet encore en création.',zero:!entrepriseOk},
+    {points:caOk?'+15':'+0',titre:'CA 50K€ ou plus',detail:caOk?"Seuil de chiffre d'affaires atteint sur les 12 derniers mois.":'Seuil non atteint ou situation à confirmer.',zero:!caOk},
     {points:docOk?'+10':'+0',titre:'Document fourni',detail:docOk?'Un deck ou document est disponible.':'Aucun document exploitable dans le dossier.',zero:!docOk},
-    {points:descriptionOk?'+5':'+0',titre:'Description detaillee',detail:descriptionOk?'Description suffisamment longue pour l analyse automatique.':'Description courte : pas de bonus detail.',zero:!descriptionOk},
+    {points:descriptionOk?'+5':'+0',titre:'Description détaillée',detail:descriptionOk?"Description suffisamment longue pour l'analyse automatique.":'Description courte : pas de bonus détail.',zero:!descriptionOk},
   ];
-  return {note:'Decision : 65+ = qualifie, 21-64 = a etudier, 0-20 = refuse.',lignes};
+  return {note:'Score automatique : 65+ = qualifié, 21-64 = à étudier, 0-20 = refusé.',lignes};
 }
 
 function ouvrirScoreDossier(id){
@@ -2418,7 +2433,7 @@ function ouvrirScoreDossier(id){
         <div><div class="score-title">${h(r.titre)}</div><div class="score-detail">${h(r.detail)}</div></div>
       </div>`).join('')}
     </div>
-    <div class="score-note">${h(exp.note)}<br>Motif IA : ${h(l.motif||'Non renseigne')}</div>
+    <div class="score-note">${h(exp.note)}<br>Motif affiché : ${h(l.motif||'Non renseigné')}</div>
   `;
   document.getElementById('modal-score').style.display='flex';
 }
@@ -2440,7 +2455,7 @@ function renderDetail(){
     </div>
     <div class="dbar" style="background:${col}">
       <div class="db-left"><div class="db-name">${h(l.prenom)} ${h(l.nom)}</div><div class="db-email">${h(l.email)} · ${h(l.date)}</div><div class="db-meta">${h(l.act)} · Entreprise : ${h(l.ent)} · CA : ${h(l.ca)} · Source : ${h(sourceLabel(l.source))}</div></div>
-      <div class="db-right"><button type="button" class="db-score-btn" onclick="ouvrirScoreDossier('${l.id}')" title="Expliquer ce score"><div class="db-score">${h(l.score)}</div><div class="db-slbl">/100</div><div class="db-dec">${h(l.dec)}</div></button></div>
+      <div class="db-right"><button type="button" class="db-score-btn" onclick="ouvrirScoreDossier('${l.id}')" title="Voir pourquoi ce score a été attribué" aria-label="Voir l'explication du score ${h(l.score)} sur 100"><div class="db-score">${h(l.score)}</div><div class="db-slbl">/100</div><div class="db-dec">${h(l.dec)}</div><div class="db-score-help">Voir pourquoi</div></button></div>
     </div>
     <div class="action-bar">
       <div class="action-bar-label">Traitement</div>
