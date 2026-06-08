@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Inscription - Startups, diasporas et finance ethique</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23071324'/%3E%3Ccircle cx='32' cy='32' r='18' fill='none' stroke='%23d99a2b' stroke-width='5' stroke-linecap='round'/%3E%3Ctext x='32' y='39' text-anchor='middle' font-size='24' fill='%23fff'%3E0%3C/text%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=Afacad:wght@400;500;600;700;800&family=Chivo:wght@700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--navy:#071324;--navy2:#0d1d36;--gold:#d99a2b;--gold2:#f4b950;--cream:#f7efe3;--muted:#b9c0ca;--line:rgba(244,185,80,.34);--font:'Afacad',sans-serif;--display:'Chivo',sans-serif}
+html,body{min-height:100%;background:var(--navy);color:#fff;font-family:var(--font)}
+body{display:grid;place-items:center;padding:22px}
+.page{width:min(1040px,100%);min-height:calc(100vh - 44px);display:grid;grid-template-columns:minmax(0,1.05fr) minmax(280px,.95fr);border:1px solid var(--line);background:linear-gradient(135deg,#071324 0%,#101f38 68%,#071324 100%);position:relative;overflow:hidden}
+.page:before{content:"";position:absolute;inset:-30%;background:radial-gradient(circle at 82% 18%,rgba(244,185,80,.2),transparent 32%),radial-gradient(circle at 18% 82%,rgba(255,255,255,.09),transparent 28%);pointer-events:none}
+.left,.right{position:relative;z-index:1}
+.left{padding:44px 42px;display:flex;flex-direction:column;justify-content:space-between;gap:38px}
+.kicker{display:inline-flex;align-items:center;gap:8px;color:var(--gold2);font-size:13px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}
+.kicker:before{content:"";width:34px;height:1px;background:var(--gold)}
+h1{font-family:var(--display);font-size:clamp(40px,7vw,74px);line-height:.98;letter-spacing:-.01em;max-width:780px;margin:26px 0 14px}
+.sub{font-size:clamp(24px,3vw,34px);line-height:1.04;color:var(--gold2);font-weight:800;max-width:680px}
+.meta{display:flex;flex-wrap:wrap;gap:9px;margin-top:28px}
+.pill{border:1px solid var(--line);border-radius:999px;padding:8px 13px;color:var(--cream);font-size:15px;font-weight:700;background:rgba(255,255,255,.04)}
+.price{margin-top:34px;border:1px solid var(--line);padding:18px 20px;width:max-content;max-width:100%;background:rgba(7,19,36,.72)}
+.old{color:var(--muted);font-size:18px;font-weight:800}
+.old span{text-decoration:line-through;text-decoration-thickness:3px;text-decoration-color:#e15757}
+.new{font-family:var(--display);font-size:54px;line-height:1;color:#fff;margin-top:4px}
+.new span{color:var(--gold2)}
+.foot{color:var(--muted);font-size:16px;line-height:1.45;max-width:620px}
+.right{padding:38px;display:grid;align-content:center;gap:18px;background:rgba(0,0,0,.16);border-left:1px solid var(--line)}
+.date{border:1px solid var(--line);padding:18px;background:rgba(255,255,255,.04)}
+.date strong{font-family:var(--display);font-size:34px;color:#fff}
+.date span{display:block;color:var(--gold2);font-weight:800;font-size:18px;margin-top:4px}
+.speakers{display:grid;gap:10px}
+.speaker{border:1px solid rgba(255,255,255,.16);padding:14px 16px;background:rgba(255,255,255,.045)}
+.speaker b{display:block;font-size:20px}
+.speaker span{display:block;color:var(--gold2);font-size:14px;font-weight:700;margin-top:2px}
+.cta{margin-top:8px;border:0;background:var(--gold2);color:#071324;border-radius:0;padding:17px 18px;font-family:var(--display);font-size:18px;font-weight:800;text-align:center}
+.note{color:var(--muted);font-size:14px;line-height:1.4}
+@media(max-width:760px){body{padding:0}.page{min-height:100vh;grid-template-columns:1fr;border:0}.left{padding:28px 22px}.right{padding:22px;border-left:0;border-top:1px solid var(--line)}.price{width:100%}.new{font-size:46px}}
+</style>
+</head>
+<body>
+<main class="page">
+  <section class="left">
+    <div>
+      <div class="kicker">Inscription ouverte</div>
+      <h1>Startups, diasporas et finance ethique</h1>
+      <div class="sub">Ouvrir l'acces au capital autrement</div>
+      <div class="meta">
+        <div class="pill">Networking</div>
+        <div class="pill">Diner</div>
+        <div class="pill">Conference</div>
+        <div class="pill">Paris</div>
+      </div>
+      <div class="price">
+        <div class="old">Ancien tarif : <span>60 euros</span></div>
+        <div class="new"><span>0 euro</span> maintenant</div>
+      </div>
+    </div>
+    <p class="foot">Votre invitation est offerte. Le formulaire d'inscription sera active tres prochainement sur cette meme adresse.</p>
+  </section>
+  <aside class="right">
+    <div class="date">
+      <strong>19 juin 2026</strong>
+      <span>Paris</span>
+    </div>
+    <div class="speakers">
+      <div class="speaker"><b>Mouffek Kassous</b><span>Partner - Big Four</span></div>
+      <div class="speaker"><b>Adrien Pannetier</b><span>Fondateur - Prouesse</span></div>
+      <div class="speaker"><b>Nacima Lamalchi Elkilani</b><span>Cofondatrice - MyDataPartner</span></div>
+    </div>
+    <div class="cta">Scannez pour reserver votre place offerte</div>
+    <p class="note">Places limitees. Inscription obligatoire. Cette URL reste stable pour le QR code imprime.</p>
+  </aside>
+</main>
+</body>
+</html>
