@@ -3,76 +3,348 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Inscription - Startups, diasporas et finance ethique</title>
+<title>Inscription - Startups, diasporas et finance éthique</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23071324'/%3E%3Ccircle cx='32' cy='32' r='18' fill='none' stroke='%23d99a2b' stroke-width='5' stroke-linecap='round'/%3E%3Ctext x='32' y='39' text-anchor='middle' font-size='24' fill='%23fff'%3E0%3C/text%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Afacad:wght@400;500;600;700;800&family=Chivo:wght@700;800&display=swap" rel="stylesheet">
+<script src="config.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--navy:#071324;--navy2:#0d1d36;--gold:#d99a2b;--gold2:#f4b950;--cream:#f7efe3;--muted:#b9c0ca;--line:rgba(244,185,80,.34);--font:'Afacad',sans-serif;--display:'Chivo',sans-serif}
-html,body{min-height:100%;background:var(--navy);color:#fff;font-family:var(--font)}
+:root{--navy:#071324;--navy2:#0d1d36;--gold:#d99a2b;--gold2:#f4b950;--cream:#f7efe3;--muted:#b9c0ca;--line:rgba(244,185,80,.34);--danger:#ff6b6b;--font:'Afacad',sans-serif;--display:'Chivo',sans-serif}
+html,body{min-height:100%;background:var(--navy);color:#fff;font-family:var(--font);overflow-x:hidden}
 body{display:grid;place-items:center;padding:22px}
-.page{width:min(1040px,100%);min-height:calc(100vh - 44px);display:grid;grid-template-columns:minmax(0,1.05fr) minmax(280px,.95fr);border:1px solid var(--line);background:linear-gradient(135deg,#071324 0%,#101f38 68%,#071324 100%);position:relative;overflow:hidden}
-.page:before{content:"";position:absolute;inset:-30%;background:radial-gradient(circle at 82% 18%,rgba(244,185,80,.2),transparent 32%),radial-gradient(circle at 18% 82%,rgba(255,255,255,.09),transparent 28%);pointer-events:none}
-.left,.right{position:relative;z-index:1}
-.left{padding:44px 42px;display:flex;flex-direction:column;justify-content:space-between;gap:38px}
-.kicker{display:inline-flex;align-items:center;gap:8px;color:var(--gold2);font-size:13px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}
-.kicker:before{content:"";width:34px;height:1px;background:var(--gold)}
-h1{font-family:var(--display);font-size:clamp(40px,7vw,74px);line-height:.98;letter-spacing:-.01em;max-width:780px;margin:26px 0 14px}
-.sub{font-size:clamp(24px,3vw,34px);line-height:1.04;color:var(--gold2);font-weight:800;max-width:680px}
-.meta{display:flex;flex-wrap:wrap;gap:9px;margin-top:28px}
-.pill{border:1px solid var(--line);border-radius:999px;padding:8px 13px;color:var(--cream);font-size:15px;font-weight:700;background:rgba(255,255,255,.04)}
-.price{margin-top:34px;border:1px solid var(--line);padding:18px 20px;width:max-content;max-width:100%;background:rgba(7,19,36,.72)}
-.old{color:var(--muted);font-size:18px;font-weight:800}
+button,input,textarea{font:inherit}
+.page{width:min(1120px,100%);min-height:calc(100vh - 44px);display:grid;grid-template-columns:minmax(280px,.88fr) minmax(0,1.12fr);border:1px solid var(--line);background:linear-gradient(135deg,#071324 0%,#101f38 68%,#071324 100%);position:relative;overflow:hidden}
+.page:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(244,185,80,.12) 0 1px,transparent 1px 100%),repeating-linear-gradient(135deg,rgba(255,255,255,.055) 0 1px,transparent 1px 16px);background-size:72px 100%,auto;opacity:.42;pointer-events:none}
+.left,.form-side,.success{position:relative;z-index:1}
+.left{padding:38px;display:flex;flex-direction:column;justify-content:space-between;gap:32px;border-right:1px solid var(--line);background:rgba(0,0,0,.14)}
+.kicker{display:inline-flex;align-items:center;gap:8px;color:var(--gold2);font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+.kicker:before{content:"";width:32px;height:1px;background:var(--gold)}
+h1{font-family:var(--display);font-size:clamp(34px,5.4vw,64px);line-height:.98;letter-spacing:-.01em;max-width:660px;margin:24px 0 13px}
+.sub{font-size:clamp(22px,2.6vw,31px);line-height:1.04;color:var(--gold2);font-weight:800;max-width:560px}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:24px}
+.pill{border:1px solid var(--line);border-radius:999px;padding:7px 12px;color:var(--cream);font-size:14px;font-weight:700;background:rgba(255,255,255,.04)}
+.price{margin-top:28px;border:1px solid var(--line);padding:16px 18px;width:max-content;max-width:100%;background:rgba(7,19,36,.72)}
+.old{color:var(--muted);font-size:17px;font-weight:800}
 .old span{text-decoration:line-through;text-decoration-thickness:3px;text-decoration-color:#e15757}
-.new{font-family:var(--display);font-size:54px;line-height:1;color:#fff;margin-top:4px}
+.new{font-family:var(--display);font-size:46px;line-height:1;color:#fff;margin-top:4px}
 .new span{color:var(--gold2)}
-.foot{color:var(--muted);font-size:16px;line-height:1.45;max-width:620px}
-.right{padding:38px;display:grid;align-content:center;gap:18px;background:rgba(0,0,0,.16);border-left:1px solid var(--line)}
-.date{border:1px solid var(--line);padding:18px;background:rgba(255,255,255,.04)}
-.date strong{font-family:var(--display);font-size:34px;color:#fff}
-.date span{display:block;color:var(--gold2);font-weight:800;font-size:18px;margin-top:4px}
-.speakers{display:grid;gap:10px}
-.speaker{border:1px solid rgba(255,255,255,.16);padding:14px 16px;background:rgba(255,255,255,.045)}
-.speaker b{display:block;font-size:20px}
-.speaker span{display:block;color:var(--gold2);font-size:14px;font-weight:700;margin-top:2px}
-.cta{margin-top:8px;border:0;background:var(--gold2);color:#071324;border-radius:0;padding:17px 18px;font-family:var(--display);font-size:18px;font-weight:800;text-align:center}
-.note{color:var(--muted);font-size:14px;line-height:1.4}
-@media(max-width:760px){body{padding:0}.page{min-height:100vh;grid-template-columns:1fr;border:0}.left{padding:28px 22px}.right{padding:22px;border-left:0;border-top:1px solid var(--line)}.price{width:100%}.new{font-size:46px}}
+.speakers{display:grid;gap:8px}
+.speaker{border:1px solid rgba(255,255,255,.14);padding:12px 14px;background:rgba(255,255,255,.04)}
+.speaker b{display:block;font-size:18px}
+.speaker span{display:block;color:var(--gold2);font-size:13px;font-weight:700;margin-top:2px}
+.form-side{padding:34px;display:flex;flex-direction:column;min-width:0}
+.progress-top{display:flex;justify-content:space-between;color:var(--muted);font-weight:800;font-size:14px;margin-bottom:10px}
+.progress-bar{height:8px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden;margin-bottom:34px}
+.progress-fill{height:100%;width:100%;transform:scaleX(0);transform-origin:left center;background:var(--gold2);transition:transform .25s ease}
+form{flex:1;display:flex;flex-direction:column;justify-content:center;min-width:0}
+.step{display:none;animation:rise .2s ease}
+.step.active{display:block}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.eyebrow{color:var(--gold2);font-size:13px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;margin-bottom:12px}
+.question{font-family:var(--display);font-size:clamp(30px,4.5vw,52px);line-height:1.02;margin-bottom:14px;max-width:700px}
+.hint{color:var(--muted);font-size:19px;line-height:1.4;max-width:690px;margin-bottom:24px}
+.fields{display:grid;gap:13px;max-width:680px}
+.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+label{display:block;color:var(--cream);font-size:14px;font-weight:800;margin-bottom:7px}
+input,textarea{width:100%;border:1.5px solid rgba(255,255,255,.18);background:rgba(255,255,255,.07);color:#fff;border-radius:0;padding:15px 16px;font-size:19px;outline:none;transition:border-color .15s,box-shadow .15s}
+textarea{min-height:130px;resize:vertical;line-height:1.45}
+input:focus,textarea:focus{border-color:var(--gold2);box-shadow:0 0 0 4px rgba(244,185,80,.12)}
+input.invalid,textarea.invalid{border-color:var(--danger)}
+.choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;max-width:720px}
+.choice{min-height:58px;border:1.5px solid rgba(255,255,255,.18);background:rgba(255,255,255,.055);color:#fff;text-align:left;border-radius:0;padding:14px 15px;cursor:pointer;font-size:18px;font-weight:800;transition:border-color .15s,background .15s,transform .15s}
+.choice:hover{border-color:var(--gold2);transform:translateY(-1px)}
+.choice.active{border-color:var(--gold2);background:rgba(244,185,80,.16);color:#fff}
+.choice span{display:block;color:var(--muted);font-size:14px;font-weight:600;margin-top:3px;line-height:1.3}
+.consent{display:flex;gap:12px;align-items:flex-start;max-width:720px;border:1.5px solid rgba(255,255,255,.18);background:rgba(255,255,255,.055);padding:15px}
+.consent input{width:22px;height:22px;flex-shrink:0;margin-top:2px}
+.consent strong{display:block;color:#fff;font-size:18px;margin-bottom:2px}
+.consent p{color:var(--muted);font-size:15px;line-height:1.35}
+.error{min-height:23px;color:var(--danger);font-size:15px;font-weight:800;margin-top:17px}
+.nav{display:flex;justify-content:flex-end;gap:10px;margin-top:28px}
+.nav button{min-height:48px;border:1.5px solid transparent;border-radius:0;padding:0 18px;cursor:pointer;font-weight:900;transition:opacity .15s,transform .15s,background .15s}
+.nav button:hover{transform:translateY(-1px)}
+.back{background:transparent;border-color:rgba(255,255,255,.2)!important;color:#fff}
+.next{background:var(--gold2);color:#071324}
+.next.ready{background:#fff;color:#071324}
+.nav button:disabled{opacity:.48;cursor:wait;transform:none}
+.hp{position:absolute;left:-9999px;opacity:0;pointer-events:none}
+.success{display:none;min-height:calc(100vh - 44px);width:min(760px,100%);border:1px solid var(--line);background:linear-gradient(135deg,#071324 0%,#101f38 100%);padding:42px}
+.success h2{font-family:var(--display);font-size:clamp(36px,6vw,66px);line-height:.98;margin:18px 0}
+.success p{font-size:20px;line-height:1.45;color:var(--muted)}
+.success .price{margin-top:26px}
+@media(max-width:820px){body{padding:0}.page{min-height:100vh;grid-template-columns:1fr;border:0}.left{border-right:0;border-bottom:1px solid var(--line);padding:24px 20px}.speakers{display:none}.form-side{padding:24px 20px 28px}.two,.choice-grid{grid-template-columns:1fr}.question{font-size:32px}.hint{font-size:17px}.nav{position:sticky;bottom:0;background:var(--navy);padding-top:12px}.nav button{flex:1}.new{font-size:40px}.success{min-height:100vh;border:0}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
-<main class="page">
-  <section class="left">
+<main class="page" id="app">
+  <aside class="left">
     <div>
-      <div class="kicker">Inscription ouverte</div>
-      <h1>Startups, diasporas et finance ethique</h1>
-      <div class="sub">Ouvrir l'acces au capital autrement</div>
+      <div class="kicker">Inscription offerte</div>
+      <h1>Startups, diasporas et finance éthique</h1>
+      <div class="sub">Ouvrir l'accès au capital autrement</div>
       <div class="meta">
         <div class="pill">Networking</div>
-        <div class="pill">Diner</div>
-        <div class="pill">Conference</div>
+        <div class="pill">Dîner</div>
+        <div class="pill">Conférence</div>
+        <div class="pill">19 juin 2026</div>
         <div class="pill">Paris</div>
       </div>
       <div class="price">
-        <div class="old">Ancien tarif : <span>60 euros</span></div>
-        <div class="new"><span>0 euro</span> maintenant</div>
+        <div class="old">Ancien tarif : <span>60€</span></div>
+        <div class="new"><span>0€</span> maintenant</div>
       </div>
-    </div>
-    <p class="foot">Votre invitation est offerte. Le formulaire d'inscription sera active tres prochainement sur cette meme adresse.</p>
-  </section>
-  <aside class="right">
-    <div class="date">
-      <strong>19 juin 2026</strong>
-      <span>Paris</span>
     </div>
     <div class="speakers">
       <div class="speaker"><b>Mouffek Kassous</b><span>Partner - Big Four</span></div>
       <div class="speaker"><b>Adrien Pannetier</b><span>Fondateur - Prouesse</span></div>
       <div class="speaker"><b>Nacima Lamalchi Elkilani</b><span>Cofondatrice - MyDataPartner</span></div>
     </div>
-    <div class="cta">Scannez pour reserver votre place offerte</div>
-    <p class="note">Places limitees. Inscription obligatoire. Cette URL reste stable pour le QR code imprime.</p>
   </aside>
+
+  <section class="form-side">
+    <div class="progress-top"><span id="step-label">Étape 1</span><span id="step-count">1 / 7</span></div>
+    <div class="progress-bar" aria-hidden="true"><div class="progress-fill" id="progress-fill"></div></div>
+    <form id="event-form">
+      <input class="hp" type="text" name="site_cache" tabindex="-1" autocomplete="off">
+      <input class="hp" type="text" name="website_url" tabindex="-1" autocomplete="off">
+      <input type="hidden" name="token" id="token">
+
+      <section class="step active" data-step>
+        <p class="eyebrow">Identité</p>
+        <h2 class="question">Qui doit-on inscrire ?</h2>
+        <p class="hint">Votre place est offerte. Ces informations servent uniquement à confirmer votre inscription.</p>
+        <div class="fields two">
+          <div><label for="prenom">Prénom *</label><input id="prenom" name="prenom" autocomplete="given-name" required></div>
+          <div><label for="nom">Nom *</label><input id="nom" name="nom" autocomplete="family-name" required></div>
+        </div>
+        <div class="error" data-error></div>
+      </section>
+
+      <section class="step" data-step>
+        <p class="eyebrow">Contact</p>
+        <h2 class="question">Où peut-on vous envoyer les infos pratiques ?</h2>
+        <p class="hint">Email et téléphone sont nécessaires pour confirmer l'inscription et envoyer les rappels.</p>
+        <div class="fields two">
+          <div><label for="email">Email *</label><input id="email" name="email" type="email" autocomplete="email" required></div>
+          <div><label for="telephone">Téléphone *</label><input id="telephone" name="telephone" type="tel" autocomplete="tel" placeholder="+33 6 12 34 56 78" required></div>
+        </div>
+        <div class="error" data-error></div>
+      </section>
+
+      <section class="step" data-step>
+        <p class="eyebrow">Organisation</p>
+        <h2 class="question">Vous venez au nom de quelle structure ?</h2>
+        <p class="hint">Indiquez votre entreprise, association, fonds, réseau ou laissez vide si ce n'est pas pertinent.</p>
+        <div class="fields two">
+          <div><label for="organisation">Organisation</label><input id="organisation" name="organisation" autocomplete="organization"></div>
+          <div><label for="fonction">Fonction</label><input id="fonction" name="fonction"></div>
+        </div>
+        <div class="error" data-error></div>
+      </section>
+
+      <section class="step" data-step>
+        <p class="eyebrow">Profil</p>
+        <h2 class="question">Vous venez plutôt comme...</h2>
+        <div class="choice-grid" data-choice="profil" data-required>
+          <button class="choice" type="button" data-value="entrepreneur">Entrepreneur / startup</button>
+          <button class="choice" type="button" data-value="investisseur">Investisseur</button>
+          <button class="choice" type="button" data-value="diaspora">Diaspora / réseau</button>
+          <button class="choice" type="button" data-value="sponsor">Sponsor / partenaire</button>
+          <button class="choice" type="button" data-value="curieux">Curieux de la finance éthique</button>
+        </div>
+        <input type="hidden" name="profil">
+        <div class="error" data-error></div>
+      </section>
+
+      <section class="step" data-step>
+        <p class="eyebrow">Dîner</p>
+        <h2 class="question">Serez-vous présent au dîner ?</h2>
+        <p class="hint">Cela nous aide à organiser le nombre de places et la logistique.</p>
+        <div class="choice-grid" data-choice="diner" data-required>
+          <button class="choice" type="button" data-value="oui">Oui</button>
+          <button class="choice" type="button" data-value="non">Non</button>
+          <button class="choice" type="button" data-value="confirmer">À confirmer</button>
+        </div>
+        <input type="hidden" name="diner">
+        <div class="error" data-error></div>
+      </section>
+
+      <section class="step" data-step>
+        <p class="eyebrow">Optionnel</p>
+        <h2 class="question">Un mot à ajouter ?</h2>
+        <p class="hint">Vous pouvez laisser un message, une question, ou indiquer une personne que vous souhaitez rencontrer.</p>
+        <div class="fields">
+          <div><label for="message">Message</label><textarea id="message" name="message" maxlength="1200"></textarea></div>
+        </div>
+        <div class="error" data-error></div>
+      </section>
+
+      <section class="step" data-step>
+        <p class="eyebrow">Confirmation</p>
+        <h2 class="question">Dernière étape.</h2>
+        <p class="hint">Ancien tarif : 60€. Aujourd'hui : invitation offerte, 0€.</p>
+        <label class="consent">
+          <input type="checkbox" name="newsletter" value="true">
+          <span><strong>Je veux recevoir les informations Prouesse / Lina Capital.</strong><p>Optionnel. Vous pourrez vous désinscrire ensuite.</p></span>
+        </label>
+        <div class="error" data-error></div>
+      </section>
+
+      <div class="nav" id="nav">
+        <button class="back" type="button" id="prev-btn">Retour</button>
+        <button class="next" type="button" id="next-btn">Continuer</button>
+      </div>
+    </form>
+  </section>
 </main>
+
+<section class="success" id="success">
+  <p class="kicker">Inscription reçue</p>
+  <h2>Votre place est réservée.</h2>
+  <p>Merci. Votre invitation pour la conférence "Startups, diasporas et finance éthique" est bien prise en compte.</p>
+  <div class="price">
+    <div class="old">Ancien tarif : <span>60€</span></div>
+    <div class="new"><span>0€</span> pour vous</div>
+  </div>
+  <p style="margin-top:22px">Nous vous enverrons les informations pratiques avant l'événement.</p>
+</section>
+
+<script>
+(function(){
+  const form=document.getElementById('event-form');
+  const steps=[...document.querySelectorAll('[data-step]')];
+  const prev=document.getElementById('prev-btn');
+  const next=document.getElementById('next-btn');
+  const label=document.getElementById('step-label');
+  const count=document.getElementById('step-count');
+  const fill=document.getElementById('progress-fill');
+  const tokenInput=document.getElementById('token');
+  const app=document.getElementById('app');
+  const success=document.getElementById('success');
+  let current=0;
+  let sending=false;
+
+  document.querySelectorAll('[data-error]').forEach(box=>box.setAttribute('aria-live','polite'));
+  document.querySelectorAll('.choice').forEach(btn=>btn.setAttribute('aria-pressed','false'));
+
+  async function obtenirToken(){
+    try{
+      if(!window.CONFIG||!CONFIG.SUPABASE_URL||!CONFIG.SUPABASE_ANON_KEY)return false;
+      const res=await fetch(CONFIG.SUPABASE_URL+'/functions/v1/event-registration-submit',{headers:{apikey:CONFIG.SUPABASE_ANON_KEY}});
+      const data=await res.json().catch(()=>({}));
+      if(res.ok&&data.token){tokenInput.value=data.token;return true;}
+    }catch(_){}
+    return false;
+  }
+  obtenirToken();
+
+  function activeStep(){return steps[current]}
+  function errorBox(){return activeStep().querySelector('[data-error]')}
+  function setError(message){const box=errorBox();if(box)box.textContent=message||''}
+  function showStep(){
+    const dernier=current===steps.length-1;
+    steps.forEach((s,i)=>s.classList.toggle('active',i===current));
+    prev.style.display=current===0?'none':'block';
+    next.textContent=dernier?"Réserver ma place offerte":'Continuer';
+    next.classList.toggle('ready',dernier);
+    label.textContent='Étape '+(current+1);
+    count.textContent=(current+1)+' / '+steps.length;
+    fill.style.transform='scaleX('+((current+1)/steps.length)+')';
+    setError('');
+    const first=activeStep().querySelector('input:not([type=hidden]):not(.hp),textarea,button.choice');
+    setTimeout(()=>first&&first.focus&&first.focus(),40);
+  }
+
+  function validate(){
+    const step=activeStep();
+    step.querySelectorAll('.invalid').forEach(el=>el.classList.remove('invalid'));
+    const fields=[...step.querySelectorAll('input:not([type=hidden]):not(.hp),textarea')];
+    for(const field of fields){
+      if(field.type==='checkbox')continue;
+      if(field.required&&!String(field.value||'').trim()){
+        field.classList.add('invalid');
+        setError('Ce champ est nécessaire pour confirmer votre inscription.');
+        return false;
+      }
+      if(field.type==='email'&&field.value&&!field.checkValidity()){
+        field.classList.add('invalid');
+        setError('Vérifiez le format de votre adresse email.');
+        return false;
+      }
+      if(field.name==='telephone'){
+        const digits=field.value.replace(/[^\d]/g,'');
+        if(digits.length<9){
+          field.classList.add('invalid');
+          setError('Le téléphone est nécessaire pour confirmer votre inscription.');
+          return false;
+        }
+      }
+    }
+    for(const group of step.querySelectorAll('.choice-grid[data-required]')){
+      const hidden=form.elements[group.dataset.choice];
+      if(!hidden||!hidden.value){
+        setError('Choisissez une option pour continuer.');
+        return false;
+      }
+    }
+    setError('');
+    return true;
+  }
+
+  document.querySelectorAll('.choice-grid').forEach(group=>{
+    group.addEventListener('click',e=>{
+      const btn=e.target.closest('.choice');
+      if(!btn)return;
+      group.querySelectorAll('.choice').forEach(b=>{b.classList.remove('active');b.setAttribute('aria-pressed','false')});
+      btn.classList.add('active');
+      btn.setAttribute('aria-pressed','true');
+      const hidden=form.elements[group.dataset.choice];
+      if(hidden)hidden.value=btn.dataset.value||'';
+      setError('');
+    });
+  });
+
+  prev.addEventListener('click',()=>{if(sending)return;if(current>0){current--;showStep()}});
+  next.addEventListener('click',async()=>{
+    if(sending)return;
+    if(!validate())return;
+    if(current<steps.length-1){current++;showStep();return}
+    await submit();
+  });
+  form.addEventListener('keydown',e=>{if(e.key!=='Enter'||e.target.tagName==='TEXTAREA')return;e.preventDefault();next.click()});
+
+  async function submit(){
+    sending=true;
+    next.disabled=true;prev.disabled=true;
+    next.textContent='Réservation en cours';
+    try{
+      if(!window.CONFIG||!CONFIG.SUPABASE_URL||!CONFIG.SUPABASE_ANON_KEY)throw new Error('Configuration manquante.');
+      if(!tokenInput.value)await obtenirToken();
+      if(!tokenInput.value)throw new Error('Merci de recharger la page avant de renvoyer le formulaire.');
+      const payload=Object.fromEntries(new FormData(form).entries());
+      payload.newsletter=form.elements.newsletter.checked?'true':'false';
+      const res=await fetch(CONFIG.SUPABASE_URL+'/functions/v1/event-registration-submit',{
+        method:'POST',
+        headers:{apikey:CONFIG.SUPABASE_ANON_KEY,'Content-Type':'application/json'},
+        body:JSON.stringify(payload),
+      });
+      const data=await res.json().catch(()=>({}));
+      if(!res.ok||data.erreur)throw new Error(data.message||'Inscription impossible pour le moment.');
+      app.style.display='none';
+      success.style.display='block';
+      window.scrollTo({top:0,behavior:'smooth'});
+    }catch(e){
+      setError(e.message||'Inscription impossible pour le moment. Réessayez dans un instant.');
+      next.disabled=false;prev.disabled=false;
+      next.textContent='Réserver ma place offerte';
+    }finally{
+      sending=false;
+    }
+  }
+
+  showStep();
+})();
+</script>
 </body>
 </html>
