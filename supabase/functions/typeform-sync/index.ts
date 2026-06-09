@@ -57,6 +57,13 @@ Deno.serve(async (req) => {
     // Client service_role pour les écritures (bypass RLS)
     const sb = createClient(supabaseUrl, serviceRoleKey);
 
+    // Réservé aux admins : la synchro déclenche un import massif + des appels IA.
+    const { data: profilAppelant } = await sb
+      .from("profiles").select("role").eq("id", user.id).maybeSingle();
+    if (!profilAppelant || profilAppelant.role !== "admin") {
+      return reponseJson({ erreur: "Accès réservé aux admins" }, 403);
+    }
+
     // ── 1. Récupération exhaustive des réponses Typeform ──────────────────────
     // Pagination `before` jusqu'à épuisement. La limite v1 (5 pages / 1 000
     // réponses) est une régression interdite : on pagine tant qu'il y a des items.

@@ -113,20 +113,26 @@ ${champs.message || "-"}
 Source : QR Netlify
 Lien : https://detectus2.netlify.app/paris-19juin`;
 
-  const res = await fetch("https://api.brevo.com/v3/smtp/email", {
-    method: "POST",
-    headers: {
-      "api-key": brevoKey,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      sender: expediteurEmail(),
-      to: [{ email: NOTIFY_TO }],
-      replyTo: { email: champs.email },
-      subject: `Inscription événement - ${champs.prenom} ${champs.nom}`,
-      textContent: contenu,
-    }),
-  });
+  let res: Response;
+  try {
+    res = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        "api-key": brevoKey,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        sender: expediteurEmail(),
+        to: [{ email: NOTIFY_TO }],
+        replyTo: { email: champs.email },
+        subject: `Inscription événement - ${champs.prenom} ${champs.nom}`,
+        textContent: contenu,
+      }),
+      signal: AbortSignal.timeout(8000),
+    });
+  } catch (e) {
+    return { ok: false, message: `Brevo injoignable: ${e instanceof Error ? e.message : String(e)}`.slice(0, 200) };
+  }
 
   if (!res.ok) {
     const message = await res.text().catch(() => "");
@@ -234,24 +240,9 @@ Deno.serve(async (req) => {
     if (!profil) return erreur("profil", "Merci de choisir un profil.");
     if (!diner) return erreur("diner", "Merci d'indiquer votre présence au dîner.");
 
-    await sb
-      .from("event_registration_tokens")
-      .update({ consumed_at: new Date().toISOString() })
-      .eq("id", tokenRow.id);
-
-    const emailResult = await envoyerEmailInscription({
-      prenom,
-      nom,
-      email,
-      telephone,
-      organisation,
-      fonction,
-      profil,
-      diner,
-      newsletter,
-      message,
-    });
-
+    // Inscription d'abord : on ne doit JAMAIS perdre une inscription (priorité événement).
+    // L'index unique (event_slug, lower(email)) rend l'opération idempotente :
+    // double-clic / deux onglets / ré-inscription → une seule ligne, pas de doublon.
     const { data, error } = await sb
       .from("event_registrations")
       .insert({
@@ -269,18 +260,49 @@ Deno.serve(async (req) => {
         source: "netlify_qr",
         ip_hash: ipHash || null,
         user_agent: req.headers.get("user-agent") || null,
-        email_notification_ok: emailResult.ok,
-        email_notification_message: emailResult.message,
+        email_notification_ok: false,
+        email_notification_message: "en cours",
       })
       .select("id")
       .single();
 
     if (error) {
+      // 23505 = violation d'unicité → déjà inscrit : réponse idempotente (pas une erreur).
+      if ((error as { code?: string }).code === "23505") {
+        await sb.from("event_registration_tokens")
+          .update({ consumed_at: new Date().toISOString() })
+          .eq("id", tokenRow.id).is("consumed_at", null);
+        return reponseJson({ statut: "deja_inscrit" });
+      }
       console.error("event-registration-submit insert:", error.message);
       return reponseJson({ erreur: "interne", message: "Inscription impossible pour le moment." }, 500);
     }
 
-    return reponseJson({ statut: "recu", id: data.id, email_ok: emailResult.ok });
+    // Jeton consommé APRÈS succès (best-effort) : si l'insert avait échoué, le porteur
+    // pourrait réessayer au lieu de voir « déjà envoyé ».
+    await sb.from("event_registration_tokens")
+      .update({ consumed_at: new Date().toISOString() })
+      .eq("id", tokenRow.id).is("consumed_at", null);
+
+    // Notification email APRÈS l'enregistrement (timeout interne) : un échec/lenteur
+    // Brevo ne bloque jamais l'inscription, déjà sauvegardée.
+    const emailResult = await envoyerEmailInscription({
+      prenom,
+      nom,
+      email,
+      telephone,
+      organisation,
+      fonction,
+      profil,
+      diner,
+      newsletter,
+      message,
+    });
+    await sb.from("event_registrations")
+      .update({ email_notification_ok: emailResult.ok, email_notification_message: emailResult.message })
+      .eq("id", data.id);
+
+    return reponseJson({ statut: "recu", id: data.id });
   } catch (e) {
     console.error("event-registration-submit:", e);
     return reponseJson({ erreur: "interne", message: "Inscription impossible pour le moment." }, 500);

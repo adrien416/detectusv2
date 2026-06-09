@@ -553,3 +553,35 @@ Deploiement de ces corrections :
 - `npx supabase functions deploy formulaire-maison-submit --no-verify-jwt`
 - Repousser le front Netlify (`formulaire.html`, `index.html`)
 - Aucun secret ni cle externe a configurer.
+
+## Ajout 09/06/2026 — revue complete (securite + UX/UI) + corrections
+
+> ⚠️ **Le deploiement est une tache PC** (CLI Supabase). Le week-end Adrien est sur iPhone → a faire depuis un ordinateur, jamais depuis le telephone.
+
+Branche : `claude/revue-corrections`. Corrections appliquees :
+
+**Evenement 19 juin (priorite absolue — ne doit pas tomber)**
+- `config.toml` : `event-registration-submit` passe en `verify_jwt=false` (sinon le prochain deploiement le casse en 401).
+- Inscription idempotente : insert AVANT l'email + index unique `(event_slug, lower(email))` (migration `017`) → plus de doublon ni d'inscription perdue.
+- Email Brevo APRES l'enregistrement, avec timeout 8 s → une lenteur/erreur Brevo ne bloque plus l'inscription.
+- Page : consentement/notice RGPD + lien, touche Entree ne vole plus la selection des choix, safe-area iPhone, balises OG (partage WhatsApp/LinkedIn).
+
+**Formulaire candidature + securite**
+- 🔴 Brevo : header `xkeysib-key` → `api-key` (tous les emails du formulaire maison echouaient en silence) + timeout.
+- Lien « politique de confidentialite » repare (pointait sur le formulaire) → nouvelle page `confidentialite.html`.
+- Reponse publique minimale (anti-enumeration email/telephone) ; liberation du jeton si echec d'upload/insert (candidature non perdue).
+- `typeform-sync` reserve aux admins (import massif + appels IA).
+
+**Deploiement de ces corrections (PC, dans l'ordre) :**
+1. Merger `claude/revue-corrections` dans `main`, puis `git checkout main && git pull`.
+2. `npx supabase login` puis `npx supabase link --project-ref qobmctcloqekfascyrqs`.
+3. `npx supabase db push` (applique la migration `017`).
+4. `npx supabase functions deploy event-registration-submit --no-verify-jwt`
+5. `npx supabase functions deploy formulaire-maison-submit --no-verify-jwt`
+6. `npx supabase functions deploy typeform-sync`
+7. Front Netlify : republie automatiquement au merge sur `main`.
+
+**Restant a traiter (issu de la revue, NON inclus — a decider) :**
+- 🔴 Cloisonnement des champs confidentiels : un compte `membre` (non-admin) peut lire `notes_dd`/`valorisation`/`montant_*` via l'API (le masquage actuel est seulement visuel). A corriger (table/vue gardee par `est_admin()`) **avant d'inviter un non-admin** ; necessite une migration + un test.
+- 🟠 Rate-limit par IP contournable (X-Forwarded-For) : volontairement NON modifie ici (un mauvais choix de hop bloquerait de vrais inscrits) → a traiter avec un vrai limiteur.
+- CSP absente + polish UX/UI du CRM (contraste du score, accessibilite clavier, double rendu de la liste, Board qui ignore les filtres, charte DM Sans vs Afacad/Chivo).
