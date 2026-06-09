@@ -61,6 +61,7 @@ label{display:block;font-size:14px;font-weight:800;letter-spacing:.02em;color:#6
 .consent input{width:22px;height:22px;margin-top:2px;flex-shrink:0}
 .consent strong{display:block;font-size:18px;color:var(--navy);margin-bottom:3px}
 .consent p{font-size:15px;line-height:1.4;color:var(--muted)}
+.consent a{color:var(--mint-dark);font-weight:800;text-decoration:underline;text-underline-offset:3px}
 .error{min-height:22px;margin-top:18px;color:var(--danger);font-weight:800;font-size:15px}
   .nav{position:fixed;right:26px;bottom:24px;z-index:10;display:flex;gap:10px;align-items:center;max-width:calc(100vw - 52px);isolation:isolate}
   .nav::before{content:"";position:absolute;left:-18px;right:-18px;top:-14px;bottom:calc(-24px - env(safe-area-inset-bottom));background:var(--surface);z-index:-1;pointer-events:none}
@@ -291,7 +292,7 @@ label{display:block;font-size:14px;font-weight:800;letter-spacing:.02em;color:#6
           <p class="hint">Votre dossier sera transmis à l'équipe Lina Capital et créé automatiquement dans Detectus.</p>
           <label class="consent">
             <input type="checkbox" name="consentement_rgpd" required>
-            <span><strong>J'accepte que Lina Capital traite ces informations.</strong><p>Ces données sont utilisées uniquement pour étudier ma demande de financement et reprendre contact avec moi.</p></span>
+            <span><strong>J'accepte que Lina Capital traite ces informations.</strong><p>Vos données sont traitées par Lina Capital aux seules fins de gestion de votre demande. Pour en savoir plus, consultez notre <a href="https://lina.capital/politique-de-confidentialite/" target="_blank" rel="noopener noreferrer">politique de confidentialité</a>.</p></span>
           </label>
           <div class="error" data-error></div>
         </section>
