@@ -316,14 +316,20 @@ async function envoyerEmail(
   };
   if (replyTo && emailValide(replyTo)) body.replyTo = { email: replyTo };
 
-  const res = await fetch("https://api.brevo.com/v3/smtp/email", {
-    method: "POST",
-    headers: {
-      "xkeysib-key": brevoKey,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
+  let res: Response;
+  try {
+    res = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        "api-key": brevoKey,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(8000),
+    });
+  } catch (e) {
+    return { ok: false, message: `Brevo injoignable: ${e instanceof Error ? e.message : String(e)}`.slice(0, 200) };
+  }
 
   if (!res.ok) {
     const message = await res.text().catch(() => "");
@@ -595,7 +601,10 @@ Deno.serve(async (req) => {
     if (fichier) {
       // Fallback : petit fichier passe par la fonction (rare, voie principale = upload direct).
       const messageFichier = erreurFichier(fichier);
-      if (messageFichier) return erreur("document_upload", messageFichier);
+      if (messageFichier) {
+        await sb.from("formulaire_soumissions").update({ consomme_le: null }).eq("jeton", jeton);
+        return erreur("document_upload", messageFichier);
+      }
 
       const nomStocke = securiserNomFichier(fichier.name || "document");
       const chemin = `${submissionId.replace(":", "/")}/${nomStocke}`;
@@ -609,6 +618,7 @@ Deno.serve(async (req) => {
       );
       if (erreurUpload) {
         console.error("formulaire-maison-submit upload:", erreurUpload.message);
+        await sb.from("formulaire_soumissions").update({ consomme_le: null }).eq("jeton", jeton);
         return reponseJson({ erreur: "upload_document", message: "Enregistrement du document impossible." }, 500);
       }
       documentUrlFinal = `storage://${BUCKET_DOCUMENTS}/${chemin}`;
@@ -754,6 +764,8 @@ Deno.serve(async (req) => {
 
     if (erreurInsert) {
       console.error("formulaire-maison-submit insertion:", erreurInsert.message);
+      // Libère le jeton : la candidature n'a pas été enregistrée → le porteur doit pouvoir réessayer.
+      await sb.from("formulaire_soumissions").update({ consomme_le: null }).eq("jeton", jeton);
       return reponseJson({ erreur: "insertion_deal", message: "Enregistrement impossible." }, 500);
     }
 
@@ -815,12 +827,10 @@ Deno.serve(async (req) => {
       })());
     }
 
-    return reponseJson({
-      statut: "insere",
-      deal_id: insere.id,
-      submission_source_id: submissionId,
-      doublon_potentiel: doublons.length > 0,
-    });
+    // Réponse volontairement minimale : ne pas exposer d'info interne (deal_id,
+    // présence d'un doublon) à un appelant public → évite l'énumération email/téléphone.
+    // Le doublon reste tracé en interne dans deal_events.
+    return reponseJson({ statut: "insere" });
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     console.error("formulaire-maison-submit:", message);
