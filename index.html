@@ -507,6 +507,7 @@ body.mobile-detail-open #detail{display:block}
 .toast{left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));transform:translateY(80px);justify-content:center;padding:12px 14px;text-align:center}
 .toast.show{transform:translateY(0)}
 }
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 </style>
 </head>
 <body>
@@ -598,7 +599,7 @@ body.mobile-detail-open #detail{display:block}
     <div id="sb-top">
       <div class="sw">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--text-sub)" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <input id="sb-search" type="text" placeholder="Rechercher…" oninput="render()">
+        <input id="sb-search" type="text" placeholder="Rechercher…" oninput="rechercheTapee()">
       </div>
       <div class="ftabs">
         <div class="ftab on" onclick="showPanel('ia',this)">Detectus</div>
@@ -806,7 +807,7 @@ function toggleTheme(){const html=document.documentElement;const isDark=html.get
 (function(){const saved=localStorage.getItem('detectus-theme');if(saved==='dark'){document.documentElement.setAttribute('data-theme','dark');setTimeout(()=>{document.getElementById('theme-icon-sun').style.display='block';document.getElementById('theme-icon-moon').style.display='none';},0);}})();
 
 /* ── Constantes UI (reprises de la v1) ───────────────────────────────────── */
-const C={green:'#2ecc71',orange:'#e08c3a',red:'#e05252',teal:'#47d3b0',blue:'#3c6da4',navy:'#061D39',grey:'#757575',purple:'#8b5cf6'};
+const C={green:'#1a9e54',orange:'#c4720f',red:'#d83a3a',teal:'#47d3b0',blue:'#3c6da4',navy:'#061D39',grey:'#757575',purple:'#8b5cf6'};
 const h=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const urlHttp=v=>{const s=String(v||'').trim();return /^https?:\/\//i.test(s)?s:''};
 const dc=d=>d==="QUALIFIÉ"?C.green:d==="REFUSÉ"?C.red:C.orange;
@@ -994,7 +995,7 @@ function afficherToast(message,couleur){
   t.querySelector('.t-msg').textContent=message;
   t.classList.add('show');
   clearTimeout(minuteurToast);
-  minuteurToast=setTimeout(()=>t.classList.remove('show'),2600);
+  minuteurToast=setTimeout(()=>t.classList.remove('show'),4200);
 }
 /* Erreur : message clair en français pour l'utilisateur ; le détail technique
    ne part que dans la console (jamais affiché à l'écran). */
@@ -2153,6 +2154,9 @@ function filtrerStatutDepuisKpi(statut){
   render();
 }
 
+// Anti-rebond de la recherche : on ne re-rend pas la liste à chaque frappe.
+let _tRecherche;
+function rechercheTapee(){clearTimeout(_tRecherche);_tRecherche=setTimeout(render,120);}
 function render(){
   renderKpis();
   majBadgeRattacher();
@@ -2184,7 +2188,7 @@ function render(){
     renderDetail();
     return;
   }
-  document.getElementById('sb-list').innerHTML=list.map(l=>{const s=ST[l.statut],sel=selectedIds.has(l.id);return `<div class="li${currentL?.id===l.id?' on':''}" onclick="pick('${l.id}')"><div class="li-top"><div class="li-left"><div class="li-check${sel?' checked':''}" onclick="toggleSelect('${l.id}',event)">${sel?'✓':''}</div><div class="li-st" style="background:${s.color}${l.statut==='nouveau'?'44':''};border-color:${s.color}" title="${h(s.label)}"></div><div class="li-name">${h(l.prenom)} ${h(l.nom)}</div></div><div class="li-sc" style="background:${dc(l.dec)}22;color:${dc(l.dec)};border:1px solid ${dc(l.dec)}">${h(l.score)}</div></div><div class="li-meta" style="padding-left:42px">${h(l.act)} · ${h(l.date)}</div><div class="li-tags" style="padding-left:42px">${l.statut!=='nouveau'?`<span class="tst" style="background:${s.color}18;color:${s.color};border-color:${s.color}">${h(s.label)}</span>`:''}${l.sante?'<span class="tag ts">Santé</span>':''}${l.doc?'<span class="tag td">Doc</span>':''}</div></div>`;}).join('');
+  // (doublon de rendu supprimé — la liste est rendue une seule fois ci-dessous)
   document.getElementById('sb-list').innerHTML=list.map(l=>{
     const s=ST[l.statut],sel=selectedIds.has(l.id);
     const meta=[l.act,l.tel?`Tel : ${l.tel}`:'',l.date].filter(Boolean).join(' · ');
