@@ -585,3 +585,50 @@ Branche : `claude/revue-corrections`. Corrections appliquees :
 - 🔴 Cloisonnement des champs confidentiels : un compte `membre` (non-admin) peut lire `notes_dd`/`valorisation`/`montant_*` via l'API (le masquage actuel est seulement visuel). A corriger (table/vue gardee par `est_admin()`) **avant d'inviter un non-admin** ; necessite une migration + un test.
 - 🟠 Rate-limit par IP contournable (X-Forwarded-For) : volontairement NON modifie ici (un mauvais choix de hop bloquerait de vrais inscrits) → a traiter avec un vrai limiteur.
 - CSP absente + polish UX/UI du CRM (contraste du score, accessibilite clavier, double rendu de la liste, Board qui ignore les filtres, charte DM Sans vs Afacad/Chivo).
+
+## Ajout 16/06/2026 — revue complète Fable 5 appliquée (4 lots)
+
+> ⚠️ Règle respectée : **rien du 19 juin n'a été modifié** (`paris-19juin.html` et
+> `event-registration-submit` intacts — événement dans 3 jours). Décision Adrien :
+> téléphone **obligatoire** conservé sur l'inscription événement.
+> Décision appliquée (reco des revues) : marque unique **« Lina Capital »** dans
+> tous les emails — réversible par une migration inverse si Djamel préfère autrement.
+
+**Lot A — fiabilité invisible**
+- Plafond PostgREST 1000 lignes neutralisé : `chargerDeals` (CRM), matching `fathom-webhook` et lecture `typeform-sync` paginés — plus de troncature silencieuse au-delà de 1000 dossiers.
+- `fetchAvecRetry` : timeout 15 s PAR tentative (un blocage Anthropic/Typeform ne gèle plus une fonction).
+- `fathom-webhook` : réponse rapide à Fathom — la réunion est stockée immédiatement, l'analyse Haiku (3 scores) tourne en arrière-plan et met à jour la ligne (Realtime) ; insertion idempotente (`upsert` sur `fathom_recording_id`) ; `share_url` validé http(s).
+- `montantOptionnel` : « 10,000 » ne devient plus 10 € (séparateurs de milliers gérés).
+
+**Lot B — quick wins UX**
+- Board : respecte enfin recherche + filtres (comme la Liste).
+- Marque « Lina Capital » partout (défauts front + **migration 018** pour les templates déjà en base) ; fin du « rempli le typeform ».
+- Accents corrigés (CRM + formulaire public) ; onglets « Avis IA » / « Pipeline ».
+- Fiche dossier : bloc email/relance remonté sous les boutons de statut.
+- Formulaire : « Étape x sur y », succès sans jargon + mention email de confirmation, balises OG.
+- Divers : noindex CRM/document, recherche type=search, toast aria-live, scrollIntoView j/k, retour confidentialité réparé.
+
+**Lot C — sécurité**
+- CSP sur le CRM uniquement (`/` et `/index.html`) — pages publiques volontairement non touchées.
+- Anti-spam : l'IP est lue sur le DERNIER segment de x-forwarded-for (non falsifiable) — formulaire candidature uniquement, fonction événement non modifiée.
+- `document.html` : plus d'auto-redirection vers un lien externe du porteur (anti-phishing, l'admin voit l'adresse et clique).
+- `fullenrich-webhook` : comparaison du secret à temps constant + erreurs d'écriture loggées.
+- Lien LinkedIn rendu via `urlHttp()` (anti `javascript:`).
+
+**Lot D — hygiène des données**
+- **Migration 019** : `deals.telephone_norm` (colonne générée chiffres-uniquement + index) → dédup téléphone fiable ; CHECK sur `deals.source` (NOT VALID) ; purge quotidienne pg_cron des jetons anti-spam périmés (> 7 jours, sans effet sur les formulaires en cours).
+- Dédup email : jokers `_`/`%` échappés (plus de faux doublons), erreurs loggées.
+- Classification santé IA sur la description BRUTE (cohérence Typeform/formulaire).
+- Brevo (formulaire) : retry 3x + timeout par tentative, en arrière-plan.
+
+**Déploiement (PC, dans l'ordre — jamais depuis l'iPhone) :**
+1. `git checkout main && git pull`
+2. `npx supabase db push` (migrations **018** et **019** — AVANT les fonctions : la dédup téléphone utilise la colonne de la 019)
+3. `npx supabase functions deploy formulaire-maison-submit --no-verify-jwt`
+4. `npx supabase functions deploy fathom-webhook --no-verify-jwt`
+5. `npx supabase functions deploy typeform-sync`
+6. `npx supabase functions deploy fullenrich-webhook --no-verify-jwt`
+7. Front Netlify : republie automatiquement au merge sur `main`.
+8. **Ne PAS redéployer `event-registration-submit`** avant le 19 juin (aucun changement dedans, on ne touche pas à ce qui marche).
+
+**Restant (backlog priorisé)** : cloisonnement confidentiel (🔴 avant toute invitation non-admin), vue « Inscriptions événement » dans le CRM, éditeur de questions du formulaire, accessibilité structurelle (modales/clavier/landmarks), autosave Confidentiel, unification de la charte (DM Sans vs Afacad/Chivo), heartbeat webhooks, tests Deno sur `_shared/`, nettoyage Storage orphelin.

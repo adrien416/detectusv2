@@ -13,7 +13,7 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders, reponseJson } from "../_shared/cors.ts";
-import { enArrierePlan } from "../_shared/retry.ts";
+import { enArrierePlan, fetchAvecRetry } from "../_shared/retry.ts";
 import { autoScore, scoringSante } from "../_shared/typeform.ts";
 import { classifierSanteIA } from "../_shared/sante.ts";
 
@@ -325,15 +325,16 @@ async function envoyerEmail(
 
   let res: Response;
   try {
-    res = await fetch("https://api.brevo.com/v3/smtp/email", {
+    // Retry 3x + timeout 8s par tentative (convention CLAUDE.md §10) : appelé en
+    // arrière-plan, un 5xx Brevo transitoire ne fait plus perdre l'accusé de réception.
+    res = await fetchAvecRetry("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
       headers: {
         "api-key": brevoKey,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(8000),
-    });
+    }, 3, 8000);
   } catch (e) {
     return { ok: false, message: `Brevo injoignable: ${e instanceof Error ? e.message : String(e)}`.slice(0, 200) };
   }
@@ -715,18 +716,29 @@ Deno.serve(async (req) => {
     };
 
     const doublons: Array<Record<string, unknown>> = [];
-    const { data: memeEmail } = await sb
+    // ilike : « _ » et « % » sont des jokers SQL — échappés pour que jean_dupont@
+    // ne matche pas jeanXdupont@ (faux doublons). Erreurs loggées : une panne de
+    // la détection de doublons ne doit plus être invisible.
+    const emailLike = email.replace(/[\\%_]/g, (c) => "\\" + c);
+    const { data: memeEmail, error: erreurDedupEmail } = await sb
       .from("deals")
       .select("id, prenom, nom, email, telephone, source")
-      .ilike("email", email)
+      .ilike("email", emailLike)
       .limit(5);
+    if (erreurDedupEmail) console.error("formulaire-maison-submit dedup email:", erreurDedupEmail.message);
     if (memeEmail) doublons.push(...memeEmail);
 
-    const { data: memeTelephone } = await sb
+    // Téléphone : comparaison sur la colonne normalisée (chiffres uniquement,
+    // migration 019) — « +33 6 12 34 56 78 » et « 0612345678 » se reconnaissent.
+    const variantesNorm = [...new Set(
+      variantesTelephone(telephone).map((v) => v.replace(/\D/g, "")).filter(Boolean),
+    )];
+    const { data: memeTelephone, error: erreurDedupTel } = await sb
       .from("deals")
       .select("id, prenom, nom, email, telephone, source")
-      .in("telephone", variantesTelephone(telephone))
+      .in("telephone_norm", variantesNorm)
       .limit(5);
+    if (erreurDedupTel) console.error("formulaire-maison-submit dedup telephone:", erreurDedupTel.message);
     if (memeTelephone) {
       for (const d of memeTelephone) {
         if (!doublons.some((x) => x.id === d.id)) doublons.push(d);
@@ -782,7 +794,9 @@ Deno.serve(async (req) => {
     }
 
     // Rattache la soumission au dossier cree (tracabilite anti-spam).
-    await sb.from("formulaire_soumissions").update({ deal_id: insere.id }).eq("jeton", jeton);
+    const { error: erreurRattachement } = await sb
+      .from("formulaire_soumissions").update({ deal_id: insere.id }).eq("jeton", jeton);
+    if (erreurRattachement) console.error("formulaire-maison-submit rattachement soumission:", erreurRattachement.message);
 
     enArrierePlan(envoyerEmailsAutomatiquesFormulaire(sb, insere.id, {
       prenom,
@@ -820,7 +834,9 @@ Deno.serve(async (req) => {
     const cleAnthropic = Deno.env.get("ANTHROPIC_API_KEY");
     if (!scoring.sante && cleAnthropic) {
       enArrierePlan((async () => {
-        const estSante = await classifierSanteIA(insere.activite ?? "", insere.description ?? "", cleAnthropic);
+        // Description BRUTE du porteur (pas la version enrichie stockée) : même
+        // entrée que le canal Typeform et que le scoring mots-clés → cohérence.
+        const estSante = await classifierSanteIA(insere.activite ?? "", descriptionProjet, cleAnthropic);
         if (estSante === true) {
           const { data: maj } = await sb.from("deals")
             .update({ ...scoringSante(), statut: "sante" })
