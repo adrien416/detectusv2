@@ -21,7 +21,7 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { reponseJson } from "../_shared/cors.ts";
-import { fetchAvecRetry } from "../_shared/retry.ts";
+import { enArrierePlan, fetchAvecRetry } from "../_shared/retry.ts";
 
 function comparaisonConstante(a: string, b: string): boolean {
   const aa = new TextEncoder().encode(a);
@@ -213,7 +213,11 @@ function extraireReunion(p: any): ReunionExtraite | null {
   return {
     recordingId,
     titre: String(p.title ?? p.meeting_title ?? "Réunion sans titre"),
-    shareUrl: p.share_url ?? p.url ?? p.recording_url ?? null,
+    // share_url validé : seul un vrai lien http(s) est stocké (le front le rend en href)
+    shareUrl: (() => {
+      const brut = p.share_url ?? p.url ?? p.recording_url ?? null;
+      return typeof brut === "string" && /^https?:\/\//i.test(brut) ? brut : null;
+    })(),
     debut,
     fin,
     dureeMinutes,
@@ -335,17 +339,27 @@ Deno.serve(async (req) => {
     }
 
     // ── 4. Matching deal — règle stricte (revue Codex) ─────────────────────────
-    const { data: tousDeals, error: erreurDeals } = await sb
-      .from("deals")
-      .select("id, email, prenom, nom")
-      .not("email", "is", null);
+    // Lecture PAGINÉE : PostgREST plafonne à 1 000 lignes par requête. Sans
+    // pagination, les dossiers au-delà du plafond deviendraient invisibles au
+    // matching → réunions silencieusement non rattachées (revue Fable 5 — R1).
+    const tousDeals: Array<{ id: string; email: string; prenom: string; nom: string }> = [];
+    for (let depuis = 0; ; depuis += 1000) {
+      const { data: pageDeals, error: erreurDeals } = await sb
+        .from("deals")
+        .select("id, email, prenom, nom")
+        .not("email", "is", null)
+        .order("id")
+        .range(depuis, depuis + 999);
 
-    if (erreurDeals) {
-      console.error("fathom-webhook lecture deals:", erreurDeals.message);
-      return reponseJson({ erreur: "lecture_deals", message: "Erreur interne" }, 500);
+      if (erreurDeals) {
+        console.error("fathom-webhook lecture deals:", erreurDeals.message);
+        return reponseJson({ erreur: "lecture_deals", message: "Erreur interne" }, 500);
+      }
+      tousDeals.push(...(pageDeals ?? []));
+      if (!pageDeals || pageDeals.length < 1000) break;
     }
 
-    const correspondances = (tousDeals ?? []).filter((d) =>
+    const correspondances = tousDeals.filter((d) =>
       emailsExternes.includes(String(d.email).toLowerCase())
     );
 
@@ -392,27 +406,11 @@ Deno.serve(async (req) => {
       statutMatch = "non_rattache";
     }
 
-    // ── 5. Extraction Haiku : 3 scores ──────────────────────────────────────────
-    // Entrée : résumé + transcript complet (en mémoire uniquement — décision D11)
-    // deno-lint-ignore no-explicit-any
-    let extraction: any = null;
-    if (cleAnthropic && (reunion.resume || reunion.transcriptTexte)) {
-      try {
-        const contexteAnalyse = [
-          `Titre de la réunion : ${reunion.titre}`,
-          `Participants externes : ${emailsExternes.join(", ")}`,
-          `RÉSUMÉ FATHOM :\n${reunion.resume || "(absent)"}`,
-          `TRANSCRIPT COMPLET :\n${reunion.transcriptTexte || "(absent)"}`,
-        ].join("\n\n");
-        const reponse = await appelerClaude(PROMPT_EXTRACTION, contexteAnalyse, cleAnthropic);
-        extraction = parserJsonClaude(reponse);
-      } catch (e) {
-        // Non bloquant : la réunion est stockée sans scores
-        console.error("Extraction Haiku échouée :", e instanceof Error ? e.message : e);
-      }
-    }
-
-    // ── 6. Stockage : payload EXPURGÉ du transcript + deal_events ──────────────
+    // ── 5./6. Stockage IMMÉDIAT (sans scores), analyse Haiku en ARRIÈRE-PLAN ───
+    // Le webhook doit répondre vite (délai de livraison Fathom, sinon re-livraison
+    // et travail dupliqué — revue Fable 5 R2/O5). La partie lente (extraction des
+    // 3 scores sur le transcript complet) tourne APRÈS la réponse et met à jour la
+    // ligne ; le Realtime pousse la mise à jour aux clients connectés.
     // Le transcript ne quitte jamais la mémoire de cette fonction (décision D6).
     const payloadSansTranscript = { ...payload };
     delete payloadSansTranscript.transcript;
@@ -429,29 +427,62 @@ Deno.serve(async (req) => {
       invitees: reunion.invites,
       resume: reunion.resume,
       action_items: reunion.actionItems,
-      score_interet_lina: extraction?.score_interet_lina ?? null,
-      score_interet_porteur: extraction?.score_interet_porteur ?? null,
-      score_conformite: extraction?.score_conformite ?? null,
-      score_global: typeof extraction?.score_global === "number" ? extraction.score_global : null,
-      structure_recommandee: extraction?.structure_recommandee ?? null,
-      alertes_charia: extraction?.alertes_charia ?? null,
-      prochaine_etape: extraction?.prochaine_etape ?? null,
-      date_prochaine_etape: extraction?.date_prochaine_etape ?? null,
+      score_interet_lina: null,
+      score_interet_porteur: null,
+      score_conformite: null,
+      score_global: null,
+      structure_recommandee: null,
+      alertes_charia: null,
+      prochaine_etape: null,
+      date_prochaine_etape: null,
       matched_email: matchedEmail,
       statut_match: statutMatch,
       matchs_candidats: matchsCandidats,
       payload_brut: payloadSansTranscript,
     };
 
+    // Upsert idempotent sur fathom_recording_id : deux livraisons simultanées
+    // (retry Fathom) ne créent qu'une seule ligne — plus de course check-then-insert.
     const { data: meetingInsere, error: erreurInsert } = await sb
       .from("meetings")
-      .insert(ligneMeeting)
+      .upsert(ligneMeeting, { onConflict: "fathom_recording_id", ignoreDuplicates: true })
       .select("id")
-      .single();
+      .maybeSingle();
 
     if (erreurInsert) {
       console.error("fathom-webhook insertion meeting:", erreurInsert.message);
       return reponseJson({ erreur: "insertion_meeting", message: "Erreur interne" }, 500);
+    }
+    if (!meetingInsere) {
+      // Course perdue : une livraison concurrente vient d'insérer la même réunion
+      return reponseJson({ statut: "deja_traitee" });
+    }
+
+    // Extraction Haiku (3 scores) en arrière-plan — résumé + transcript en mémoire
+    if (cleAnthropic && (reunion.resume || reunion.transcriptTexte)) {
+      const meetingId = meetingInsere.id;
+      enArrierePlan((async () => {
+        const contexteAnalyse = [
+          `Titre de la réunion : ${reunion.titre}`,
+          `Participants externes : ${emailsExternes.join(", ")}`,
+          `RÉSUMÉ FATHOM :\n${reunion.resume || "(absent)"}`,
+          `TRANSCRIPT COMPLET :\n${reunion.transcriptTexte || "(absent)"}`,
+        ].join("\n\n");
+        const reponse = await appelerClaude(PROMPT_EXTRACTION, contexteAnalyse, cleAnthropic);
+        const extraction = parserJsonClaude(reponse);
+        if (!extraction) return;
+        const { error: erreurScores } = await sb.from("meetings").update({
+          score_interet_lina: extraction.score_interet_lina ?? null,
+          score_interet_porteur: extraction.score_interet_porteur ?? null,
+          score_conformite: extraction.score_conformite ?? null,
+          score_global: typeof extraction.score_global === "number" ? extraction.score_global : null,
+          structure_recommandee: extraction.structure_recommandee ?? null,
+          alertes_charia: extraction.alertes_charia ?? null,
+          prochaine_etape: extraction.prochaine_etape ?? null,
+          date_prochaine_etape: extraction.date_prochaine_etape ?? null,
+        }).eq("id", meetingId);
+        if (erreurScores) console.error("fathom-webhook maj scores:", erreurScores.message);
+      })());
     }
 
     // Timeline du dossier si rattachement automatique
@@ -473,7 +504,7 @@ Deno.serve(async (req) => {
       meeting_id: meetingInsere.id,
       rattachement: statutMatch,
       deal_id: dealId,
-      scores_extraits: !!extraction,
+      analyse: "en_arriere_plan",
     });
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);

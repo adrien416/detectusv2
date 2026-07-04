@@ -18,12 +18,15 @@ export async function fetchAvecRetry(
   url: string,
   options: RequestInit,
   essaisMax = 3,
+  timeoutMs = 15000,
 ): Promise<Response> {
   let derniereErreur: Error | null = null;
 
   for (let essai = 0; essai < essaisMax; essai++) {
     try {
-      const res = await fetch(url, options);
+      // Timeout PAR TENTATIVE : sans lui, un serveur externe qui ne répond pas
+      // gèle la fonction jusqu'au kill du runtime (revue Fable 5 — R2).
+      const res = await fetch(url, { ...options, signal: AbortSignal.timeout(timeoutMs) });
       // Pas de retry sur les erreurs client (4xx) : elles ne se résoudront pas seules.
       if (res.ok || (res.status >= 400 && res.status < 500)) return res;
       derniereErreur = new Error(`HTTP ${res.status} sur ${url}`);

@@ -39,6 +39,23 @@ function lienLinkedin(ligne: any): string | null {
 
 const STATUTS_FINAUX = new Set(["termine", "aucun_resultat", "credits_insuffisants"]);
 
+// Comparaison à temps constant (même durée quel que soit le point de divergence) —
+// aligne ce webhook sur Typeform/Fathom, qui l'utilisent déjà.
+function comparaisonConstante(a: string, b: string): boolean {
+  const aa = new TextEncoder().encode(a);
+  const bb = new TextEncoder().encode(b);
+  if (aa.length !== bb.length) return false;
+  let diff = 0;
+  for (let i = 0; i < aa.length; i++) diff |= aa[i] ^ bb[i];
+  return diff === 0;
+}
+
+// Trace toute erreur d'écriture : un résultat d'enrichissement ne doit jamais
+// se perdre en silence (revue Fable 5 — O9).
+function loggerErreur(contexte: string, erreur: { message: string } | null | undefined): void {
+  if (erreur) console.error(`fullenrich-webhook ${contexte}:`, erreur.message);
+}
+
 Deno.serve(async (req) => {
   try {
     const secretAttendu = Deno.env.get("FULLENRICH_WEBHOOK_SECRET");
@@ -50,7 +67,7 @@ Deno.serve(async (req) => {
     if (!secretAttendu || !apiKey || !supabaseUrl || !serviceRoleKey) {
       return reponseJson({ erreur: "Configuration serveur incomplete" }, 500);
     }
-    if (!secretRecu || secretRecu !== secretAttendu) {
+    if (!secretRecu || !comparaisonConstante(secretRecu, secretAttendu)) {
       return reponseJson({ erreur: "Secret invalide" }, 401);
     }
 
@@ -63,7 +80,7 @@ Deno.serve(async (req) => {
     const lignes = Array.isArray(payload.data) ? payload.data : [];
 
     if (status === "CREDITS_INSUFFICIENT") {
-      await sb
+      const { error: erreurCredits } = await sb
         .from("fullenrich_requests")
         .update({
           statut: "credits_insuffisants",
@@ -73,6 +90,7 @@ Deno.serve(async (req) => {
           resultats: payload,
         })
         .eq("enrichment_id", enrichmentId);
+      loggerErreur("maj credits_insuffisants", erreurCredits);
       return reponseJson({ statut: "credits_insuffisants" });
     }
 
@@ -105,13 +123,15 @@ Deno.serve(async (req) => {
       };
 
       if (requestId) {
-        await sb.from("fullenrich_requests").update(updateRequest).eq("id", requestId);
+        const { error: erreurMaj } = await sb.from("fullenrich_requests").update(updateRequest).eq("id", requestId);
+        loggerErreur(`maj demande ${requestId}`, erreurMaj);
       } else if (enrichmentId) {
-        await sb
+        const { error: erreurMaj } = await sb
           .from("fullenrich_requests")
           .update(updateRequest)
           .eq("enrichment_id", enrichmentId)
           .eq("deal_id", dealId);
+        loggerErreur(`maj demande enrichment ${enrichmentId}`, erreurMaj);
       }
 
       const { data: dealAvant } = await sb
@@ -130,23 +150,26 @@ Deno.serve(async (req) => {
           })
           .eq("id", dealId);
 
+        loggerErreur(`maj telephone deal ${dealId}`, erreurUpdate);
         if (!erreurUpdate) {
-          await sb.from("deal_events").insert({
+          const { error: erreurEvent } = await sb.from("deal_events").insert({
             deal_id: dealId,
             type: "enrichissement",
             resume: `Telephone trouve via FullEnrich : ${telephone}`,
             payload: { enrichment_id: enrichmentId, request_id: requestId || null },
             auteur_id: null,
           });
+          loggerErreur("event telephone", erreurEvent);
         }
       } else if (!telephone) {
-        await sb.from("deal_events").insert({
+        const { error: erreurEvent } = await sb.from("deal_events").insert({
           deal_id: dealId,
           type: "enrichissement",
           resume: "FullEnrich n'a pas trouve de telephone",
           payload: { enrichment_id: enrichmentId, request_id: requestId || null },
           auteur_id: null,
         });
+        loggerErreur("event aucun telephone", erreurEvent);
       }
 
       // LinkedIn renvoyé par FullEnrich : on l'enregistre gratuitement (même réponse,

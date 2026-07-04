@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Demande de financement - Lina Capital</title>
+<meta name="description" content="Déposez votre demande de financement auprès de Lina Capital — finance éthique. Environ 3 minutes, réponse de l'équipe après étude du dossier.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Demande de financement — Lina Capital">
+<meta property="og:description" content="Déposez votre dossier en 3 minutes. Finance éthique, sans intérêts.">
+<meta property="og:locale" content="fr_FR">
+<meta name="twitter:card" content="summary">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230d2137'/%3E%3Ccircle cx='32' cy='32' r='18' fill='none' stroke='%2300c9a7' stroke-width='5' stroke-linecap='round' stroke-dasharray='95 18'/%3E%3Crect x='24' y='24' width='16' height='16' rx='3' transform='rotate(45 32 32)' fill='%2300c9a7'/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Afacad:wght@400;500;600;700&family=Chivo:wght@600;700;800&display=swap" rel="stylesheet">
 <script src="config.js"></script>
@@ -131,7 +137,7 @@ label{display:block;font-size:14px;font-weight:800;letter-spacing:.02em;color:#6
 
   <main class="form-zone">
     <div class="progress-wrap">
-      <div class="progress-top"><span id="step-label">Question 1</span><span id="step-count"></span></div>
+      <div class="progress-top"><span id="step-label">Étape 1</span><span id="step-count"></span></div>
       <div class="progress-bar" aria-hidden="true"><div class="progress-fill" id="progress-fill"></div></div>
     </div>
 
@@ -196,7 +202,7 @@ label{display:block;font-size:14px;font-weight:800;letter-spacing:.02em;color:#6
 
         <section class="step" data-step>
           <p class="eyebrow">Maturité</p>
-          <h2 class="question">Ou en est l'entreprise aujourd'hui&nbsp;?</h2>
+          <h2 class="question">Où en est l'entreprise aujourd'hui&nbsp;?</h2>
           <p class="hint">Ces informations servent à orienter l'analyse, pas à juger le projet trop vite.</p>
           <div class="fields">
             <div>
@@ -208,7 +214,7 @@ label{display:block;font-size:14px;font-weight:800;letter-spacing:.02em;color:#6
               <input type="hidden" name="entreprise_creee">
             </div>
             <div>
-              <label>CA realise *</label>
+              <label>CA réalisé *</label>
               <div class="choice-grid" data-choice="ca_traction" data-required>
                 <button class="choice" type="button" data-value="plus_50k">50K&euro; ou plus de CA<span>Sur les 12 derniers mois glissants.</span></button>
                 <button class="choice" type="button" data-value="moins_50k">Moins de 50K&euro; de CA<span>Sur les 12 derniers mois glissants.</span></button>
@@ -234,10 +240,10 @@ label{display:block;font-size:14px;font-weight:800;letter-spacing:.02em;color:#6
         <section class="step" data-step>
           <p class="eyebrow">Besoin</p>
           <h2 class="question">Quel financement recherchez-vous&nbsp;?</h2>
-          <p class="hint">Indiquez le montant si vous l'avez. Sinon, decrivez surtout l'usage prevu.</p>
+          <p class="hint">Indiquez le montant si vous l'avez. Sinon, décrivez surtout l'usage prévu.</p>
           <div class="fields">
-            <div><label for="montant_recherche">Montant recherche (EUR)</label><input id="montant_recherche" name="montant_recherche" inputmode="numeric" placeholder="150000"></div>
-            <div><label for="besoin_financement">Besoin de financement</label><textarea id="besoin_financement" name="besoin_financement" placeholder="Stock, materiel, recrutement, croissance, reprise..."></textarea></div>
+            <div><label for="montant_recherche">Montant recherché (€)</label><input id="montant_recherche" name="montant_recherche" inputmode="numeric" placeholder="150 000"></div>
+            <div><label for="besoin_financement">Besoin de financement</label><textarea id="besoin_financement" name="besoin_financement" placeholder="Stock, matériel, recrutement, croissance, reprise..."></textarea></div>
           </div>
           <div class="error" data-error></div>
         </section>
@@ -310,7 +316,8 @@ label{display:block;font-size:14px;font-weight:800;letter-spacing:.02em;color:#6
   <div class="success-card">
     <p class="eyebrow">Dossier reçu</p>
     <h1>Merci, votre demande a bien été transmise.</h1>
-    <p>Lina Capital va étudier les informations envoyées. Si le dossier entre dans le périmètre, l'équipe reviendra vers vous avec les prochaines étapes.</p>
+    <p>Lina Capital va étudier les informations envoyées. Si votre projet correspond à nos critères, l'équipe reviendra vers vous avec les prochaines étapes.</p>
+    <p style="margin-top:10px">Un email de confirmation vient de vous être envoyé — pensez à vérifier vos courriers indésirables.</p>
   </div>
 </div>
 
@@ -378,7 +385,8 @@ label{display:block;font-size:14px;font-weight:800;letter-spacing:.02em;color:#6
     prev.style.display=pos===0?'none':'block';
     next.textContent=dernier?'Envoyer la demande':'Continuer';
     next.classList.toggle('ready',dernier);
-    label.textContent='Étape '+(pos+1);
+    // « Étape x sur y » : le porteur sait toujours combien il reste (anti-abandon).
+    label.textContent='Étape '+(pos+1)+' sur '+vis.length;
     count.textContent='≈ 3 min';
     fill.style.transform='scaleX('+((pos+1)/vis.length)+')';
     setError('');

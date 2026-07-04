@@ -13,7 +13,7 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders, reponseJson } from "../_shared/cors.ts";
-import { enArrierePlan } from "../_shared/retry.ts";
+import { enArrierePlan, fetchAvecRetry } from "../_shared/retry.ts";
 import { autoScore, scoringSante } from "../_shared/typeform.ts";
 import { classifierSanteIA } from "../_shared/sante.ts";
 
@@ -181,8 +181,15 @@ function urlOptionnelle(v: unknown, champ: string): string | null {
 }
 
 function montantOptionnel(v: unknown): number | null {
-  const brute = texte(v).replace(/\s/g, "").replace(/€/g, "").replace(",", ".");
+  // Parseur robuste : « 150 000 », « 150.000 », « 10,000 », « 1 500 000,50 € »…
+  // Un séparateur suivi de 3 chiffres = séparateur de milliers (supprimé) ;
+  // un point/virgule final suivi de 1-2 chiffres = décimale. L'ancien
+  // replace(",",".") transformait « 10,000 » en 10 (montant divisé par 1000).
+  let brute = texte(v).replace(/[\s€]/g, "");
   if (!brute) return null;
+  brute = brute.replace(/[.,](?=\d{3}(\D|$))/g, "");   // séparateurs de milliers
+  brute = brute.replace(",", ".");                       // décimale FR restante
+  if (!/^\d+(\.\d{1,2})?$/.test(brute)) return null;
   const n = Number(brute);
   return Number.isFinite(n) && n >= 0 ? n : null;
 }
@@ -318,15 +325,16 @@ async function envoyerEmail(
 
   let res: Response;
   try {
-    res = await fetch("https://api.brevo.com/v3/smtp/email", {
+    // Retry 3x + timeout 8s par tentative (convention CLAUDE.md §10) : appelé en
+    // arrière-plan, un 5xx Brevo transitoire ne fait plus perdre l'accusé de réception.
+    res = await fetchAvecRetry("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
       headers: {
         "api-key": brevoKey,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(8000),
-    });
+    }, 3, 8000);
   } catch (e) {
     return { ok: false, message: `Brevo injoignable: ${e instanceof Error ? e.message : String(e)}`.slice(0, 200) };
   }
@@ -387,9 +395,14 @@ async function envoyerEmailsAutomatiquesFormulaire(sb: any, dealId: string, vari
 // ── Anti-spam : IP + jeton ────────────────────────────────────────────────────
 
 function ipClient(req: Request): string {
+  // Le client peut FORGER le début de x-forwarded-for ; chaque proxy AJOUTE la
+  // vraie IP en fin de liste. On lit donc le DERNIER segment (posé par l'infra
+  // Supabase, de confiance) — sinon la limite par IP se contourne en variant
+  // l'en-tête à chaque requête (revue Fable 5 — R4).
   const xff = req.headers.get("x-forwarded-for") ?? "";
-  const premier = xff.split(",")[0].trim();
-  return premier || (req.headers.get("x-real-ip") ?? "").trim();
+  const segments = xff.split(",").map((s) => s.trim()).filter(Boolean);
+  const dernier = segments.length ? segments[segments.length - 1] : "";
+  return dernier || (req.headers.get("x-real-ip") ?? "").trim();
 }
 
 async function hacherIp(ip: string): Promise<string> {
@@ -703,18 +716,29 @@ Deno.serve(async (req) => {
     };
 
     const doublons: Array<Record<string, unknown>> = [];
-    const { data: memeEmail } = await sb
+    // ilike : « _ » et « % » sont des jokers SQL — échappés pour que jean_dupont@
+    // ne matche pas jeanXdupont@ (faux doublons). Erreurs loggées : une panne de
+    // la détection de doublons ne doit plus être invisible.
+    const emailLike = email.replace(/[\\%_]/g, (c) => "\\" + c);
+    const { data: memeEmail, error: erreurDedupEmail } = await sb
       .from("deals")
       .select("id, prenom, nom, email, telephone, source")
-      .ilike("email", email)
+      .ilike("email", emailLike)
       .limit(5);
+    if (erreurDedupEmail) console.error("formulaire-maison-submit dedup email:", erreurDedupEmail.message);
     if (memeEmail) doublons.push(...memeEmail);
 
-    const { data: memeTelephone } = await sb
+    // Téléphone : comparaison sur la colonne normalisée (chiffres uniquement,
+    // migration 019) — « +33 6 12 34 56 78 » et « 0612345678 » se reconnaissent.
+    const variantesNorm = [...new Set(
+      variantesTelephone(telephone).map((v) => v.replace(/\D/g, "")).filter(Boolean),
+    )];
+    const { data: memeTelephone, error: erreurDedupTel } = await sb
       .from("deals")
       .select("id, prenom, nom, email, telephone, source")
-      .in("telephone", variantesTelephone(telephone))
+      .in("telephone_norm", variantesNorm)
       .limit(5);
+    if (erreurDedupTel) console.error("formulaire-maison-submit dedup telephone:", erreurDedupTel.message);
     if (memeTelephone) {
       for (const d of memeTelephone) {
         if (!doublons.some((x) => x.id === d.id)) doublons.push(d);
@@ -770,7 +794,9 @@ Deno.serve(async (req) => {
     }
 
     // Rattache la soumission au dossier cree (tracabilite anti-spam).
-    await sb.from("formulaire_soumissions").update({ deal_id: insere.id }).eq("jeton", jeton);
+    const { error: erreurRattachement } = await sb
+      .from("formulaire_soumissions").update({ deal_id: insere.id }).eq("jeton", jeton);
+    if (erreurRattachement) console.error("formulaire-maison-submit rattachement soumission:", erreurRattachement.message);
 
     enArrierePlan(envoyerEmailsAutomatiquesFormulaire(sb, insere.id, {
       prenom,
@@ -808,7 +834,9 @@ Deno.serve(async (req) => {
     const cleAnthropic = Deno.env.get("ANTHROPIC_API_KEY");
     if (!scoring.sante && cleAnthropic) {
       enArrierePlan((async () => {
-        const estSante = await classifierSanteIA(insere.activite ?? "", insere.description ?? "", cleAnthropic);
+        // Description BRUTE du porteur (pas la version enrichie stockée) : même
+        // entrée que le canal Typeform et que le scoring mots-clés → cohérence.
+        const estSante = await classifierSanteIA(insere.activite ?? "", descriptionProjet, cleAnthropic);
         if (estSante === true) {
           const { data: maj } = await sb.from("deals")
             .update({ ...scoringSante(), statut: "sante" })
