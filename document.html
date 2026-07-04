@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Préparation du document - Detectus</title>
+<meta name="robots" content="noindex,nofollow">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
@@ -29,8 +30,8 @@ a:hover{text-decoration:underline}
     <div class="kicker">Detectus</div>
     <h1>Préparation du document…</h1>
     <p>Nous générons un lien temporaire sécurisé. Cet onglet va afficher le document automatiquement.</p>
-    <div class="loader" aria-hidden="true"><span></span></div>
-    <div class="error" id="error"></div>
+    <div class="loader" aria-hidden="true" id="loader"><span></span></div>
+    <div class="error" id="error" role="alert"></div>
     <div class="actions" id="actions"><a href="/" id="back">Retour à Detectus</a></div>
   </main>
 
@@ -59,6 +60,23 @@ a:hover{text-decoration:underline}
     if(error)throw error;
     if(data&&data.erreur)throw new Error(data.message||data.erreur);
     if(!data||!data.url)throw new Error('Lien document absent.');
+    if(data.type==='lien_externe'){
+      // Lien saisi par le porteur (non vérifié) : JAMAIS de redirection automatique —
+      // l'admin voit l'adresse et décide (anti-phishing). Construit en DOM, pas en HTML.
+      document.getElementById('loader').style.display='none';
+      document.querySelector('h1').textContent='Document hébergé à l\'extérieur';
+      document.querySelector('p').textContent='Le porteur a fourni un lien externe. Vérifiez l\'adresse avant de l\'ouvrir :';
+      const zone=document.getElementById('actions');
+      const bloc=document.createElement('p');
+      bloc.style.cssText='margin-bottom:12px;word-break:break-all';
+      const a=document.createElement('a');
+      a.href=data.url;a.target='_blank';a.rel='noopener noreferrer';
+      a.textContent=data.url;
+      bloc.appendChild(a);
+      zone.prepend(bloc);
+      zone.style.display='block';
+      return;
+    }
     window.location.replace(data.url);
   }catch(e){
     showError(e.message||String(e));

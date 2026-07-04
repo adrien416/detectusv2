@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Detectus · Lina Capital</title>
+<meta name="robots" content="noindex,nofollow">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23061D39'/%3E%3Ccircle cx='32' cy='32' r='18' fill='none' stroke='%236B7A8D' stroke-width='5' stroke-linecap='round' stroke-dasharray='95 18'/%3E%3Crect x='24' y='24' width='16' height='16' rx='3' transform='rotate(45 32 32)' fill='%2347d3b0'/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&display=swap" rel="stylesheet">
 <!-- Dépendances v2 : supabase-js (CDN) + config publique (URL + anon key, protégées par RLS) -->
@@ -580,7 +581,7 @@ body.mobile-detail-open #detail{display:block}
       Formulaire
     </button>
     <button class="tb-btn credit-pill" onclick="chargerCreditsFullEnrich()" title="Rafraîchir les crédits FullEnrich" id="btn-fullenrich-credits" style="display:none">
-      Credits FE&nbsp;<strong id="fullenrich-credit-val">--</strong>
+      Crédits FE&nbsp;<strong id="fullenrich-credit-val">--</strong>
     </button>
     <button class="theme-toggle" onclick="toggleTheme()" title="Mode sombre / clair" id="theme-btn">
       <svg id="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:none"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
@@ -599,11 +600,11 @@ body.mobile-detail-open #detail{display:block}
     <div id="sb-top">
       <div class="sw">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--text-sub)" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <input id="sb-search" type="text" placeholder="Rechercher…" oninput="rechercheTapee()">
+        <input id="sb-search" type="search" placeholder="Rechercher…" aria-label="Rechercher un dossier" oninput="rechercheTapee()">
       </div>
       <div class="ftabs">
-        <div class="ftab on" onclick="showPanel('ia',this)">Detectus</div>
-        <div class="ftab" onclick="showPanel('st',this)">Backlog</div>
+        <div class="ftab on" onclick="showPanel('ia',this)">Avis IA</div>
+        <div class="ftab" onclick="showPanel('st',this)">Pipeline</div>
         <div class="ftab" onclick="showPanel('tri',this)">Tri</div>
         <div class="ftab" onclick="showPanel('source',this)">Source</div>
         <div class="ftab" onclick="showPanel('sel',this)">Sélection</div>
@@ -773,7 +774,7 @@ body.mobile-detail-open #detail{display:block}
     <div class="modal-titre">Profil LinkedIn</div>
     <div id="linkedin-modal-body"></div>
     <div class="modal-field">
-      <label>URL LinkedIn validee</label>
+      <label>URL LinkedIn validée</label>
       <input type="url" id="linkedin-url-manuel" placeholder="https://www.linkedin.com/in/...">
     </div>
     <div class="modal-actions">
@@ -794,7 +795,7 @@ body.mobile-detail-open #detail{display:block}
   </div>
 </div>
 
-<div class="toast" id="toast"><span class="t-dot"></span><span class="t-msg"></span></div>
+<div class="toast" id="toast" role="status" aria-live="polite"><span class="t-dot"></span><span class="t-msg"></span></div>
 
 <script>
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -830,9 +831,9 @@ const EMAIL_TEMPLATE_NAMES={
 };
 
 const EMAIL_DEFAULTS={
-  info:{label:'Demande de documents',subject:'Lina Finance — Compléments nécessaires pour votre dossier',body:`Bonjour {{prenom}},
+  info:{label:'Demande de documents',subject:'Lina Capital — Compléments nécessaires pour votre dossier',body:`Bonjour {{prenom}},
 
-Nous avons bien reçu votre dossier pour {{societe}} et vous remercions de l'intérêt que vous portez à Lina Finance.
+Nous avons bien reçu votre dossier pour {{societe}} et vous remercions de l'intérêt que vous portez à Lina Capital.
 
 Afin de compléter notre analyse, nous aurions besoin des documents suivants :
 — Business plan ou prévisionnel financier
@@ -841,12 +842,12 @@ Afin de compléter notre analyse, nous aurions besoin des documents suivants :
 Nous revenons vers vous rapidement après réception.
 
 Cordialement,
-L'Équipe Lina Finance
+L'Équipe Lina Capital
 
 https://lina.capital`},
   pitch:{label:'Invitation pitch',subject:'Lina Capital — Invitation à un appel de présentation',body:`Bonjour {{prenom}},
 
-Merci grandement d'avoir rempli le typeform pour votre demande de financement auprès de Lina Capital.
+Merci grandement pour votre demande de financement auprès de Lina Capital.
 
 Nous avons bien étudié votre dossier {{societe}} et souhaitons aller plus loin.
 
@@ -856,10 +857,10 @@ Voici nos disponibilités :
 prouesse.vc/cal/30min
 
 Cordialement,
-L'Équipe Lina Finance
+L'Équipe Lina Capital
 
 https://lina.capital`},
-  attente:{label:"Mise en liste d'attente",subject:'Lina Finance — Votre dossier est en suivi',body:`Bonjour {{prenom}},
+  attente:{label:"Mise en liste d'attente",subject:'Lina Capital — Votre dossier est en suivi',body:`Bonjour {{prenom}},
 
 Nous vous remercions pour la qualité de votre présentation concernant {{societe}}.
 
@@ -868,36 +869,36 @@ Votre dossier est intéressant et nous souhaitons le garder en suivi actif. Nous
 N'hésitez pas à nous tenir informés de l'évolution de votre projet.
 
 Cordialement,
-L'Équipe Lina Finance
+L'Équipe Lina Capital
 
 https://lina.capital`},
-  accepte:{label:"Confirmation d'acceptation",subject:"Lina Finance — Votre dossier est accepté",body:`Bonjour {{prenom}},
+  accepte:{label:"Confirmation d'acceptation",subject:"Lina Capital — Votre dossier est accepté",body:`Bonjour {{prenom}},
 
 Nous sommes heureux de vous informer que votre dossier pour {{societe}} a été retenu par notre comité.
 
 Nous allons vous adresser sous 48h les documents relatifs aux conditions de financement. Un conseiller dédié prendra contact avec vous pour les prochaines étapes.
 
-Félicitations et bienvenue chez Lina Finance.
+Félicitations et bienvenue chez Lina Capital.
 
 Cordialement,
-L'Équipe Lina Finance
+L'Équipe Lina Capital
 
 https://lina.capital`},
-  refuse:{label:'Notification de refus',subject:'Lina Finance — Suite à votre demande de financement',body:`Bonjour {{prenom}},
+  refuse:{label:'Notification de refus',subject:'Lina Capital — Suite à votre demande de financement',body:`Bonjour {{prenom}},
 
-Nous vous remercions pour l'intérêt que vous portez à Lina Finance et pour le temps consacré à votre demande concernant {{societe}}.
+Nous vous remercions pour l'intérêt que vous portez à Lina Capital et pour le temps consacré à votre demande concernant {{societe}}.
 
 Après étude attentive de votre dossier, nous ne sommes malheureusement pas en mesure de donner une suite favorable, en raison de critères propres à notre politique de financement.
 
 Nous vous souhaitons plein succès dans votre projet.
 
 Cordialement,
-L'Équipe Lina Finance
+L'Équipe Lina Capital
 
 https://lina.capital`},
   sante:{label:'Refus santé temporaire',subject:'Lina Capital — Suite à votre demande de financement',body:`Bonjour {{prenom}},
 
-Merci grandement d'avoir rempli le typeform pour votre demande de financement auprès de Lina Capital.
+Merci grandement pour votre demande de financement auprès de Lina Capital.
 
 Nous avons bien étudié votre dossier {{societe}}.
 
@@ -908,7 +909,7 @@ Nous conservons donc votre dossier dans notre base de suivi afin de pouvoir vous
 Nous vous souhaitons sincèrement le meilleur pour votre recherche de financement.
 
 Cordialement,
-L'Équipe Lina Finance
+L'Équipe Lina Capital
 
 https://lina.capital`},
   formulaire_porteur_recu:{label:'Accusé réception formulaire',subject:'Lina Capital - Votre demande a bien été reçue',body:`Bonjour {{prenom}},
@@ -1214,7 +1215,7 @@ async function chargerProfils(){
 }
 function estAdmin(){return !!(PROFIL_COURANT&&PROFIL_COURANT.role==='admin');}
 async function ouvrirFormulaireMaison(){
-  if(!estAdmin()){afficherToast('Acces reserve aux admins',C.red);return;}
+  if(!estAdmin()){afficherToast('Accès réservé aux admins',C.red);return;}
   const url=new URL('formulaire.html',window.location.href).href;
   try{
     if(navigator.clipboard)await navigator.clipboard.writeText(url);
@@ -1241,7 +1242,7 @@ async function chargerTemplatesEmails(){
     (data||[]).forEach(t=>{
       if(t&&t.statut)EMAIL_TEMPLATES[t.statut]={
         label:t.label||EMAIL_DEFAULTS[t.statut]?.label||'Email',
-        subject:t.subject||EMAIL_DEFAULTS[t.statut]?.subject||'Lina Finance',
+        subject:t.subject||EMAIL_DEFAULTS[t.statut]?.subject||'Lina Capital',
         body:t.body||EMAIL_DEFAULTS[t.statut]?.body||'',
       };
     });
@@ -1301,7 +1302,7 @@ function gererChangementTemplateEmail(payload){
     }else{
       EMAIL_TEMPLATES[ligne.statut]={
         label:ligne.label||EMAIL_DEFAULTS[ligne.statut]?.label||'Email',
-        subject:ligne.subject||EMAIL_DEFAULTS[ligne.statut]?.subject||'Lina Finance',
+        subject:ligne.subject||EMAIL_DEFAULTS[ligne.statut]?.subject||'Lina Capital',
         body:ligne.body||EMAIL_DEFAULTS[ligne.statut]?.body||'',
       };
     }
@@ -1509,7 +1510,7 @@ function entreeFullEnrichPossible(l){
   if(linkedinValide(l.linkedin_url))return {ok:true,raison:'LinkedIn valide'};
   const societe=String(l.societe||'').trim();
   const domaine=domaineEmailPro(l.email);
-  if(l.prenom&&l.nom&&(societe||domaine))return {ok:true,raison:societe?'Societe renseignee':'Domaine email pro'};
+  if(l.prenom&&l.nom&&(societe||domaine))return {ok:true,raison:societe?'Société renseignée':'Domaine email pro'};
   return {ok:false,raison:'Societe, domaine pro ou LinkedIn requis'};
 }
 
@@ -1584,7 +1585,7 @@ function boutonDocumentDossier(l){
 }
 
 function ouvrirDocumentDossier(id){
-  if(!sb||!estAdmin())return afficherToast('Acces reserve aux admins',C.red);
+  if(!sb||!estAdmin())return afficherToast('Accès réservé aux admins',C.red);
   const url=new URL('document.html',window.location.href);
   url.searchParams.set('deal_id',id);
   const onglet=window.open(url.toString(),'_blank','noopener');
@@ -1594,7 +1595,7 @@ function ouvrirDocumentDossier(id){
 }
 
 async function chercherLinkedin(id){
-  if(!sb||!estAdmin())return afficherToast('Acces reserve aux admins',C.red);
+  if(!sb||!estAdmin())return afficherToast('Accès réservé aux admins',C.red);
   const l=LEADS.find(x=>x.id===id);
   if(!l)return;
   linkedinDealEnCours=id;
@@ -1632,7 +1633,7 @@ function renderModalLinkedin(data){
       <a class="mini-btn${i===0?' teal':''}" href="${h(l.url)}" target="_blank" rel="noopener">${h(l.label||'Recherche web')}</a>`).join('')}</div>`:'';
   body.innerHTML=`
     ${data.erreur?`<div class="pnone">${h(data.erreur)}</div>`:''}
-    ${candidats.length?`<div class="clbl">Candidats trouves</div><div class="linkedin-candidates">${candidats.map(c=>`
+    ${candidats.length?`<div class="clbl">Candidats trouvés</div><div class="linkedin-candidates">${candidats.map(c=>`
       <button type="button" class="linkedin-candidate" onclick="choisirLinkedinCandidat('${encodeURIComponent(c.url||'')}')">
         <strong>${h(c.titre||c.url)}</strong>
         <span>${h(c.extrait||c.raison||'Profil LinkedIn possible')}</span>
@@ -1659,7 +1660,7 @@ async function sauvegarderLinkedinDepuisModal(){
 }
 
 async function sauvegarderLinkedin(id,url){
-  if(!sb||!estAdmin())return afficherToast('Acces reserve aux admins',C.red);
+  if(!sb||!estAdmin())return afficherToast('Accès réservé aux admins',C.red);
   if(url&&!linkedinValide(url))return afficherToast('URL LinkedIn invalide',C.red);
   try{
     const {data,error}=await sb.rpc('admin_update_deal_linkedin',{p_deal_id:id,p_linkedin_url:url||null});
@@ -1734,9 +1735,9 @@ function confirmerLancementFullEnrich(params){
       </div>
       <div class="contact-grid" style="margin-top:12px">
         <div class="contact-item"><div class="contact-label">Coût maximum</div><div class="contact-value">${h(coutMax)} crédits</div></div>
-        <div class="contact-item"><div class="contact-label">Dossiers ignores</div><div class="contact-value">${h(ignores)}</div></div>
+        <div class="contact-item"><div class="contact-label">Dossiers ignorés</div><div class="contact-value">${h(ignores)}</div></div>
       </div>
-      <div class="pnone" style="margin-top:10px">Un credit n'est consomme que si FullEnrich trouve une donnee facturable.</div>`;
+      <div class="pnone" style="margin-top:10px">Un crédit n'est consommé que si FullEnrich trouve une donnée facturable.</div>`;
     document.getElementById('modal-fullenrich-confirm').style.display='flex';
   });
 }
@@ -1751,7 +1752,7 @@ function repondreConfirmationFullEnrich(ok){
 }
 
 async function enrichirTelephones(ids){
-  if(!sb||!UTILISATEUR||!estAdmin())return afficherToast('Acces reserve aux admins',C.red);
+  if(!sb||!UTILISATEUR||!estAdmin())return afficherToast('Accès réservé aux admins',C.red);
   if(!fullenrichDisponible)return afficherToast('FullEnrich n’est pas encore configuré',C.orange);
   if(fullenrichEnCours)return;
   const uniques=[...new Set(ids)].filter(Boolean);
@@ -1881,7 +1882,7 @@ async function chargerDetailDossier(dealId){
 /* Sauvegarde des champs confidentiels (à la perte de focus) */
 async function sauvegarderConfidentiel(id){
   if(!sb)return;
-  if(!estAdmin())return afficherToast('Acces reserve aux admins',C.red);
+  if(!estAdmin())return afficherToast('Accès réservé aux admins',C.red);
   const lead=LEADS.find(x=>x.id===id);
   if(!lead)return;
   const valeurNum=el=>{const v=document.getElementById(el)?.value;return v===''||v===undefined?null:Number(v);};
@@ -2225,6 +2226,9 @@ function pick(id){
   }
   if(currentL)ouvrirDetailMobile();
   render();
+  // Navigation clavier j/k : garder la ligne sélectionnée visible dans la liste
+  const ligneOn=document.querySelector('#sb-list .li.on');
+  if(ligneOn)ligneOn.scrollIntoView({block:'nearest'});
 }
 
 function actionButtons(l){
@@ -2252,7 +2256,7 @@ function relance(id){
   afficherToast(`Relance ouverte dans la messagerie → ${l.email}`,C.orange);
 }
 
-function mailtoLink(l){const tpl=templateEmail(l.statut);if(!tpl)return null;const subj=encodeURIComponent(tpl.subject||'Lina Finance');const body=encodeURIComponent(appliquerVariablesTemplate(tpl.body,l));const email=encodeURIComponent(String(l.email||'').trim());return `mailto:${email}?subject=${subj}&body=${body}`;}
+function mailtoLink(l){const tpl=templateEmail(l.statut);if(!tpl)return null;const subj=encodeURIComponent(tpl.subject||'Lina Capital');const body=encodeURIComponent(appliquerVariablesTemplate(tpl.body,l));const email=encodeURIComponent(String(l.email||'').trim());return `mailto:${email}?subject=${subj}&body=${body}`;}
 
 function emailBlock(l){const st=l.statut;if(st==='nouveau')return '';const tpl=templateEmail(st);if(!tpl)return '';const href=mailtoLink(l);const corps=appliquerVariablesTemplate(tpl.body,l);return `<div class="ebox"><div class="ehead"><span class="elbl">${h(tpl.label||'Email')}</span><span class="eto">→ ${h(l.email)}</span></div><div class="ebody">${h(corps)}</div></div><a href="${h(href)}" target="_blank" rel="noopener" class="sbtn" style="display:block;text-align:center;text-decoration:none" onclick="tracerEmailEnvoye('${l.id}')">✉  Ouvrir dans ma messagerie</a>`;}
 
@@ -2475,10 +2479,12 @@ function renderDetail(){
       <div class="action-bar-status" style="background:${s.color}18;color:${s.color};border:2px solid ${s.color}"><span class="st-icon" style="background:${s.color}"></span>${h(s.label)}</div>
       ${actionButtons(l)}
     </div>
+    ${emailBlock(l)}
     ${blocContact(l)}
     ${blocConfidentiel(l)}
     <div class="card"><div class="cb"><div class="clbl">Projet</div><div class="ctxt">${l.desc?h(l.desc):'<i>Aucune description</i>'}</div>${l.ethique_financement?`<div class="pnone" style="margin-top:10px">Finance éthique/islamique : ${h(l.ethique_financement)}</div>`:''}${l.engagement_sans_interets?`<div class="pnone" style="margin-top:6px">Engagement sans intérêts : ${h(l.engagement_sans_interets)}</div>`:''}${boutonDoc?`<div class="contact-actions" style="margin-top:10px">${boutonDoc}</div>`:''}</div></div>
     <div class="card motif" style="border-left-color:${col}"><div class="cb"><div class="clbl">Analyse IA</div><div class="cmotif">${h(l.motif)}</div></div></div>
+    <div class="abox"><div><div class="albl">Action recommandée</div><div class="atxt">${h(l.action)}</div></div></div>
     <div class="pgrid">
       <div class="pcard"><div class="plbl" style="color:${C.green}">Points forts</div>${l.forts.length?l.forts.map(p=>`<div class="prow"><div class="pdot" style="background:${C.green}"></div><div class="ptxt">${h(p)}</div></div>`).join(''):'<div class="pnone">Aucun</div>'}</div>
       <div class="pcard"><div class="plbl" style="color:${C.red}">Points faibles</div>${l.faibles.length?l.faibles.map(p=>`<div class="prow"><div class="pdot" style="background:${C.red}"></div><div class="ptxt">${h(p)}</div></div>`).join(''):'<div class="pnone">Aucun</div>'}</div>
@@ -2489,11 +2495,9 @@ function renderDetail(){
       <span class="badge" style="background:var(--light);color:var(--grey);border-color:var(--pale)">Entreprise : ${h(l.ent)}</span>
       <span class="badge" style="background:var(--light);color:var(--grey);border-color:var(--pale)">CA : ${h(l.ca)}</span>
     </div>
-    <div class="abox"><div><div class="albl">Action recommandée</div><div class="atxt">${h(l.action)}</div></div></div>
     ${typeof blocReunions==='function'?blocReunions(l):''}
     ${blocNotes(l)}
     ${blocTimeline()}
-    ${emailBlock(l)}
   `;
 }
 
@@ -2577,9 +2581,12 @@ function renderRattacher(){
 
 function renderBoard(){
   const board=document.getElementById('view-board');
+  // Le Board respecte la recherche et les filtres, exactement comme la Liste
+  // (avant : il affichait TOUT le portefeuille, sans avertissement).
+  const visibles=getVisibleLeads();
   board.innerHTML=ST_ORDER.map(st=>{
     const s=ST[st];
-    const items=LEADS.filter(l=>l.statut===st).sort((a,b)=>b.score-a.score);
+    const items=visibles.filter(l=>l.statut===st).sort((a,b)=>b.score-a.score);
     return `<div class="board-col" data-col="${st}" ondragover="boardDragOver(event)" ondragleave="boardDragLeave(event)" ondrop="boardDrop(event,'${st}')"><div class="board-col-head"><div class="board-col-title"><div class="board-col-dot" style="background:${s.color}"></div>${h(s.label)}</div><div class="board-col-count">${items.length}</div></div><div class="board-col-body">${items.map(l=>{const col=dc(l.dec);return `<div class="bc" draggable="true" data-id="${l.id}" ondragstart="boardDragStart(event,'${l.id}')" ondragend="boardDragEnd(event)" onclick="boardClick('${l.id}')"><div class="bc-top"><div class="bc-name">${h(l.prenom)} ${h(l.nom)}</div><div class="bc-score" style="background:${col}22;color:${col};border:1px solid ${col}">${h(l.score)}</div></div><div class="bc-act">${h(l.act)} · ${h(l.date)}</div><div class="bc-tags">${l.sante?'<span class="tag ts">Santé</span>':''}${l.doc?'<span class="tag td">Doc</span>':''}${l.tel?'<span class="tag td">Tel</span>':''}${l.linkedin_url?'<span class="tag te">LinkedIn</span>':''}</div><div class="bc-ia" style="background:${col}15;color:${col}">${h(l.dec)}</div></div>`;}).join('')}</div></div>`;
   }).join('');
 }
