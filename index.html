@@ -1444,9 +1444,18 @@ async function chargerDeals(){
     // est inutile pour la liste et bloque le chargement sur connexion lente (cas Djamel).
     const colonnesAdmin=colonnesPubliques+',societe,montant_demande,valorisation,montant_investi,notes_dd,prochaine_etape,date_prochaine_etape';
     const colonnes=estAdmin()?colonnesAdmin:colonnesPubliques;
-    const {data,error}=await sb.from('deals').select(colonnes).order('date_soumission',{ascending:false}).abortSignal(AbortSignal.timeout(25000));
-    if(error)throw error;
-    LEADS=(data||[]).map(dealVersLead);
+    // Lecture PAGINÉE : Supabase plafonne à 1000 lignes par requête. Sans boucle,
+    // le CRM n'afficherait plus que les 1000 dossiers les plus récents, en silence.
+    const toutes=[];
+    for(let depuis=0;;depuis+=1000){
+      const {data,error}=await sb.from('deals').select(colonnes)
+        .order('date_soumission',{ascending:false}).order('id')
+        .range(depuis,depuis+999).abortSignal(AbortSignal.timeout(25000));
+      if(error)throw error;
+      toutes.push(...(data||[]));
+      if(!data||data.length<1000)break;
+    }
+    LEADS=toutes.map(dealVersLead);
     dataSource=`Supabase · ${LEADS.length} dossiers`;
   }catch(e){
     dataSource='Erreur de chargement';

@@ -181,8 +181,15 @@ function urlOptionnelle(v: unknown, champ: string): string | null {
 }
 
 function montantOptionnel(v: unknown): number | null {
-  const brute = texte(v).replace(/\s/g, "").replace(/€/g, "").replace(",", ".");
+  // Parseur robuste : « 150 000 », « 150.000 », « 10,000 », « 1 500 000,50 € »…
+  // Un séparateur suivi de 3 chiffres = séparateur de milliers (supprimé) ;
+  // un point/virgule final suivi de 1-2 chiffres = décimale. L'ancien
+  // replace(",",".") transformait « 10,000 » en 10 (montant divisé par 1000).
+  let brute = texte(v).replace(/[\s€]/g, "");
   if (!brute) return null;
+  brute = brute.replace(/[.,](?=\d{3}(\D|$))/g, "");   // séparateurs de milliers
+  brute = brute.replace(",", ".");                       // décimale FR restante
+  if (!/^\d+(\.\d{1,2})?$/.test(brute)) return null;
   const n = Number(brute);
   return Number.isFinite(n) && n >= 0 ? n : null;
 }

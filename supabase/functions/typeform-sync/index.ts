@@ -108,17 +108,27 @@ Deno.serve(async (req) => {
     // Les réponses Typeform sont immuables après soumission : pour les deals déjà
     // importés, il n'y a RIEN à mettre à jour — et surtout on ne touche jamais
     // au statut, aux notes ni aux champs confidentiels.
-    const { data: existants, error: erreurLecture } = await sb
-      .from("deals")
-      .select("typeform_id")
-      .not("typeform_id", "is", null);
+    // Lecture PAGINÉE des typeform_id existants (plafond PostgREST 1000 lignes) :
+    // sans boucle, au-delà de 1000 dossiers les compteurs et deal_events d'import
+    // seraient faux (l'upsert ignoreDuplicates protège l'intégrité, pas les stats).
+    const existants: Array<{ typeform_id: string }> = [];
+    for (let depuis = 0; ; depuis += 1000) {
+      const { data: pageIds, error: erreurLecture } = await sb
+        .from("deals")
+        .select("typeform_id")
+        .not("typeform_id", "is", null)
+        .order("typeform_id")
+        .range(depuis, depuis + 999);
 
-    if (erreurLecture) {
-      console.error("typeform-sync lecture deals:", erreurLecture.message);
-      return reponseJson({ erreur: "lecture_deals", message: "Erreur interne — réessayez." }, 500);
+      if (erreurLecture) {
+        console.error("typeform-sync lecture deals:", erreurLecture.message);
+        return reponseJson({ erreur: "lecture_deals", message: "Erreur interne — réessayez." }, 500);
+      }
+      existants.push(...(pageIds ?? []));
+      if (!pageIds || pageIds.length < 1000) break;
     }
 
-    const idsExistants = new Set((existants ?? []).map((d) => d.typeform_id));
+    const idsExistants = new Set(existants.map((d) => d.typeform_id));
     const nouvelles = lignes.filter((l) => !idsExistants.has(l.typeform_id));
     const cleAnthropic = Deno.env.get("ANTHROPIC_API_KEY");
 
