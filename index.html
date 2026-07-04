@@ -2270,9 +2270,10 @@ function blocContact(l){
   const actionsTel=tel
     ? `<div class="contact-actions"><button class="mini-btn" onclick="copierTelephone('${l.id}')">Copier</button>${hrefTel?`<a class="mini-btn teal" href="${h(hrefTel)}">Appeler</a>`:''}</div>`
     : estAdmin()?`<div class="contact-actions"><button class="mini-btn teal" onclick="enrichirTelephone('${l.id}')" ${elig.ok&&!feEnCours?'':`disabled title="${h(feEnCours?'Recherche FullEnrich déjà en cours':elig.raison)}"`}>Lancer recherche FullEnrich</button><button class="mini-btn" onclick="chercherLinkedin('${l.id}')">Chercher LinkedIn</button></div><div class="pnone" style="margin-top:6px">${h(feEnCours?'Recherche déjà lancée : le retour FullEnrich arrive via webhook.':elig.raison)}</div>${statutFe}`:'<div class="pnone">Aucun téléphone</div>';
-  const linkedin=l.linkedin_url
-    ? `<a href="${h(l.linkedin_url)}" target="_blank" rel="noopener">${h(l.linkedin_url)}</a>`
-    : 'Non renseigné';
+  const linkedinHref=urlHttp(l.linkedin_url);
+  const linkedin=linkedinHref
+    ? `<a href="${h(linkedinHref)}" target="_blank" rel="noopener noreferrer">${h(l.linkedin_url)}</a>`
+    : (l.linkedin_url?h(l.linkedin_url):'Non renseigné');
   const actionsLinkedin=estAdmin()?`<div class="contact-actions"><button class="mini-btn" onclick="chercherLinkedin('${l.id}')">${l.linkedin_url?'Modifier LinkedIn':'Chercher LinkedIn'}</button>${l.linkedin_url?`<button class="mini-btn" onclick="sauvegarderLinkedin('${l.id}','')">Retirer</button>`:''}</div>`:'';
   return `<div class="card"><div class="cb">
     <div class="clbl">Contact</div>

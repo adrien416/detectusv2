@@ -394,9 +394,14 @@ async function envoyerEmailsAutomatiquesFormulaire(sb: any, dealId: string, vari
 // ── Anti-spam : IP + jeton ────────────────────────────────────────────────────
 
 function ipClient(req: Request): string {
+  // Le client peut FORGER le début de x-forwarded-for ; chaque proxy AJOUTE la
+  // vraie IP en fin de liste. On lit donc le DERNIER segment (posé par l'infra
+  // Supabase, de confiance) — sinon la limite par IP se contourne en variant
+  // l'en-tête à chaque requête (revue Fable 5 — R4).
   const xff = req.headers.get("x-forwarded-for") ?? "";
-  const premier = xff.split(",")[0].trim();
-  return premier || (req.headers.get("x-real-ip") ?? "").trim();
+  const segments = xff.split(",").map((s) => s.trim()).filter(Boolean);
+  const dernier = segments.length ? segments[segments.length - 1] : "";
+  return dernier || (req.headers.get("x-real-ip") ?? "").trim();
 }
 
 async function hacherIp(ip: string): Promise<string> {
